@@ -1,0 +1,40 @@
+MULTIJUGADOR — Dolphin Netplay
+==============================
+Aplica a: GameCube y Wii.
+
+Requisito de oro
+------------------
+Todos los jugadores necesitan:
+  1. La MISMA versión de Dolphin (revisá "Ayuda > Acerca de" si dudás).
+  2. El MISMO ISO/ROM del juego — mismo archivo, mismo hash.
+Si no coincide, Dolphin directamente rechaza la conexión o se
+desincroniza a los pocos minutos.
+
+Cómo anfitrionar una partida
+------------------------------
+1. Abre Dolphin, seleccioná el juego (no hace falta abrirlo todavía).
+2. Herramientas > Iniciar sesión de NetPlay.
+3. Elegí "Anfitrionar" (Host). Dolphin usa por defecto un servidor de
+   traversal público — no necesitás abrir puertos en tu router para la
+   mayoría de los casos.
+4. Compartile a tus amigos el código/sala que te muestra Dolphin (o tu
+   IP si elegiste conexión directa en vez de traversal).
+
+Cómo unirse a una partida
+---------------------------
+1. Herramientas > Iniciar sesión de NetPlay > "Conectarse" (Join).
+2. Metele el código de sala o la IP que te pasó el anfitrión.
+3. Dolphin te va a avisar si tu copia del juego no coincide con la del
+   anfitrión (hash distinto) — en ese caso hay que conseguir la misma
+   versión/región del juego antes de poder jugar juntos.
+
+Recomendaciones extra
+------------------------
+- Antes de empezar netplay, desactivá los "Estados guardados" (Save
+  States) — usarlos en medio de una partida en red rompe la
+  sincronización entre todos los jugadores.
+- Si usás algún código Gecko/AR (trucos), activá "Sincronizar Códigos"
+  en la ventana de NetPlay para que todos jueguen con los mismos.
+
+MegaHUB no gestiona la conexión por vos — esto se configura DENTRO de
+Dolphin, MegaHUB solo te deja el juego listo para abrir.

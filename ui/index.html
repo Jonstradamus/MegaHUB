@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>MegaHUB</title>
+  <link rel="icon" href="brand/gamevault-icon-64.png" />
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <div id="mode-transition-overlay" hidden>
+    <div class="mode-transition-content">
+      <div class="mode-transition-icon" id="mode-transition-icon"></div>
+      <div class="mode-transition-label" id="mode-transition-label">PC</div>
+    </div>
+  </div>
+
+  <header id="titlebar">
+    <div id="titlebar-drag"></div>
+    <div id="titlebar-controls">
+      <button id="tb-min" class="tb-btn" title="Minimizar" aria-label="Minimizar"><i data-icon="winMin"></i></button>
+      <button id="tb-max" class="tb-btn" title="Maximizar" aria-label="Maximizar"><i data-icon="winMax"></i></button>
+      <button id="tb-close" class="tb-btn tb-close" title="Cerrar" aria-label="Cerrar"><i data-icon="winClose"></i></button>
+    </div>
+  </header>
+
+  <div id="app-grid">
+  <div id="sidebar-slot">
+    <aside id="sidebar" class="sidebar-panel">
+      <div id="logo">
+        <div id="logo-text">
+          <div class="brand-word">Mega<span class="accent">HUB</span></div>
+          <span class="brand-tag logo-eco">by <b>DERIVA</b></span>
+        </div>
+      </div>
+
+      <!-- Pill de estado del Companion Desktop (opcional, ver
+           src/services/companionBridge.js) — no bloquea nada si Companion no
+           está instalado o no está corriendo, solo queda en "Desconectado".
+           Sin id único: se repite igual en #retro-sidebar (misma lógica que
+           ya usa #logo, duplicado por vista) — initCompanionPill() en app.js
+           las actualiza a todas por clase, no por id. -->
+      <div class="companion-pill" data-state="off" hidden>
+        <div class="companion-pill-row">
+          <span class="companion-pill-dot"></span>
+          <span class="companion-pill-text">DERIVA Companion</span>
+        </div>
+        <!-- Panel ampliado al pasar el mouse — calcado del propio mando de
+             Companion (companion-desktop/radio.html): carátula, título/artista,
+             transporte circular, volumen y guardar. Oculto salvo :hover (ver
+             app.css). -->
+        <div class="companion-pill-expand">
+          <div class="cpx-np">
+            <div class="cpx-cover"><span class="cpx-cover-fallback">🎵</span><img class="cpx-cover-img" hidden alt="" /></div>
+            <div class="cpx-meta">
+              <div class="cpx-lbl"><span class="cpx-live-dot"></span><span class="cpx-genre">Radio</span></div>
+              <div class="cpx-title">—</div>
+              <div class="cpx-artist"></div>
+            </div>
+          </div>
+          <div class="cpx-transport">
+            <button type="button" class="cpx-tb" data-cmd="prev" title="Anterior" aria-label="Anterior">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+            <button type="button" class="cpx-tb cpx-play" data-cmd="toggle" title="Reproducir/pausar" aria-label="Reproducir/pausar">
+              <svg viewBox="0 0 24 24" fill="currentColor" class="cpx-play-ico"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button type="button" class="cpx-tb" data-cmd="next" title="Siguiente" aria-label="Siguiente">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg>
+            </button>
+            <button type="button" class="cpx-tb" data-cmd="random" title="Radio aleatoria" aria-label="Radio aleatoria">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+            </button>
+          </div>
+          <div class="cpx-volume-row">
+            <button type="button" class="cpx-mute" data-cmd="mute" title="Silenciar" aria-label="Silenciar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4.03v8.06A4.5 4.5 0 0016.5 12z"/></svg>
+            </button>
+            <input type="range" class="cpx-volume" min="0" max="100" value="70" title="Volumen" aria-label="Volumen" />
+          </div>
+          <div class="cpx-actions">
+            <button type="button" class="cpx-like" data-cmd="like" title="Me gusta" aria-label="Me gusta">♡</button>
+            <button type="button" class="cpx-save" data-cmd="save" title="Guardar en Mi lista" aria-label="Guardar en Mi lista">💟 Guardar en Mi lista</button>
+          </div>
+        </div>
+      </div>
+
+      <section class="side-section">
+        <h3>Plataforma</h3>
+        <div id="platform-filters" class="chip-list"></div>
+      </section>
+
+      <section class="side-section">
+        <h3>Estado</h3>
+        <div id="state-filters" class="chip-list">
+          <button class="chip active" data-state="all">Todos</button>
+          <button class="chip" data-state="installed">Instalados</button>
+          <button class="chip" data-state="library">Biblioteca</button>
+          <button class="chip" data-state="hidden">Ocultos</button>
+        </div>
+      </section>
+
+      <section class="side-section">
+        <h3>Ordenar por</h3>
+        <div id="sort-filters" class="chip-list">
+          <button class="chip active" data-sort="name">Nombre</button>
+          <button class="chip" data-sort="date">Fecha de salida</button>
+        </div>
+      </section>
+
+      <section class="side-section">
+        <h3>Género</h3>
+        <div id="genre-filters" class="chip-list">
+          <button class="chip active" data-genre="all">Todos</button>
+        </div>
+        <div class="side-note" id="genre-note">Los géneros se cargan al obtener metadatos</div>
+      </section>
+
+      <section class="side-section" id="accounts-section">
+        <h3>Cuentas</h3>
+        <button class="account-btn" data-account="gog"><span class="dot"></span> GOG <span class="account-state">conectar</span></button>
+        <button class="account-btn" data-account="epic"><span class="dot"></span> Epic Games <span class="account-state">conectar</span></button>
+        <button class="account-btn disabled" data-account="xbox" title="Requiere que registres tu propia app en Azure AD (Microsoft no permite una clave compartida). No es un simulacro de 'próximamente' — es una limitación real de su API.">
+          <span class="dot"></span> Xbox <span class="account-state">requiere Client ID propio</span>
+        </button>
+      </section>
+
+      <section class="side-section" id="sgdb-section">
+        <h3>Portadas (SteamGridDB)</h3>
+        <div class="sgdb-row">
+          <input id="sgdb-key" type="password" placeholder="API key gratuita…" />
+          <button id="sgdb-save">Guardar</button>
+        </div>
+        <div class="side-note">Rellena las carátulas de Battle.net, Riot, Rockstar, Ubisoft y EA. <a href="https://steamgriddb.com/profile/preferences/api" target="_blank">Consigue tu clave gratis →</a></div>
+      </section>
+
+      <div id="specs-box">
+        <h3>Tu PC</h3>
+        <div id="specs-content">Detectando hardware…</div>
+      </div>
+    </aside>
+
+    <aside id="retro-sidebar" class="sidebar-panel" hidden>
+      <div id="logo">
+        <div id="logo-text">
+          <div class="brand-word">Mega<span class="accent">HUB</span></div>
+          <span class="brand-tag logo-eco">by <b>DERIVA</b></span>
+        </div>
+      </div>
+
+      <div class="companion-pill" data-state="off" hidden>
+        <div class="companion-pill-row">
+          <span class="companion-pill-dot"></span>
+          <span class="companion-pill-text">DERIVA Companion</span>
+        </div>
+        <!-- Panel ampliado al pasar el mouse — calcado del propio mando de
+             Companion (companion-desktop/radio.html): carátula, título/artista,
+             transporte circular, volumen y guardar. Oculto salvo :hover (ver
+             app.css). -->
+        <div class="companion-pill-expand">
+          <div class="cpx-np">
+            <div class="cpx-cover"><span class="cpx-cover-fallback">🎵</span><img class="cpx-cover-img" hidden alt="" /></div>
+            <div class="cpx-meta">
+              <div class="cpx-lbl"><span class="cpx-live-dot"></span><span class="cpx-genre">Radio</span></div>
+              <div class="cpx-title">—</div>
+              <div class="cpx-artist"></div>
+            </div>
+          </div>
+          <div class="cpx-transport">
+            <button type="button" class="cpx-tb" data-cmd="prev" title="Anterior" aria-label="Anterior">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
+            </button>
+            <button type="button" class="cpx-tb cpx-play" data-cmd="toggle" title="Reproducir/pausar" aria-label="Reproducir/pausar">
+              <svg viewBox="0 0 24 24" fill="currentColor" class="cpx-play-ico"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <button type="button" class="cpx-tb" data-cmd="next" title="Siguiente" aria-label="Siguiente">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg>
+            </button>
+            <button type="button" class="cpx-tb" data-cmd="random" title="Radio aleatoria" aria-label="Radio aleatoria">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
+            </button>
+          </div>
+          <div class="cpx-volume-row">
+            <button type="button" class="cpx-mute" data-cmd="mute" title="Silenciar" aria-label="Silenciar">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4.03v8.06A4.5 4.5 0 0016.5 12z"/></svg>
+            </button>
+            <input type="range" class="cpx-volume" min="0" max="100" value="70" title="Volumen" aria-label="Volumen" />
+          </div>
+          <div class="cpx-actions">
+            <button type="button" class="cpx-like" data-cmd="like" title="Me gusta" aria-label="Me gusta">♡</button>
+            <button type="button" class="cpx-save" data-cmd="save" title="Guardar en Mi lista" aria-label="Guardar en Mi lista">💟 Guardar en Mi lista</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="retro-sidebar-empty">
+        <div class="side-note">Elige una consola en el panel principal para ver sus filtros y accesos.</div>
+      </div>
+      <div id="retro-sidebar-content" hidden>
+        <section class="side-section">
+          <h3>Consola</h3>
+          <div id="retro-sidebar-console-info"></div>
+        </section>
+
+        <section class="side-section">
+          <h3>Estado</h3>
+          <div id="retro-owned-filter" class="chip-list">
+            <button class="chip active" data-owned="all">Todos</button>
+            <button class="chip" data-owned="owned">Obtenido</button>
+          </div>
+          <div class="side-note" id="retro-count"></div>
+        </section>
+
+        <section class="side-section">
+          <a id="retro-download-link" class="account-btn" target="_blank" rel="noopener"><i data-icon="download"></i> <span>Descargar emulador</span></a>
+          <button id="retro-auto-download-btn" class="account-btn" hidden><i data-icon="zap"></i> <span>Descargar e instalar automáticamente (con tu confirmación)</span></button>
+          <button id="retro-locate-emulator-btn" class="account-btn" hidden><i data-icon="pin"></i> <span>Ya lo tengo — ubicar carpeta</span></button>
+          <button id="retro-open-standalone-btn" class="account-btn" hidden><i data-icon="gamepad"></i> <span>Abrir emulador</span></button>
+          <div class="side-note" id="retro-auto-download-status"></div>
+
+          <div id="retro-core-controls" hidden>
+            <div class="side-note" id="retro-core-status" style="margin:0 0 8px;"></div>
+            <button id="retro-install-core-btn" class="account-btn" hidden><i data-icon="zap"></i> <span>Instalar core</span></button>
+            <button id="retro-install-sysfiles-btn" class="account-btn" hidden><i data-icon="package"></i> <span>Descargar archivos de sistema del core</span></button>
+            <button id="retro-open-retroarch-btn" class="account-btn" hidden><i data-icon="gamepad"></i> <span>Abrir RetroArch (jugar / configurar)</span></button>
+            <div class="side-note" id="retro-core-install-status"></div>
+            <div id="retro-bios-warning" class="bios-warning" hidden>
+              <div><i data-icon="warning"></i> <span id="retro-bios-warning-text">Requiere de una BIOS oficial, extráela vía dumping desde tu consola. No proporcionamos BIOS.</span></div>
+              <button id="retro-open-bios-folder-btn" class="account-btn"><i data-icon="folderOpen"></i> <span>Abrir carpeta de BIOS</span></button>
+            </div>
+          </div>
+
+          <button id="retro-multiplayer-btn" class="account-btn multiplayer-btn" hidden title="Cómo activar el online de este emulador para jugar con amigos">
+            <i data-icon="users"></i> <span>Multijugador</span>
+          </button>
+        </section>
+
+        <section class="side-section" id="retro-resolution-section" hidden>
+          <h3>Resolución / Rendimiento</h3>
+          <div id="retro-resolution-presets" class="chip-list">
+            <button class="chip" data-tier="default">Por defecto</button>
+            <button class="chip" data-tier="1080p">1080p</button>
+            <button class="chip" data-tier="2k">2K</button>
+            <button class="chip" data-tier="4k">4K</button>
+          </div>
+          <div class="side-note" id="retro-resolution-status"></div>
+        </section>
+
+        <section class="side-section">
+          <h3>Carpetas locales</h3>
+          <button id="retro-create-folders-btn" class="account-btn"><i data-icon="folder"></i> Crear carpetas del emulador/ROMs</button>
+          <button id="retro-open-roms-btn" class="account-btn"><i data-icon="folderOpen"></i> Abrir carpeta de ROMs</button>
+          <button id="retro-locate-roms-btn" class="account-btn"><i data-icon="pin"></i> <span>¿Ya tienes ROMs en otra carpeta? Ubicar</span></button>
+          <div class="side-note" id="retro-rom-location-status"></div>
+          <div class="side-note" id="retro-rom-scan-status"></div>
+        </section>
+      </div>
+    </aside>
+  </div>
+
+  <div id="main-col">
+    <header id="topbar">
+      <button class="icon-btn" id="sidebar-toggle" title="Mostrar/ocultar panel lateral"><i data-icon="menu"></i></button>
+      <input id="search" type="text" placeholder="Buscar juego…  ( / )" />
+      <span id="count"></span>
+      <div id="view-switch">
+        <div class="view-group">
+          <span class="view-group-label">PC</span>
+          <button class="view-btn active" data-view="dock" title="Vista Dock"><i data-icon="grid"></i></button>
+          <button class="view-btn" data-view="list" title="Vista Lista"><i data-icon="menu"></i></button>
+        </div>
+        <button class="view-btn view-retro-btn" data-view="retro" title="Consolas Retro"><i data-icon="gamepad" class="icon-lg"></i> <span>RETRO</span></button>
+        <button class="view-btn view-achievements-btn" data-view="achievements" title="Logros (RetroAchievements)"><i data-icon="trophy" class="icon-lg"></i></button>
+      </div>
+      <button class="icon-btn" id="settings-open" title="Ajustes"><i data-icon="settings"></i></button>
+      <span id="gamepad-status"><i data-icon="plug"></i> <span id="gamepad-status-label">sin mando</span></span>
+    </header>
+
+    <main id="dock-wrap">
+      <div id="dock" tabindex="0"></div>
+    </main>
+    <main id="list" tabindex="0" hidden></main>
+
+    <main id="retro-wrap" hidden>
+      <div id="retro-disclaimer">
+        <i data-icon="warning"></i> MegaHUB no distribuye BIOS ni ROMs de ningún tipo. Esto es solo una guía
+        visual con portadas — tú debes obtener tus propios archivos legalmente y
+        configurarlos en RetroArch (o el emulador que prefieras).
+      </div>
+
+      <div id="retro-console-view">
+        <div id="retro-console-sort" class="chip-list">
+          <span class="sort-label">Ordenar:</span>
+          <button class="chip active" data-consort="year">Año</button>
+          <button class="chip" data-consort="gen">Generación</button>
+          <button class="chip" data-consort="owned">Obtenidas primero</button>
+        </div>
+        <div id="retro-console-grid"></div>
+      </div>
+
+      <div id="retro-detail-view" hidden>
+        <div id="retro-detail-header">
+          <button id="retro-back">← Consolas</button>
+          <div id="retro-detail-photo"></div>
+          <div id="retro-detail-info">
+            <h2 id="retro-detail-name"></h2>
+            <div id="retro-detail-meta"></div>
+          </div>
+        </div>
+        <div id="retro-game-grid"></div>
+      </div>
+    </main>
+
+    <main id="achievements-wrap" hidden>
+      <div id="ach-source-tabs" class="chip-list">
+        <button class="chip active" data-ach-source="mh"><i data-icon="trophy"></i> MegaHUB</button>
+        <button class="chip" data-ach-source="ra">RetroAchievements</button>
+        <button class="chip" data-ach-source="consolas">Xenia / RPCS3</button>
+      </div>
+
+      <div id="ach-source-mh" class="ach-source-panel">
+        <div id="mh-header">
+          <div>
+            <h2>Logros de MegaHUB</h2>
+            <p class="side-note">Generados por tu actividad real — horas jugadas de Steam (exactas, leídas de tu propio Steam),
+              y sesiones de Modo Retro medidas por MegaHUB mismo. El resto de launchers (Epic/GOG/Battle.net/etc.) solo
+              cuentan como "lanzado" para las rachas, ya que corren fuera del alcance de MegaHUB.</p>
+          </div>
+          <button id="mh-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span>Actualizar</span></button>
+        </div>
+        <div id="mh-tabs" class="chip-list">
+          <button class="chip active" data-mh-tab="global">Generales</button>
+          <button class="chip" data-mh-tab="steamgame">Por juego (Steam)</button>
+          <button class="chip" data-mh-tab="retroconsole">Por consola (Retro)</button>
+          <button class="chip" data-mh-tab="retrogame">Por juego (Retro)</button>
+        </div>
+        <div id="mh-panel" class="ach-grid"></div>
+      </div>
+
+      <div id="ach-source-ra" class="ach-source-panel" hidden>
+      <div id="ra-empty-state">
+        <h2><i data-icon="trophy" class="icon-xl"></i> Logros</h2>
+        <p>Conecta tu cuenta de <a href="https://retroachievements.org" target="_blank" rel="noopener">RetroAchievements</a>
+          para ver aquí tu perfil de logros — juegos, progreso e historial, igual que Steam o Xbox.</p>
+        <div class="ra-connect-row">
+          <input id="ra-username-input" type="text" placeholder="Tu usuario de RetroAchievements…" />
+          <input id="ra-key-input" type="password" placeholder="Web API key (Panel de control → Keys)…" />
+          <button id="ra-connect-btn" class="account-btn">Conectar</button>
+        </div>
+        <div class="side-note">
+          <a href="https://retroachievements.org/controlpanel.php" target="_blank" rel="noopener">Consigue tu clave gratis en tu Panel de control →</a>
+          No es tu contraseña — es un token de solo lectura. MegaHUB nunca ve ni guarda tu contraseña.
+        </div>
+        <div class="side-note" id="ra-cheevos-status"></div>
+        <button id="ra-enable-cheevos-btn" class="account-btn" hidden><i data-icon="zap"></i> <span>Activar logros en RetroArch</span></button>
+        <button id="ra-open-retroarch-btn" class="account-btn" hidden><i data-icon="gamepad"></i> <span>Abrir RetroArch para iniciar sesión</span></button>
+      </div>
+
+      <div id="ra-dashboard" hidden>
+        <div id="ra-header">
+          <div id="ra-header-info">
+            <div id="ra-username-label"></div>
+            <div id="ra-stats"></div>
+          </div>
+          <div id="ra-header-actions">
+            <button id="ra-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span>Actualizar</span></button>
+            <button id="ra-disconnect-btn" class="account-btn">Desconectar</button>
+          </div>
+        </div>
+
+        <div id="ra-tabs" class="chip-list">
+          <button class="chip active" data-ra-tab="games">Mis juegos</button>
+          <button class="chip" data-ra-tab="recent">Actividad reciente</button>
+        </div>
+
+        <div id="ra-panel-games" class="ra-panel"></div>
+        <div id="ra-panel-recent" class="ra-panel" hidden></div>
+      </div>
+
+      <div id="ra-game-detail" hidden>
+        <button id="ra-game-back">← Mis juegos</button>
+        <div id="ra-game-detail-header"></div>
+        <div id="ra-game-detail-grid"></div>
+      </div>
+      </div>
+
+      <div id="ach-source-consolas" class="ach-source-panel" hidden>
+        <div id="consolas-dashboard">
+          <div id="consolas-header" class="mh-header-layout">
+            <div>
+              <h2><i data-icon="trophy" class="icon-xl"></i> Xenia (Xbox 360) y RPCS3 (PS3)</h2>
+              <p class="side-note">Logros y trofeos leídos directamente de los archivos locales que genera cada emulador
+                — sin cuenta ni red. RPCS3 aún no expone de forma fiable qué trofeos ya desbloqueaste (formato propietario
+                sin documentar); por ahora se muestra el catálogo completo de cada juego.</p>
+            </div>
+            <button id="consolas-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span>Actualizar</span></button>
+          </div>
+          <div id="consolas-panel-games" class="ra-panel"></div>
+        </div>
+
+        <div id="consolas-game-detail" hidden>
+          <button id="consolas-game-back">← Mis juegos</button>
+          <div id="consolas-game-detail-header"></div>
+          <div id="consolas-game-detail-grid"></div>
+        </div>
+      </div>
+    </main>
+
+    <footer id="controls">
+      <span><b>←→↑↓</b>/stick — navegar</span>
+      <span><b>Enter</b>/<b>A</b> — jugar · instalar</span>
+      <span><b>Q·E</b>/<b>LB·RB</b> — plataforma</span>
+      <span><b>/</b> — buscar</span>
+    </footer>
+  </div>
+
+  <aside id="details">
+    <div id="details-empty">Selecciona un juego para ver sus detalles</div>
+    <div id="details-content" hidden>
+      <div id="d-video" hidden></div>
+      <div id="d-cover"></div>
+      <h2 id="d-title"></h2>
+      <div id="d-badges"></div>
+      <p id="d-desc"></p>
+      <div id="d-meta"></div>
+      <div id="d-reqs">
+        <h3>¿Lo mueve tu PC?</h3>
+        <div id="d-reqs-body">—</div>
+      </div>
+      <div id="d-actions"></div>
+    </div>
+  </aside>
+  </div>
+
+  <div id="settings-overlay" hidden>
+    <div id="settings-modal">
+      <div id="settings-header">
+        <h2>Ajustes</h2>
+        <button id="settings-close" class="icon-btn"><i data-icon="x"></i></button>
+      </div>
+      <div id="settings-tabs">
+        <button class="settings-tab active" data-tab="launchers">Launchers</button>
+        <button class="settings-tab" data-tab="retro">Modo Retro</button>
+        <button class="settings-tab" data-tab="apariencia">Apariencia</button>
+        <button class="settings-tab" data-tab="backup">Respaldo</button>
+        <button class="settings-tab" data-tab="creditos">Créditos</button>
+        <div id="settings-tab-indicator"></div>
+      </div>
+      <div id="settings-body">
+        <div class="settings-panel" data-panel="launchers">
+          <div class="settings-intro">
+            Activa o desactiva qué plataformas se muestran en tu biblioteca. Las marcadas
+            "próximamente" ya están en el mapa pero MegaHUB todavía no sabe leerlas.
+          </div>
+          <div id="launcher-list"></div>
+        </div>
+        <div class="settings-panel" data-panel="retro" hidden>
+          <div class="retro-box">
+            <div class="launcher-row" style="border:none;padding:0;">
+              <span class="launcher-name">Zona de emuladores (RetroArch)</span>
+              <div class="toggle-switch" id="retro-toggle"></div>
+            </div>
+            <div class="retro-status" id="retro-status">Buscando RetroArch…</div>
+          </div>
+
+          <section class="side-section" style="margin-top:18px;">
+            <h3>Skins de RetroArch</h3>
+            <div class="settings-intro" style="margin-bottom:10px;">
+              Instala temas de menú (XMB/RGUI) de la comunidad directo en tu RetroArch, sin tener
+              que copiar carpetas a mano. El original se respalda antes de reemplazarlo.
+            </div>
+            <div id="retro-skins-list"></div>
+          </section>
+
+          <details class="collapsible-guide" style="margin-top:18px;">
+            <summary>Guía de referencia: emulador recomendado por consola</summary>
+            <div class="console-guide-intro">
+              El más popular/funcional por consola hasta PS3/Xbox 360. La mayoría corren como
+              core de RetroArch; los más pesados (Dolphin, PCSX2, RPCS3, Xenia…) rinden mejor
+              como programa independiente.
+            </div>
+            <div id="console-guide"></div>
+          </details>
+
+          <details class="collapsible-guide" style="margin-top:10px;">
+            <summary>Ficha completa de catálogo retro (TheGamesDB, opcional)</summary>
+            <div class="console-guide-intro">
+              Las portadas ya funcionan sin clave (libretro-thumbnails). Para género, desarrollador,
+              descripción y fecha hace falta una clave gratuita propia de TheGamesDB:
+            </div>
+            <div class="sgdb-row">
+              <input id="tgdb-key" type="password" placeholder="API key de TheGamesDB (opcional)…" />
+              <button id="tgdb-save">Guardar</button>
+            </div>
+            <div class="side-note">
+              <a href="https://thegamesdb.net/action/register.php" target="_blank">Crear cuenta y conseguir la clave gratis →</a>
+            </div>
+          </details>
+        </div>
+
+        <div class="settings-panel" data-panel="apariencia" hidden>
+          <div class="settings-intro">
+            Cambia la paleta de color de todo MegaHUB — se aplica al instante y se recuerda entre sesiones.
+            (No confundir con los "Temas" de RetroArch en Modo Retro: eso cambia el menú del emulador, esto
+            cambia MegaHUB.)
+          </div>
+          <div id="theme-grid" class="theme-grid"></div>
+        </div>
+
+        <div class="settings-panel" data-panel="backup" hidden>
+          <div class="settings-intro">
+            Guarda tus ajustes en un archivo .json y llévalo a otra PC (USB, correo, tu propia nube personal —
+            MegaHUB no sube nada por su cuenta). Incluye: carpetas de emulador/ROMs que ubicaste a mano, tus
+            claves de SteamGridDB/TheGamesDB, tu cuenta de RetroAchievements, tu progreso de logros de MegaHUB
+            y los juegos que ocultaste. <b>No incluye</b> las sesiones de GOG/Epic (hay que reconectarlas en la
+            PC nueva) ni cachés de portadas/metadata (se vuelven a pedir solas).
+          </div>
+          <button id="backup-export-btn" class="account-btn"><i data-icon="download"></i> <span>Exportar ajustes…</span></button>
+          <button id="backup-import-btn" class="account-btn"><i data-icon="folderOpen"></i> <span>Importar ajustes…</span></button>
+
+          <div class="settings-intro" style="margin-top:18px;">
+            <b>Ecosistema DERIVA:</b> si tienes el DERIVA Companion instalado, MegaHUB comparte con él —
+            solo en tu propia PC, sin servidor ni cuenta — qué estás jugando ahora y un resumen de tus logros,
+            para que aparezcan en el modo gaming y el perfil de DERIVA. Ninguna de las dos apps necesita a la
+            otra para funcionar.
+          </div>
+          <div class="side-note" id="backup-status"></div>
+        </div>
+
+        <div class="settings-panel" data-panel="creditos" hidden>
+          <div class="settings-intro">
+            MegaHUB no reproduce logos ni marcas de ninguna consola o fabricante — los íconos del
+            catálogo son siluetas genéricas de hardware, elegidas justamente para evitar eso.
+          </div>
+          <section class="side-section">
+            <h3>Íconos de consola</h3>
+            <div class="settings-intro" style="margin-bottom:6px;">
+              Proyecto <a href="https://github.com/libretro/retroarch-assets" target="_blank">RetroArch / libretro (retroarch-assets)</a>,
+              tema de menú XMB "Monochrome", creado originalmente por <b>Kivutar</b>.
+            </div>
+            <div class="side-note">
+              Licencia: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">Creative Commons Attribution 4.0 International (CC BY 4.0)</a>
+              — recoloreados por consola respetando la licencia (permite modificar con atribución).
+            </div>
+          </section>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>

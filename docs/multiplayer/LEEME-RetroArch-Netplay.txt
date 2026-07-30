@@ -1,0 +1,50 @@
+MULTIJUGADOR — RetroArch Netplay
+================================
+Aplica a: NES, SNES, Genesis/Mega Drive, Game Boy/Color/Advance, PS1,
+N64, Dreamcast/NAOMI, PSP, NDS, 3DS, Arcade/NeoGeo, PC Engine, Atari
+(2600/5200/7800/Lynx/Jaguar), Intellivision, ColecoVision, Vectrex, MSX,
+3DO, Virtual Boy, Neo Geo Pocket, WonderSwan — cualquier consola de esta
+lista que MegaHUB corre a través de un core de RetroArch.
+
+Requisito de oro (léelo antes que nada)
+----------------------------------------
+Todos los jugadores necesitan:
+  1. La MISMA versión de RetroArch.
+  2. El MISMO core (y la misma versión del core).
+  3. La MISMA ROM — literalmente el mismo archivo (mismo hash/checksum).
+Si algo de esto no coincide, la partida se desincroniza (cada quien ve
+algo distinto) tarde o temprano. No es un bug de RetroArch: así funciona
+el netplay basado en sincronizar entradas, no video.
+
+Cómo anfitrionar una partida
+------------------------------
+1. Abre RetroArch y carga el juego normalmente (o desde MegaHUB).
+2. Menú principal > Netplay > "Activar Netplay Anfitrión".
+3. Puerto por defecto: 55435 (TCP y UDP). Si tu amigo no puede conectar:
+   - Si jugás en la misma red local (LAN/WiFi de casa): no hace falta
+     nada más, compartile tu IP local (192.168.x.x).
+   - Si jugás por internet: tenés que abrir ese puerto en tu router
+     (port forwarding a tu PC) y compartir tu IP PÚBLICA (buscá "cual es
+     mi ip" en Google). Alternativa sin tocar el router: activar
+     "Anunciar en las salas públicas de Netplay" para que aparezca en el
+     buscador integrado (Netplay > Buscar salas), pero eso hace tu
+     partida visible a cualquiera, no solo a tus amigos.
+
+Cómo unirse a una partida
+---------------------------
+1. Abre RetroArch, Netplay > "Conectarse a un anfitrión".
+2. Metele la IP que te pasó el anfitrión (y el puerto si lo cambió).
+3. Asegurate de tener cargado el MISMO juego (mismo archivo) antes de
+   conectar — RetroArch avisa si el hash no coincide, pero mejor
+   confirmarlo antes de perder tiempo.
+
+Qué tan bien funciona según el juego
+---------------------------------------
+- Juegos 2D (NES/SNES/Genesis/PS1 2D/Game Boy/etc.): excelente, es lo
+  que mejor soporta Netplay.
+- Juegos 3D pesados (N64, Dreamcast): puede tener más lag o
+  desincronizarse más seguido, sobre todo con mala conexión de alguno
+  de los dos. Probá primero con buena conexión antes de descartarlo.
+
+MegaHUB no gestiona la conexión por vos — esto se configura DENTRO de
+RetroArch, MegaHUB solo te deja el juego listo para abrir.
