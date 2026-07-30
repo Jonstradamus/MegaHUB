@@ -1,0 +1,49 @@
+{
+  "name": "megahub",
+  "productName": "MegaHUB",
+  "version": "0.1.0",
+  "description": "MegaHUB — todos tus juegos de todas las plataformas en un solo lugar, por DERIVA",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --win"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^24.13.3"
+  },
+  "dependencies": {
+    "7zip-min": "^3.0.1"
+  },
+  "build": {
+    "appId": "app.deriva.megahub",
+    "productName": "MegaHUB",
+    "directories": {
+      "output": "dist",
+      "buildResources": "build"
+    },
+    "files": [
+      "src/**",
+      "ui/**",
+      "package.json",
+      "build/icon.ico",
+      "docs/multiplayer/**"
+    ],
+    "win": {
+      "target": "nsis",
+      "icon": "build/icon.ico",
+      "artifactName": "MegaHUB-Setup.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "MegaHUB"
+    },
+    "asarUnpack": [
+      "node_modules/7zip-bin/**/*"
+    ]
+  }
+}

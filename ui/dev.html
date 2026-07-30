@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>MegaHUB dev</title>
+  <link rel="stylesheet" href="app.css" />
+</head>
+<body>
+  <aside id="sidebar">
+    <div id="logo">Mega<span>HUB</span></div>
+    <section class="side-section">
+      <h3>Plataforma</h3>
+      <div id="platform-filters" class="chip-list"></div>
+    </section>
+    <section class="side-section">
+      <h3>Estado</h3>
+      <div id="state-filters" class="chip-list">
+        <button class="chip active" data-state="all">Todos</button>
+        <button class="chip" data-state="installed">Instalados</button>
+        <button class="chip" data-state="library">Biblioteca</button>
+      </div>
+    </section>
+    <section class="side-section">
+      <h3>Ordenar por</h3>
+      <div id="sort-filters" class="chip-list">
+        <button class="chip active" data-sort="name">Nombre</button>
+        <button class="chip" data-sort="date">Fecha de salida</button>
+      </div>
+    </section>
+    <section class="side-section">
+      <h3>Género</h3>
+      <div id="genre-filters" class="chip-list">
+        <button class="chip active" data-genre="all">Todos</button>
+      </div>
+      <div class="side-note" id="genre-note">Los géneros se cargan al obtener metadatos</div>
+    </section>
+    <section class="side-section" id="accounts-section">
+      <h3>Cuentas</h3>
+      <button class="account-btn" data-account="gog"><span class="dot"></span> GOG <span class="account-state">conectar</span></button>
+    </section>
+    <div id="specs-box"><h3>Tu PC</h3><div id="specs-content">Detectando hardware…</div></div>
+  </aside>
+  <div id="main-col">
+    <header id="topbar">
+      <input id="search" type="text" placeholder="Buscar juego…  ( / )" />
+      <span id="count"></span>
+      <span id="gamepad-status">🎮 sin mando</span>
+    </header>
+    <main id="grid" tabindex="0"></main>
+    <footer id="controls"><span><b>Enter</b>/<b>A</b> — jugar · instalar</span></footer>
+  </div>
+  <aside id="details">
+    <div id="details-empty">Selecciona un juego para ver sus detalles</div>
+    <div id="details-content" hidden>
+      <div id="d-cover"></div>
+      <h2 id="d-title"></h2>
+      <div id="d-badges"></div>
+      <p id="d-desc"></p>
+      <div id="d-meta"></div>
+      <div id="d-reqs"><h3>¿Lo mueve tu PC?</h3><div id="d-reqs-body">—</div></div>
+      <div id="d-actions"></div>
+    </div>
+  </aside>
+  <script>
+    // Stub del API de Electron para depurar la UI en un navegador normal
+    const fake = [];
+    const plats = ['steam', 'epic', 'gog', 'battlenet', 'riot'];
+    for (let i = 0; i < 131; i++) {
+      fake.push({
+        id: 'g' + i,
+        title: 'Juego de prueba ' + i,
+        platform: plats[i % plats.length],
+        installed: i % 4 === 0,
+        coverUrl: i % 3 === 0 ? 'https://steamcdn-a.akamaihd.net/steam/apps/1245620/library_600x900.jpg' : null,
+      });
+    }
+    window.megahub = {
+      scanGames: async () => ({ games: fake, accounts: { gog: false } }),
+      launchGame: async () => ({ ok: true }),
+      installGame: async () => ({ ok: true }),
+      connectAccount: async () => ({ ok: false, error: 'dev' }),
+      getMeta: async () => null,
+      getSpecs: async () => ({ cpuName: 'CPU dev', cores: 8, threads: 16, gpuName: 'GPU dev', ramGb: 32 }),
+      analyzeGame: async () => ({ unsupported: true }),
+    };
+  </script>
+  <script src="app.js"></script>
+</body>
+</html>

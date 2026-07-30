@@ -1,0 +1,19 @@
+Íconos de consola — MegaHUB
+
+Fuente: proyecto RetroArch / libretro (retroarch-assets), tema de menú XMB
+"Monochrome", creado originalmente por Kivutar.
+https://github.com/libretro/retroarch-assets/tree/master/xmb/monochrome
+
+Licencia: Creative Commons Attribution 4.0 International (CC BY 4.0).
+https://creativecommons.org/licenses/by/4.0/
+
+Se usan sin modificar (solo redimensionados por CSS) para 39 de 39 consolas
+del catálogo de MegaHUB. No existe un ícono específico de NAOMI/Atomiswave en
+el set original (el único parecido, "TriForce", es una placa de arcade
+distinta de Namco/Sega/Nintendo) — como NAOMI es hardware de arcade de
+verdad, reutiliza el mismo ícono genérico de "Arcade" (FBNeo) en vez de
+inventar uno o dejarla sin ícono.
+
+Elegidos deliberadamente por ser siluetas monocromas genéricas del hardware
+(no logos ni marcas registradas) — ver la investigación de copyright del
+proyecto para el porqué de este criterio.

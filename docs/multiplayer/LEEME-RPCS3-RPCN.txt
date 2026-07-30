@@ -1,0 +1,42 @@
+MULTIJUGADOR — RPCS3 + RPCN (emulación de PSN)
+===============================================
+Aplica a: PS3.
+
+Qué es RPCN
+-------------
+RPCN es un servidor comunitario (gratuito, de código abierto) que
+reimplementa la parte de "matchmaking" P2P que usaba la PlayStation
+Network en PS3 — no es la PSN real de Sony, es una red paralela hecha
+por la comunidad de RPCS3 para que el modo online de ciertos juegos
+vuelva a funcionar.
+
+Límite importante (léelo antes de ilusionarte con un juego puntual)
+----------------------------------------------------------------------
+RPCN solo puede revivir juegos que usaban matchmaking P2P directo entre
+consolas. Los juegos que dependían de un SERVIDOR DEDICADO propio de
+Sony/la desarrolladora (no P2P) NO van a tener online salvo que exista
+un servidor privado hecho por fans específicamente para ESE juego —
+buscá el nombre de tu juego en la wiki de RPCS3 para ver su estado real
+de compatibilidad online antes de armar una partida con amigos.
+
+Cómo activarlo
+-----------------
+1. Abre RPCS3 (sin juego cargado todavía).
+2. Ajustes > Red (Network) > cambiá "Modo de conexión" de
+   "Desconectado" a "RPCN".
+3. Crea una cuenta gratuita en el sitio de RPCN (buscá "RPCN sign up" —
+   es un registro simple, no pide datos de pago).
+4. Iniciá sesión con esa cuenta desde RPCS3 (mismo menú de Red).
+5. Abre tu juego normalmente — si el título soporta P2P, el modo online
+   del juego debería reconocer la conexión igual que en una PS3 real.
+
+Para jugar con tus amigos
+----------------------------
+Todos deben repetir los pasos de arriba (cuenta RPCN propia cada uno) y
+tener el mismo juego. Después, agréguense como amigos o busquen la
+partida DESDE DENTRO del propio juego, exactamente como lo hubieran
+hecho en una PS3 real con PSN — RPCN solo reemplaza la capa de red por
+detrás, la interfaz del juego no cambia.
+
+MegaHUB no gestiona la conexión por vos — esto se configura DENTRO de
+RPCS3, MegaHUB solo te deja el juego listo para abrir.

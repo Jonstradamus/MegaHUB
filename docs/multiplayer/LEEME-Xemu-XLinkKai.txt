@@ -1,0 +1,44 @@
+MULTIJUGADOR — Xemu + XLink Kai (System Link por internet)
+============================================================
+Aplica a: Xbox (original).
+
+Requisito de base
+-------------------
+Esto SOLO funciona con juegos que tenían "System Link" en el Xbox
+original (el modo LAN clásico, para jugar entre varias consolas
+conectadas por cable en la misma casa/lugar). Xemu no emula Xbox Live —
+ese servicio ya no existe para el Xbox original. XLink Kai lo que hace
+es "engañar" al juego para que crea que está en una LAN, aunque en
+realidad esa LAN se arma por internet entre PCs de distintos lugares.
+
+Antes que nada: ¿tu juego lo soporta?
+----------------------------------------
+Hay 142 juegos de Xbox original con System Link confirmado. Buscá el
+nombre de tu juego en la lista pública de XLink Kai (buscá "XLink Kai
+supported games xbox") o revisá la contratapa de la caja original —
+dice "System Link" si lo tiene.
+
+Instalar y configurar XLink Kai
+-----------------------------------
+1. Descargá XLink Kai (servicio gratuito) desde su sitio oficial
+   (buscá "XLink Kai download").
+2. Creá una cuenta gratuita y entrá a una "arena" (sala pública o
+   privada) — todos los que quieran jugar juntos deben estar en la
+   MISMA arena.
+3. Seguí la guía de configuración específica para Xemu en la wiki de
+   Team XLink (buscá "Xemu XLink Kai Setup") — el paso clave es apuntar
+   la red virtual de Xemu al adaptador que crea XLink Kai en tu PC.
+
+Para jugar con tus amigos
+----------------------------
+1. Todos instalan XLink Kai y entran a la misma arena.
+2. Cada uno abre el juego en Xemu y entra al menú de "System Link" /
+   "Multijugador LAN" DENTRO del juego (no en Xemu) — el juego debería
+   ver a los demás como si estuviera en la misma red local.
+3. Si alguien no aparece en la lista: confirmá que están en la misma
+   arena de XLink Kai y que los tres (Xemu, XLink Kai, y el juego)
+   están corriendo al mismo tiempo.
+
+MegaHUB no gestiona la conexión por vos — esto se configura DENTRO de
+XLink Kai, Xemu y el propio juego, MegaHUB solo te deja el juego listo
+para abrir.

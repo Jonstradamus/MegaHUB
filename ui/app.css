@@ -1,0 +1,1734 @@
+/* Fuente pixel/8-bit para acentos retro (botón RETRO en la topbar y el botón
+   de consola del catálogo) — bundleada local (ui/fonts/, SIL Open Font
+   License, ver OFL.txt) en vez de @import a Google Fonts: antes dependía de
+   tener internet en cada arranque para no caer al monospace de respaldo. */
+@font-face {
+  font-family: 'Press Start 2P';
+  src: url('fonts/PressStart2P-Regular.ttf') format('truetype');
+  font-weight: normal; font-style: normal; font-display: swap;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+:root {
+  --bg: #0b0d12;
+  --panel: #12151d;
+  --panel2: #171b25;
+  --text: #e8eaf0;
+  --dim: #8b91a3;
+  --accent: #6d5df0;
+  --accent2: #22d3ee;
+  --accent-soft: rgba(109,93,240,0.18);
+  --accent-text: #ffffff;
+  --ok: #4ade80;
+  --great: #22d3ee;
+  --warn: #fbbf24;
+  --bad: #f87171;
+  --border: #1e2330;
+  --retro-accent: #fb923c;
+  --retro-accent2: #f472b6;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+  --ease: cubic-bezier(.2,.8,.3,1);
+  /* Marca DERIVA — mismo par violeta→cian del logo oficial (ver
+     youtrulette/public/brand/deriva-logo-*.png), reusado en el mando de
+     MegaHUB para que se sienta parte del mismo ecosistema en vez de un
+     morado genérico inventado aparte. Fijo: no cambia con el skin, es
+     identidad de marca, no color de interfaz. */
+  --deriva-violet: #8b5cf6;
+  --deriva-cyan: #22d3ee;
+  --titlebar-h: 38px;
+}
+
+/* ================================================================
+   SKINS — cada uno solo redefine las variables de arriba; el resto de
+   la hoja de estilos ya está escrita en términos de esas variables, así
+   que un skin nuevo no necesita tocar selectores, solo esta paleta.
+   "Aurora DERIVA" (sin atributo, o data-skin="aurora") = la paleta por
+   defecto de arriba, así que no necesita su propio bloque.
+   ================================================================ */
+body[data-theme="arcade"] {
+  --bg: #0a0510; --panel: #170b28; --panel2: #1f0f36; --text: #fff2fa; --dim: #c9a9c4;
+  --accent: #ff2f92; --accent2: #33e6ff; --accent-soft: rgba(255,47,146,0.18); --accent-text: #fff;
+  --border: rgba(255,47,146,0.3);
+}
+body[data-theme="retrolight"] {
+  /* Antes era casi blanco/crema (apenas se notaba el lavanda) — ahora el
+     fondo y los paneles llevan el tinte lavanda de verdad, no solo el
+     acento. También se oscurecen los colores semánticos (warn/ok/bad) acá
+     abajo: en dark eran texto claro sobre un tinte oscuro (funciona), en
+     claro ese mismo texto claro sobre un tinte claro no tenía contraste. */
+  --bg: #e6e3f2; --panel: #f7f5fc; --panel2: #eeebf7; --text: #2b2a30; --dim: #5d5a68;
+  --accent: #8683b8; --accent2: #7a5ea8; --accent-soft: rgba(134,131,184,0.22); --accent-text: #fff;
+  --border: #cfc9e3;
+  --warn: #8a5a06; --ok: #1f7a4d; --bad: #b3261e; --great: #0e7c86;
+}
+body[data-theme="xbox"] {
+  --bg: #060706; --panel: #0f110f; --panel2: #161916; --text: #f2f5f0; --dim: #9aa39a;
+  --accent: #107c10; --accent2: #7ec418; --accent-soft: rgba(16,124,16,0.2); --accent-text: #fff;
+  --border: rgba(255,255,255,0.08);
+}
+body[data-theme="steam"] {
+  --bg: #1b2838; --panel: #2a475e; --panel2: #16202d; --text: #c7d5e0; --dim: #8f98a0;
+  --accent: #66c0f4; --accent2: #a3cf06; --accent-soft: rgba(102,192,244,0.18); --accent-text: #0d1b2a;
+  --border: rgba(102,192,244,0.2);
+}
+body[data-theme="atari"] {
+  --bg: #1c130d; --panel: #2a1d13; --panel2: #382519; --text: #f2e6d5; --dim: #b9a68e;
+  --accent: #e0392f; --accent2: #e8a33d; --accent-soft: rgba(224,57,47,0.2); --accent-text: #fff2e8;
+  --border: rgba(242,230,213,0.16);
+}
+body[data-theme="sega"] {
+  --bg: #06182c; --panel: #0d2647; --panel2: #123563; --text: #eef6ff; --dim: #9fc3e0;
+  --accent: #1e9be9; --accent2: #ff6a1a; --accent-soft: rgba(30,155,233,0.2); --accent-text: #06182c;
+  --border: rgba(124,212,255,0.22);
+}
+body[data-theme="arcadepremium"] {
+  --bg: #050506; --panel: #0c0c10; --panel2: #131319; --text: #f5f2e8; --dim: #b8b2a0;
+  --accent: #d4af37; --accent2: #ff2fa0; --accent-soft: rgba(212,175,55,0.18); --accent-text: #241a04;
+  --border: rgba(212,175,55,0.28);
+}
+body[data-theme="rgb"] {
+  --bg: #07080d; --panel: #0e1018; --panel2: #151826; --text: #f2f4fb; --dim: #9298ac;
+  --accent: #5cd8ff; --accent2: #b07dff; --accent-soft: rgba(92,216,255,0.18); --accent-text: #07080d;
+  --border: rgba(255,255,255,0.08);
+}
+
+html, body { height: 100%; }
+
+/* ---------- Iconos (SVG monolínea propia, ver icon() en app.js) ---------- */
+.icon {
+  width: 16px; height: 16px; flex-shrink: 0; vertical-align: -3px;
+  stroke: currentColor;
+}
+.icon-lg { width: 20px; height: 20px; }
+.icon-xl { width: 28px; height: 28px; }
+
+/* ---------- Scrollbar temático, unificado en TODO panel con scroll ---------- */
+/* Selector amplio a propósito (en vez de listar cada contenedor a mano, que se
+   desactualiza cada vez que se agrega una vista nueva — #retro-wrap se quedó
+   afuera así la primera vez y por eso el catálogo retro mostraba la barra
+   nativa del sistema, rompiendo la estética con el resto de la app). */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #2e3648 transparent;
+}
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-track { background: transparent; }
+*::-webkit-scrollbar-thumb {
+  background-color: #2e3648; border-radius: 999px;
+  border: 2px solid transparent; background-clip: padding-box;
+  transition: background-image 0.15s var(--ease), background-color 0.15s var(--ease);
+}
+/* Gradiente violeta→cian (marca DERIVA) al pasar el mouse, en vez de un
+   simple cambio de color plano — coherente con el resto de acentos "gamer"
+   de la topbar/logo. */
+*::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent);
+  background-image: linear-gradient(180deg, var(--deriva-violet), var(--deriva-cyan));
+}
+*::-webkit-scrollbar-corner { background: transparent; }
+
+/* ---------- Foco visible por teclado (accesibilidad — no había ninguno) ---------- */
+button:focus-visible, input:focus-visible, .chip:focus-visible, .console-card:focus-visible,
+.retro-game-card:focus-visible, .dock-icon:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 2px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* ---------- Titlebar propia ---------- */
+/* frame:false en main.js le deja el marco de la ventana a MegaHUB — sin esto
+   quedaba el marco gris + icono de Electron por defecto de Windows en vez de
+   la identidad propia. #titlebar-drag es la única zona arrastrable (los
+   botones necesitan -webkit-app-region:no-drag o serían inalcanzables). */
+#titlebar {
+  height: var(--titlebar-h);
+  flex: 0 0 auto;
+  display: flex;
+  align-items: stretch;
+  background: linear-gradient(180deg, #14101f, var(--panel) 80%);
+  border-bottom: 1px solid var(--border);
+  position: relative;
+}
+/* Filo de luz violeta→cian bajo la titlebar: la única pincelada de "marca
+   compartida con DERIVA" que no compite con el resto de la interfaz. */
+#titlebar::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+  background: linear-gradient(90deg, transparent, var(--deriva-violet) 20%, var(--deriva-cyan) 55%, transparent 85%);
+  opacity: 0.55;
+}
+#titlebar-drag {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 0 12px;
+  -webkit-app-region: drag;
+}
+#titlebar-icon { width: 18px; height: 18px; filter: drop-shadow(0 0 6px rgba(139,92,246,0.55)); }
+#titlebar-title { font-size: 12.5px; }
+#titlebar-title .brand-tag { margin-left: 8px; }
+
+/* ---------- Wordmark compartido (titlebar + logo del sidebar) ---------- */
+/* Mismo tratamiento "stencil" en los dos sitios: mayúsculas, peso 900, tracking
+   apretado, ámbar sólido (mismo tono que el botón RETRO) con un resplandor en
+   capas para que el borde de cada letra parezca iluminado, no solo coloreado. */
+.brand-word {
+  font-family: var(--font-display, inherit);
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.01em;
+  line-height: 1;
+  color: var(--retro-accent);
+  text-shadow:
+    0 0 2px rgba(255, 214, 170, 0.9),
+    0 0 8px rgba(251, 146, 60, 0.75),
+    0 0 18px rgba(251, 146, 60, 0.5),
+    0 0 34px rgba(251, 146, 60, 0.3);
+}
+/* "GAME" y "VAULT" comparten el mismo ámbar — sin split de color */
+.brand-word .accent { color: var(--retro-accent); }
+/* "by DERIVA" — acreditación, no fusión: "by" en un tono neutral legible
+   (blanco apagado, no gris oscuro), "DERIVA" en degradado */
+.brand-tag {
+  font-size: 10px; font-weight: 700; letter-spacing: 0.16em; text-transform: uppercase;
+  color: rgba(232, 234, 240, 0.85);
+}
+.brand-tag b {
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--deriva-violet), var(--deriva-cyan));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+}
+#titlebar-controls { display: flex; -webkit-app-region: no-drag; }
+.tb-btn {
+  width: 44px; height: var(--titlebar-h);
+  display: flex; align-items: center; justify-content: center;
+  background: transparent; border: none; color: var(--dim);
+  cursor: pointer; transition: background-color 0.12s, color 0.12s;
+}
+.tb-btn .icon { width: 13px; height: 13px; }
+.tb-btn:hover { background: color-mix(in srgb, var(--text) 8%, transparent); color: var(--text); }
+.tb-btn.tb-close:hover { background: #e81123; color: #fff; }
+
+/* ---------- Cuerpo (sidebar + contenido + panel de detalles) ---------- */
+#app-grid {
+  --sidebar-w: 230px;
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr 320px;
+  overflow: hidden;
+  transition: grid-template-columns 0.18s ease;
+}
+body.sidebar-collapsed #app-grid { --sidebar-w: 0px; }
+
+/* ---------- Sidebar ---------- */
+/* #sidebar-slot es la celda de grid; dentro conviven #sidebar (biblioteca) y
+   #retro-sidebar (modo retro) — solo uno visible a la vez según el contexto. */
+#sidebar-slot {
+  background: var(--panel);
+  border-right: 1px solid var(--border);
+  overflow: hidden;
+  position: relative;
+}
+.sidebar-panel {
+  position: relative;
+  padding: 18px 14px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  white-space: nowrap;
+  height: 100%;
+}
+/* Franja distintiva de cada tema, arriba del todo del sidebar (PC y Retro
+   comparten .sidebar-panel) — por defecto no ocupa espacio ni se ve; cada
+   tema le pone su propio gesto (persecución de bombillas, cromado
+   deslizante, arcoíris, franja de madera...). position:absolute para no
+   empujar el layout, igual que en los mockups. */
+.sidebar-panel::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 0; pointer-events: none; }
+@keyframes theme-bulb-chase { to { background-position: 56px 0, 63px 0; } }
+@keyframes theme-chrome-slide { 0%, 100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+@keyframes theme-rainbow-slide { to { background-position: 300% 0; } }
+@keyframes theme-pulse-line { 0%, 100% { opacity: 0.55; } 50% { opacity: 1; } }
+
+body[data-theme="arcade"] .sidebar-panel::before,
+body[data-theme="arcadepremium"] .sidebar-panel::before {
+  height: 6px; opacity: 0.85;
+  background-image: radial-gradient(circle, var(--accent) 38%, transparent 40%), radial-gradient(circle, var(--accent2) 38%, transparent 40%);
+  background-size: 14px 14px, 14px 14px; background-position: 0 0, 7px 0;
+  animation: theme-bulb-chase 2.2s steps(4) infinite;
+  filter: drop-shadow(0 0 3px var(--accent));
+}
+body[data-theme="sega"] .sidebar-panel::before {
+  height: 3px;
+  background: linear-gradient(90deg, var(--accent), var(--accent2), var(--accent));
+  background-size: 220% 100%;
+  animation: theme-chrome-slide 6s ease-in-out infinite;
+}
+body[data-theme="rgb"] .sidebar-panel::before {
+  height: 3px;
+  background: linear-gradient(90deg, #ff5577, #ffcf5c, #9dfa8f, #5cd8ff, #b07dff, #ff5577);
+  background-size: 300% 100%;
+  animation: theme-rainbow-slide 9s linear infinite;
+}
+body[data-theme="atari"] .sidebar-panel::before {
+  height: 4px;
+  background: linear-gradient(90deg, #e0392f, #e8a33d, #d4c13d, #7a2e8c);
+}
+body[data-theme="xbox"] .sidebar-panel::before {
+  height: 2px; background: var(--accent); box-shadow: 0 0 8px var(--accent);
+  animation: theme-pulse-line 3.5s ease-in-out infinite;
+}
+body[data-theme="steam"] .sidebar-panel::before { height: 2px; background: var(--accent); }
+
+@media (prefers-reduced-motion: reduce) {
+  .sidebar-panel::before {
+    animation: none !important;
+  }
+}
+body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-events: none; }
+/* [hidden] pierde contra un selector de clase con la misma especificidad si esa
+   clase llega después en la hoja (como aquí) — sin esto, #sidebar y
+   #retro-sidebar se mostrarían los dos a la vez, apilados. */
+#sidebar[hidden], #retro-sidebar[hidden] { display: none; }
+
+#retro-sidebar-empty { padding-top: 8px; }
+
+#logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 2px 6px 8px;
+}
+#logo-mark {
+  width: 34px; height: 34px; flex-shrink: 0;
+  filter: drop-shadow(0 0 10px rgba(139,92,246,0.45));
+}
+#logo-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+#logo-text .brand-word { font-size: 22px; }
+/* Marca conjunta con el ecosistema DERIVA — el mando ya usa su gradiente,
+   esta acreditación va debajo del wordmark (no arriba como eyebrow), sin
+   fusionar los dos logos en uno. */
+#logo .logo-eco { letter-spacing: 0.18em; }
+
+/* Pill de estado del Companion Desktop — vive bajo el wordmark, mismo criterio
+   que logo-eco: acredita el ecosistema DERIVA sin competir visualmente con él.
+   Oculta por defecto (hidden en el HTML) hasta el primer companion-get-status
+   con datos reales — así nunca aparece un elemento "desconectado" parpadeando
+   antes de tiempo para quien no tiene Companion instalado. */
+.companion-pill {
+  position: relative; /* ancla del panel ampliado (position:absolute) */
+  z-index: 5;          /* por encima de las secciones de abajo al expandirse */
+  margin: 2px 6px 10px; padding: 6px 9px;
+  border-radius: 10px;
+  background: rgba(124,108,242,0.08);
+  border: 1px solid rgba(124,108,242,0.18);
+  font-size: 10.5px; font-weight: 700;
+  color: rgba(255,255,255,0.55);
+  transition: background 0.2s, border-color 0.2s, transform 0.15s var(--ease), box-shadow 0.15s;
+  /* Sombra propia + reborde superior claro: sin esto la pill se aplanaba
+     contra el fondo del sidebar (mismo tono violeta apagado) y no se leía
+     como un elemento aparte flotando sobre el hub — el gato/Companion es
+     una pieza añadida, no parte nativa de MegaHUB, y tiene que notarse. */
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.06) inset;
+}
+.companion-pill:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.08) inset; }
+.companion-pill-row { display: flex; align-items: center; gap: 7px; }
+.companion-pill-dot {
+  width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
+  background: rgba(255,255,255,0.25);
+}
+.companion-pill[data-state="playing"] .companion-pill-dot {
+  background: #7c6cf2; box-shadow: 0 0 6px 1px rgba(124,108,242,0.65);
+  animation: companion-pill-blip 1.6s ease-in-out infinite;
+}
+.companion-pill[data-state="connected"] .companion-pill-dot { background: #34d399; }
+@keyframes companion-pill-blip { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+.companion-pill-text {
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+/* Panel ampliado (hover) — calcado del propio mando de Companion
+   (companion-desktop/radio.html: misma carátula, transporte circular,
+   volumen y "Guardar en Mi lista") para que se sienta como el mismo
+   control, no uno reinventado. position:absolute (no empuja el resto de
+   la sidebar) + :hover del propio .companion-pill (:focus-within cubre
+   llegar por teclado hasta un botón de adentro). Solo si hay conexión —
+   desconectado no tiene nada que ampliar. */
+/* position:fixed (no absolute): el sidebar (.sidebar-panel) tiene
+   overflow-y:auto para poder scrollear sus secciones — un panel absoluto
+   quedaba recortado o forzaba un scroll raro al expandirse si la pill no
+   estaba pegada arriba del todo. Con fixed, initCompanionPill() en app.js
+   calcula top/left/width en JS (getBoundingClientRect del la pill) y el
+   panel escapa cualquier overflow:hidden/auto de sus ancestros — sigue
+   siendo hijo real de .companion-pill en el DOM, así que el :hover en
+   cadena (mouse sobre el panel → sigue "sobre" la pill) no se rompe. */
+.companion-pill-expand {
+  position: fixed;
+  overflow: hidden; /* nada (botones, glow de hover) puede asomarse fuera del borde redondeado */
+  z-index: 200; padding: 12px;
+  border-radius: 14px;
+  background:
+    radial-gradient(110% 60% at 100% -10%, rgba(124,58,237,0.24), transparent 55%),
+    radial-gradient(100% 55% at -10% 110%, rgba(34,211,238,0.13), transparent 55%),
+    #120e26;
+  border: 1px solid rgba(124,108,242,0.4);
+  box-shadow: 0 14px 34px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(0,0,0,0.4);
+  /* Oculto vía opacidad/visibilidad (no display) para poder animar la
+     entrada — display:none no transiciona. pointer-events:none evita que,
+     invisible, tape clics de lo que esté debajo mientras no se usa. */
+  opacity: 0; visibility: hidden; pointer-events: none;
+  /* Solo scaleY (no scaleX/scale parejo): así los bordes izquierdo/derecho
+     NUNCA se mueven durante la animación — antes con scale(0.97) parejo el
+     panel entero se encogía un pelín también a los costados, y un botón
+     cerca del borde se veía "desfasado" a mitad de la transición. */
+  transform: scaleY(0.94); transform-origin: top center;
+  transition: opacity 0.15s ease, transform 0.2s cubic-bezier(.34,1.35,.64,1), visibility 0s linear 0.15s;
+}
+.companion-pill[data-state="connected"]:hover .companion-pill-expand,
+.companion-pill[data-state="connected"]:focus-within .companion-pill-expand,
+.companion-pill[data-state="playing"]:hover .companion-pill-expand,
+.companion-pill[data-state="playing"]:focus-within .companion-pill-expand {
+  opacity: 1; visibility: visible; pointer-events: auto;
+  transform: scaleY(1);
+  transition: opacity 0.15s ease, transform 0.2s cubic-bezier(.34,1.35,.64,1), visibility 0s linear 0s;
+}
+/* Cuando se decide mostrar el panel ARRIBA de la pill en vez de abajo (ver
+   flipIfNeeded en app.js — no hay espacio debajo, p.ej. ventana muy baja). */
+.companion-pill-expand.cpx-flip-up { transform-origin: bottom center; }
+/* ── Now playing: carátula + etiqueta de género + título/artista ── */
+.cpx-np { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+.cpx-cover {
+  width: 42px; height: 42px; border-radius: 10px; flex: 0 0 auto;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px; background: rgba(124,108,242,0.18); overflow: hidden;
+  border: 1px solid rgba(124,108,242,0.3);
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.35);
+}
+.cpx-cover-img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
+.cpx-meta { flex: 1; min-width: 0; }
+.cpx-lbl { display: flex; align-items: center; gap: 6px; }
+.cpx-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #7c6cf2; flex-shrink: 0; }
+.companion-pill[data-state="playing"] .cpx-live-dot {
+  box-shadow: 0 0 6px 1px rgba(124,108,242,0.65); animation: companion-pill-blip 1.6s ease-in-out infinite;
+}
+.cpx-genre { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #a996ff; }
+.cpx-title {
+  font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,0.92);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
+}
+.cpx-artist {
+  font-size: 10.5px; color: rgba(255,255,255,0.4);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* ── Transporte circular (mismos íconos SVG que radio.html) — la curva
+   cubic-bezier(.34,1.56,.64,1) es la misma "rebotadita" que ya usan los
+   botones de consola 3D del catálogo (console-btn), para que se sienta
+   como el mismo lenguaje de animación en toda la app, no uno aparte. */
+.cpx-transport {
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  margin-bottom: 11px; padding-bottom: 11px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.cpx-tb {
+  width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(255,255,255,0.06); color: #a996ff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
+  transition: transform 0.16s cubic-bezier(.34,1.56,.64,1), background 0.15s, box-shadow 0.15s;
+}
+.cpx-tb:hover { transform: translateY(-1px) scale(1.06); background: rgba(255,255,255,0.12); }
+.cpx-tb:active { transform: scale(0.92); transition-duration: 0.08s; }
+.cpx-tb svg { width: 14px; height: 14px; transition: transform 0.12s; }
+.cpx-tb.cpx-play {
+  width: 38px; height: 38px; color: #14101f; background: #7c6cf2; border-color: transparent;
+  box-shadow: 0 0 14px rgba(124,108,242,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
+}
+.cpx-tb.cpx-play:hover { box-shadow: 0 0 20px rgba(124,108,242,0.7), inset 0 1px 0 rgba(255,255,255,0.3); }
+.cpx-tb.cpx-play svg { width: 16px; height: 16px; }
+/* ── Volumen (mismo truco de gradiente que radio.html: --p = % lleno) ── */
+.cpx-volume-row {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 11px; padding-bottom: 11px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+}
+.cpx-mute {
+  background: none; border: none; color: rgba(255,255,255,0.45); cursor: pointer;
+  padding: 0; display: flex; flex-shrink: 0; transition: color 0.15s, transform 0.16s cubic-bezier(.34,1.56,.64,1);
+}
+.cpx-mute:hover { color: #fff; transform: scale(1.12); }
+.cpx-volume {
+  -webkit-appearance: none; flex: 1; height: 4px; border-radius: 999px; cursor: pointer;
+  background: linear-gradient(90deg, #7c6cf2 var(--p, 70%), rgba(255,255,255,0.14) var(--p, 70%));
+  transition: filter 0.15s;
+}
+.cpx-volume:hover { filter: brightness(1.15); }
+.cpx-volume::-webkit-slider-thumb {
+  -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
+  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+  transition: transform 0.12s cubic-bezier(.34,1.56,.64,1);
+}
+.cpx-volume:hover::-webkit-slider-thumb { transform: scale(1.2); }
+/* ── Me gusta + Guardar ── */
+.cpx-actions { display: flex; align-items: center; gap: 8px; }
+.cpx-like {
+  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
+  color: rgba(255,255,255,0.5); font-size: 13px; cursor: pointer;
+  transition: transform 0.16s cubic-bezier(.34,1.56,.64,1), color 0.15s, border-color 0.15s;
+}
+.cpx-like:hover { transform: translateY(-1px) scale(1.08); }
+.cpx-like:active { transform: scale(0.9); }
+.cpx-like.cpx-active { color: #ff6b9d; border-color: rgba(255,107,157,0.4); }
+.cpx-save {
+  /* min-width:0 (no el "auto" por defecto de un flex item): sin esto el
+     botón nunca se encoge por debajo del ancho de su texto/emoji y se sale
+     del panel si la pill de origen (y por tanto el panel, que copia su
+     ancho) es angosta — visto real con "💟 Guardar en Mi lista". */
+  flex: 1; min-width: 0; padding: 8px; border-radius: 10px; border: 1px solid rgba(52,211,153,0.4);
+  background: rgba(52,211,153,0.12); color: #6ee7b7; font-weight: 700; font-size: 10.5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  cursor: pointer; font-family: inherit;
+  transition: background 0.15s, transform 0.16s cubic-bezier(.34,1.56,.64,1), box-shadow 0.15s;
+}
+.cpx-save:hover:not(:disabled) { background: rgba(52,211,153,0.2); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(52,211,153,0.25); }
+.cpx-save:active:not(:disabled) { transform: scale(0.97); }
+.cpx-save:disabled { opacity: 0.4; cursor: default; transform: none; }
+
+.side-section h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  color: var(--dim);
+  margin-bottom: 8px;
+  padding-left: 6px;
+}
+.chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip {
+  background: var(--panel2);
+  color: var(--dim);
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.12s;
+}
+.chip:hover { color: var(--text); border-color: var(--border); }
+.chip.active { background: var(--accent-soft); color: #b6acff; border-color: var(--accent); }
+.side-note { font-size: 11px; color: var(--dim); margin-top: 6px; padding-left: 6px; line-height: 1.5; }
+.side-note a { color: #b6acff; text-decoration: none; font-weight: 600; }
+.side-note a:hover { text-decoration: underline; }
+
+#retro-sidebar-console-info {
+  display: flex; align-items: center; gap: 10px; padding: 0 6px;
+}
+#retro-sidebar-console-info img { width: 44px; height: 34px; object-fit: contain; background: #181c26; border-radius: 6px; flex-shrink: 0; padding: 3px; }
+/* El ícono teñido no hereda el fondo oscuro de arriba (lo pisaría con su
+   propio gradiente de color) — solo el tamaño/recorte. */
+#retro-sidebar-console-info .console-icon-stack { width: 38px; height: 28px; flex-shrink: 0; }
+#retro-sidebar-console-info .rsci-name { font-size: 13px; font-weight: 700; }
+#retro-sidebar-console-info .rsci-meta { font-size: 11px; color: var(--dim); }
+
+.account-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  color: var(--text);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 6px;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
+}
+.account-btn:hover:not(.disabled):not(:disabled) {
+  border-color: var(--accent); background: #1a1f2c;
+  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+}
+.account-btn:active:not(.disabled):not(:disabled) { transform: translateY(1px); }
+.account-btn.disabled, .account-btn:disabled { opacity: 0.45; cursor: default; }
+.account-btn[hidden] { display: none; }
+
+.bios-warning {
+  background: rgba(251,191,36,0.14); border: 1px solid rgba(251,191,36,0.5);
+  color: var(--warn); font-size: 12px; font-weight: 600; line-height: 1.4;
+  border-radius: 8px; padding: 8px 10px; margin-top: 8px;
+}
+.bios-warning[hidden] { display: none; }
+.bios-warning #retro-open-bios-folder-btn {
+  margin: 8px 0 0; background: rgba(251,191,36,0.12); border-color: rgba(251,191,36,0.5); color: var(--warn);
+}
+.bios-warning #retro-open-bios-folder-btn:hover { background: rgba(251,191,36,0.22); }
+
+/* Pantalla de carga al cambiar entre modo PC y modo Retro. Puramente
+   funcional por ahora (del diseño final nos preocupamos después): existe
+   para que quede claro que un modo se "congela" mientras el otro carga, en
+   vez de que ambos sigan corriendo a la vez detrás de la vista activa. */
+#mode-transition-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+  --mt-color: var(--accent);
+}
+#mode-transition-overlay[hidden] { display: none; }
+/* Barrida diagonal de luz con el color de acento del modo DESTINO — no un
+   simple fundido, un "wipe" real que cruza la pantalla. */
+#mode-transition-overlay::before {
+  content: '';
+  position: absolute; top: -60%; left: -25%; width: 55%; height: 220%;
+  background: linear-gradient(100deg, transparent, var(--mt-color) 50%, transparent 85%);
+  opacity: 0.4; transform: translateX(-140%) rotate(0deg);
+  animation: mt-sweep 0.6s var(--ease);
+}
+@keyframes mt-sweep {
+  0% { transform: translateX(-140%); }
+  100% { transform: translateX(240%); }
+}
+.mode-transition-content {
+  display: flex; flex-direction: column; align-items: center; gap: 14px;
+  animation: mt-pop 0.45s var(--ease);
+  position: relative; z-index: 1;
+}
+@keyframes mt-pop {
+  0% { opacity: 0; transform: scale(0.8) translateY(6px); }
+  55% { opacity: 1; transform: scale(1.05) translateY(0); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+.mode-transition-icon svg {
+  width: 52px; height: 52px; stroke: var(--mt-color);
+  filter: drop-shadow(0 0 16px var(--mt-color));
+}
+.mode-transition-label {
+  font-size: 15px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: var(--text);
+}
+.account-btn .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--dim); }
+.account-btn.connected .dot { background: var(--ok); }
+.account-btn .account-state { margin-left: auto; font-size: 11px; color: var(--dim); font-weight: 400; text-align: right; }
+
+.sgdb-row { display: flex; gap: 6px; padding: 0 6px; }
+#sgdb-key {
+  flex: 1; min-width: 0; background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--text); padding: 6px 10px; font-size: 12px; outline: none;
+}
+#sgdb-key:focus { border-color: var(--accent); }
+#sgdb-save {
+  background: var(--accent-soft); color: #b6acff; border: 1px solid var(--accent);
+  border-radius: 7px; padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
+}
+#sgdb-save:hover { filter: brightness(1.15); }
+#sgdb-save.saved { background: rgba(74,222,128,0.15); color: var(--ok); border-color: var(--ok); }
+
+#specs-box {
+  margin-top: auto;
+  background: var(--panel2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+#specs-box h3 {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--dim); margin-bottom: 6px;
+}
+#specs-content { font-size: 11.5px; color: var(--dim); line-height: 1.5; }
+#specs-content b { color: var(--text); font-weight: 600; }
+
+/* ---------- Columna central ---------- */
+#main-col { display: flex; flex-direction: column; overflow: hidden; }
+
+#topbar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  border-bottom: 1px solid var(--border);
+  /* Con el sidebar izquierdo abierto, todo esto (buscador + vistas + RETRO +
+     logros + estado de mando) ya no entraba en el ancho restante — #search
+     tenía un ancho fijo y no cedía espacio, así que el último elemento
+     (#gamepad-status) se salía de la fila y quedaba recortado/invisible por
+     el overflow:hidden de #main-col. #search ahora encoge primero; overflow-x
+     scrolleable queda como red de seguridad si aun así no entra todo. */
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+#search {
+  flex: 1 1 160px;
+  min-width: 110px;
+  max-width: 300px;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  padding: 8px 14px;
+  font-size: 14px;
+  outline: none;
+}
+#search:focus { border-color: var(--accent); }
+#count { color: var(--dim); font-size: 13px; flex-shrink: 0; }
+
+.icon-btn {
+  background: var(--panel); border: 1px solid var(--border); color: var(--dim);
+  border-radius: var(--radius-sm); width: 42px; height: 42px; font-size: 18px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease);
+  flex-shrink: 0;
+}
+.icon-btn .icon { width: 19px; height: 19px; }
+.icon-btn:hover { color: var(--text); border-color: var(--accent); background: var(--panel2); }
+.icon-btn:active { transform: scale(0.93); }
+.icon-btn.active { color: var(--text); border-color: var(--accent); background: var(--accent-soft); }
+
+/* Grupo "PC" (dock/lista) claramente separado del botón "RETRO" — antes eran
+   tres iconos idénticos sin etiqueta y era imposible distinguir a qué modo
+   pertenecía cada uno. */
+#view-switch { display: flex; align-items: center; gap: 14px; margin-left: auto; flex-shrink: 0; }
+
+.view-group {
+  display: flex; align-items: center; gap: 6px;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 11px; padding: 6px 10px 6px 14px;
+}
+.view-group-label {
+  font-size: 11px; font-weight: 800; letter-spacing: 0.09em; color: var(--dim);
+  text-transform: uppercase; margin-right: 4px;
+}
+.view-btn {
+  background: transparent; border: 1px solid transparent; color: var(--dim);
+  border-radius: 8px; width: 38px; height: 38px; font-size: 15px; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: all 0.12s;
+}
+.view-btn .icon { width: 19px; height: 19px; }
+.view-btn:hover { color: var(--text); }
+.view-btn.active { background: var(--accent-soft); color: #b6acff; border-color: var(--accent); }
+
+/* Botón RETRO: deliberadamente vistoso, en paleta cálida arcade (naranja/rosa)
+   y con tipografía pixel de 8/16-bit (Press Start 2P, con fallback a
+   monospace del sistema si no hay red) — así se lee de inmediato como un modo
+   aparte, no una tercera vista más de la biblioteca. Sombra escalonada tipo
+   sprite en vez de un blur normal, para reforzar el aspecto "retro gaming". */
+.view-retro-btn {
+  width: auto; height: auto; gap: 10px;
+  background: linear-gradient(135deg, rgba(251,146,60,0.18), rgba(244,114,182,0.18));
+  border: 2px solid rgba(251,146,60,0.55);
+  color: #fdba74;
+  border-radius: 10px;
+  padding: 11px 20px;
+  font-size: 14px; font-weight: 800; letter-spacing: 0.03em;
+}
+.view-retro-btn .icon { width: 21px; height: 21px; }
+.view-retro-btn span {
+  font-family: 'Press Start 2P', 'Courier New', ui-monospace, monospace;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-shadow: 2px 2px 0 rgba(0,0,0,0.45);
+}
+.view-retro-btn:hover {
+  border-color: var(--retro-accent);
+  box-shadow: 0 0 0 3px rgba(251,146,60,0.18);
+  transform: translateY(-1px);
+}
+.view-retro-btn.active {
+  background: linear-gradient(135deg, var(--retro-accent), var(--retro-accent2));
+  color: #200f02; border-color: transparent;
+  box-shadow: 0 0 18px rgba(251,146,60,0.45);
+}
+.view-retro-btn.active span { text-shadow: 2px 2px 0 rgba(0,0,0,0.25); }
+
+/* Botón LOGROS: solo el trofeo, en dorado — deliberadamente distinto del
+   RETRO (naranja/rosa) y del grupo PC (violeta) para que los tres modos se
+   distingan de un vistazo en la topbar. */
+.view-achievements-btn {
+  width: 44px; height: 44px; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(255,215,0,0.14));
+  border: 2px solid rgba(251,191,36,0.55);
+  color: var(--warn);
+  border-radius: 10px;
+}
+.view-achievements-btn .icon { width: 22px; height: 22px; }
+.view-achievements-btn:hover {
+  border-color: var(--warn);
+  box-shadow: 0 0 0 3px rgba(251,191,36,0.2);
+  transform: translateY(-1px);
+}
+.view-achievements-btn.active {
+  background: linear-gradient(135deg, var(--warn), #fde68a);
+  color: #241a00; border-color: transparent;
+  box-shadow: 0 0 18px rgba(251,191,36,0.5);
+}
+
+#gamepad-status {
+  display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+  color: var(--dim); font-size: 13px; font-weight: 600;
+  background: var(--panel); border: 1px solid var(--border);
+  border-radius: 999px; padding: 8px 14px;
+}
+#gamepad-status.on { color: var(--ok); border-color: rgba(74,222,128,0.4); }
+
+/* [hidden] tiene menos especificidad que un selector por #id: sin esto, los
+   modos (dock/lista) quedarían visibles a la vez apilados verticalmente. */
+#dock-wrap[hidden], #list[hidden] { display: none; }
+
+#list .empty, #dock .empty {
+  text-align: center; color: var(--dim); padding: 60px 0; font-size: 15px; width: 100%;
+}
+
+/* ---------- Modo Dock (estilo iPhone), vista principal ---------- */
+#dock-wrap {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 40px 40px 30px;
+}
+#dock {
+  display: flex; flex-wrap: wrap; align-items: flex-end; align-content: flex-end;
+  gap: 22px; outline: none; min-height: 100%;
+}
+
+.dock-icon {
+  width: 116px; display: flex; flex-direction: column; align-items: center; gap: 8px;
+  cursor: pointer; transform-origin: bottom center;
+  transition: transform 0.15s cubic-bezier(.2,1.4,.4,1);
+}
+.dock-icon .icon-face {
+  width: 116px; height: 116px; border-radius: 26px; overflow: hidden;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5);
+  position: relative; background: #05060a;
+}
+/* Placeholder genérico: abreviatura en texto (nunca un emoji que pueda
+   confundirse con el icono de "imagen rota" del navegador). */
+.placeholder {
+  width: 100%; height: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 8px; padding: 10px; text-align: center;
+  font-weight: 700; font-size: 13px; line-height: 1.3;
+}
+.plat-abbr {
+  font-weight: 900; letter-spacing: 1px; opacity: 0.92;
+  padding: 3px 8px; border-radius: 6px; background: rgba(0,0,0,0.25);
+}
+/* object-fit:cover (no contain): la mayoría de carátulas son 2:3 verticales —
+   "contain" dentro de un cuadro dejaba franjas vacías a los lados y la
+   ilustración se veía chica; "cover" llena el cuadrado entero (recortando
+   arriba/abajo), que es lo que ya hacen los launchers reales (Steam Big
+   Picture, Playnite) para miniaturas cuadradas. El filtro sube brillo/
+   contraste/saturación un poco — muchas carátulas son oscuras/moody de por
+   sí y a 104px se leían apagadas; esto las hace más legibles sin filtro de
+   por medio (no es sharpening real, "nitidez percibida" vía contraste). */
+.dock-icon .icon-face img {
+  width: 100%; height: 100%; object-fit: cover; display: block; background: #05060a;
+  filter: brightness(1.28) contrast(1.22) saturate(1.15);
+}
+.dock-icon .icon-face .placeholder { width: 100%; height: 100%; }
+.dock-icon .icon-face .placeholder .plat-abbr { font-size: 18px; }
+.dock-icon .icon-face .placeholder .plat-title { display: none; }
+.dock-icon .icon-label {
+  font-size: 11px; font-weight: 600; color: var(--dim); text-align: center;
+  max-width: 112px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+/* Glow verde = "instalado, listo para jugar" — mucho más visible que antes:
+   anillo más grueso y opaco + halo grande de dos capas, para que se note de
+   un vistazo en una grilla con decenas de íconos, no solo al fijarse. */
+.dock-icon.installed .icon-face {
+  outline: 2.5px solid rgba(52,211,153,0.9);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.5), 0 0 0 4px rgba(52,211,153,0.22), 0 0 26px 6px rgba(52,211,153,0.65);
+}
+.dock-icon.not-installed .icon-face { filter: grayscale(0.5) brightness(0.7); }
+.dock-icon.not-installed .icon-face::after {
+  content: '⬇'; position: absolute; bottom: 4px; right: 4px;
+  background: rgba(0,0,0,0.7); color: var(--warn); font-size: 11px;
+  width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+}
+.dock-icon:hover { transform: scale(1.35) translateY(-14px); z-index: 5; }
+.dock-icon:hover + .dock-icon { transform: scale(1.15) translateY(-6px); }
+.dock-icon:has(+ .dock-icon:hover) { transform: scale(1.15) translateY(-6px); }
+.dock-icon.selected .icon-face { outline: 2px solid var(--accent); box-shadow: 0 6px 22px rgba(109,93,240,0.5); }
+.dock-icon.selected .icon-label { color: var(--text); }
+
+.dock-icon { position: relative; }
+.dock-icon[data-platform="steam"] .placeholder { background: linear-gradient(160deg, #1b2838, #2a475e); }
+.dock-icon[data-platform="epic"] .placeholder { background: linear-gradient(160deg, #202020, #3a3a3a); }
+.dock-icon[data-platform="gog"] .placeholder { background: linear-gradient(160deg, #4a1d68, #7c2ca8); }
+.dock-icon[data-platform="battlenet"] .placeholder { background: linear-gradient(160deg, #0d2d52, #1a5b9e); }
+.dock-icon[data-platform="riot"] .placeholder { background: linear-gradient(160deg, #8b1622, #d13639); }
+.dock-icon[data-platform="xbox"] .placeholder { background: linear-gradient(160deg, #0e4c1c, #107c10); }
+.dock-icon[data-platform="rockstar"] .placeholder { background: linear-gradient(160deg, #1a1a1a, #4a3510); }
+.dock-icon[data-platform="ubisoft"] .placeholder { background: linear-gradient(160deg, #0a2a4a, #0d6ba8); }
+.dock-icon[data-platform="ea"] .placeholder { background: linear-gradient(160deg, #1a1a2e, #2f2f6e); }
+.dock-icon[data-platform="retroarch"] .placeholder { background: linear-gradient(160deg, #2b1a1a, #6b3a3a); }
+
+/* ---------- Modo Lista ---------- */
+#list {
+  flex: 1; overflow-y: auto; padding: 10px 22px 30px;
+  display: flex; flex-direction: column; gap: 8px; outline: none;
+}
+.list-row {
+  display: flex; align-items: center; gap: 14px;
+  background: var(--panel2); border: 1px solid transparent; border-radius: 10px;
+  padding: 8px 14px 8px 8px; cursor: pointer; transition: border-color 0.12s, background 0.12s;
+}
+.list-row:hover { border-color: var(--border); }
+.list-row.selected { border-color: var(--accent); background: var(--accent-soft); }
+.list-row .thumb {
+  width: 54px; height: 76px; border-radius: 6px; overflow: hidden; flex-shrink: 0;
+  background: #05060a; position: relative;
+}
+.list-row .thumb img { width: 100%; height: 100%; object-fit: contain; }
+.list-row .thumb .placeholder { width: 100%; height: 100%; padding: 4px; }
+.list-row .thumb .placeholder .plat-abbr { font-size: 12px; }
+.list-row .thumb .placeholder .plat-title { display: none; }
+.list-row[data-platform="steam"] .placeholder { background: linear-gradient(160deg, #1b2838, #2a475e); }
+.list-row[data-platform="epic"] .placeholder { background: linear-gradient(160deg, #202020, #3a3a3a); }
+.list-row[data-platform="gog"] .placeholder { background: linear-gradient(160deg, #4a1d68, #7c2ca8); }
+.list-row[data-platform="battlenet"] .placeholder { background: linear-gradient(160deg, #0d2d52, #1a5b9e); }
+.list-row[data-platform="riot"] .placeholder { background: linear-gradient(160deg, #8b1622, #d13639); }
+.list-row[data-platform="xbox"] .placeholder { background: linear-gradient(160deg, #0e4c1c, #107c10); }
+.list-row[data-platform="rockstar"] .placeholder { background: linear-gradient(160deg, #1a1a1a, #4a3510); }
+.list-row[data-platform="ubisoft"] .placeholder { background: linear-gradient(160deg, #0a2a4a, #0d6ba8); }
+.list-row[data-platform="ea"] .placeholder { background: linear-gradient(160deg, #1a1a2e, #2f2f6e); }
+.list-row[data-platform="retroarch"] .placeholder { background: linear-gradient(160deg, #2b1a1a, #6b3a3a); }
+.list-row.not-installed .thumb img, .list-row.not-installed .thumb .placeholder { filter: grayscale(0.5) brightness(0.7); }
+
+.list-row .info { flex: 1; min-width: 0; }
+.list-row .info .row-title { font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.list-row .info .row-meta { font-size: 11.5px; color: var(--dim); margin-top: 3px; display: flex; gap: 8px; flex-wrap: wrap; }
+.list-row .info .row-meta .row-badge {
+  padding: 1px 7px; border-radius: 5px; background: var(--panel); border: 1px solid var(--border);
+  text-transform: capitalize;
+}
+.list-row .row-state { font-size: 11px; font-weight: 700; flex-shrink: 0; }
+.list-row .row-state.installed { color: var(--ok); }
+.list-row .row-state.not-installed { color: var(--warn); }
+
+#controls {
+  display: flex; gap: 22px; justify-content: center;
+  padding: 10px; font-size: 12.5px; color: var(--dim);
+  border-top: 1px solid var(--border);
+}
+#controls b { color: var(--text); }
+
+/* ---------- Panel de detalles ---------- */
+#details {
+  background: var(--panel);
+  border-left: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 20px 18px;
+}
+#details-empty { color: var(--dim); font-size: 13px; text-align: center; margin-top: 40px; }
+
+#d-video {
+  width: 100%; aspect-ratio: 16 / 9; border-radius: 10px; overflow: hidden;
+  margin-bottom: 14px; background: #000;
+}
+#d-video video { width: 100%; height: 100%; display: block; object-fit: contain; background: #000; }
+
+#d-cover {
+  width: 100%; aspect-ratio: 460 / 215;
+  border-radius: 10px; background-size: contain; background-repeat: no-repeat; background-position: center;
+  background-color: var(--panel2); margin-bottom: 14px;
+}
+#d-title { font-size: 20px; font-weight: 800; line-height: 1.2; margin-bottom: 8px; }
+#d-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+.d-badge {
+  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
+  background: var(--panel2); color: var(--dim); border: 1px solid var(--border);
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.d-badge .icon { width: 12px; height: 12px; }
+.d-badge.plat { color: #b6acff; border-color: var(--accent); background: var(--accent-soft); }
+.d-badge.installed { color: var(--ok); }
+.d-badge.not-installed { color: var(--warn); }
+#d-desc { font-size: 12.5px; color: var(--dim); line-height: 1.5; margin-bottom: 12px; }
+#d-meta { font-size: 12.5px; color: var(--dim); line-height: 1.7; margin-bottom: 14px; }
+#d-meta b { color: var(--text); font-weight: 600; }
+
+#d-reqs h3 { font-size: 13px; margin-bottom: 8px; }
+#d-reqs-body { font-size: 12px; color: var(--dim); }
+
+.req-tier { margin-bottom: 12px; }
+.req-tier-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 5px; }
+.req-overall {
+  display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+  font-size: 14px; font-weight: 800;
+}
+.req-bar {
+  flex: 1; height: 8px; border-radius: 4px; background: var(--panel2); overflow: hidden;
+}
+.req-bar > div { height: 100%; border-radius: 4px; transition: width 0.4s; }
+.req-row { display: flex; justify-content: space-between; font-size: 11.5px; padding: 2px 0; }
+.req-row .val { font-weight: 700; }
+.ok { color: var(--ok); } .warn { color: var(--warn); } .bad { color: var(--bad); } .great { color: var(--great); }
+
+.verdict {
+  margin-top: 4px; padding: 8px 12px; border-radius: 8px;
+  font-size: 12.5px; font-weight: 700; text-align: center;
+}
+.verdict.excelente { background: rgba(34,211,238,0.12); color: var(--great); }
+.verdict.sobrado { background: rgba(74,222,128,0.12); color: var(--ok); }
+.verdict.cumple { background: rgba(251,191,36,0.12); color: var(--warn); }
+.verdict.justo { background: rgba(251,191,36,0.12); color: var(--warn); }
+.verdict.insuficiente { background: rgba(248,113,113,0.12); color: var(--bad); }
+
+#d-actions { margin-top: 16px; display: flex; flex-direction: column; gap: 8px; }
+.action-btn {
+  width: 100%; padding: 12px; border: none; border-radius: 10px;
+  font-size: 14px; font-weight: 800; cursor: pointer;
+  transition: filter 0.12s;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+}
+.action-btn:hover { filter: brightness(1.15); }
+.action-btn.play { background: var(--accent); color: #fff; box-shadow: 0 0 18px rgba(109,93,240,0.4); }
+.action-btn.install { background: var(--panel2); color: var(--warn); border: 1px solid var(--warn); }
+
+/* Retro: verde = la ROM está en su sitio y se puede jugar ya mismo; gris =
+   falta la ROM, con un mensaje explicando qué falta en vez de solo ocultar
+   el botón (para que no parezca que la función no existe). */
+.action-btn.play-ready { background: var(--ok); color: #062910; box-shadow: 0 0 18px rgba(74,222,128,0.4); }
+.action-btn.play-missing { background: var(--panel2); color: var(--dim); border: 1px solid var(--border); cursor: default; }
+.action-btn.play-missing:hover { filter: none; }
+#d-play-hint { font-size: 12px; color: var(--dim); margin-top: -4px; }
+
+/* Botón inverso del plan "Deriva MegaHUB" (Fase 4) — secundario a propósito,
+   nunca compite visualmente con Jugar/Instalar. */
+.action-btn.deriva-search {
+  background: transparent; color: var(--dim); border: 1px solid var(--border);
+  font-size: 12.5px; font-weight: 700; padding: 9px 12px;
+}
+.action-btn.deriva-search:hover { color: var(--text); border-color: var(--accent); filter: none; }
+.action-btn.deriva-search .icon { width: 14px; height: 14px; }
+
+/* Botón "Multijugador" del sidebar de consola: solo aparece en consolas con
+   online real (ver MULTIPLAYER_KEY en app.js, poblado desde
+   updateMultiplayerControls) — acento propio (verde azulado) para
+   diferenciarlo del resto de botones de esta sección, sin competir con
+   "Descargar emulador"/"Instalar core". */
+.account-btn.multiplayer-btn {
+  color: var(--great); border-color: rgba(34,211,238,0.35); margin-top: 10px;
+}
+.account-btn.multiplayer-btn:hover:not(.disabled):not(:disabled) {
+  border-color: var(--great); background: rgba(34,211,238,0.12);
+}
+
+@keyframes launch-pulse {
+  0% { transform: scale(1.05); } 50% { transform: scale(0.97); } 100% { transform: scale(1.05); }
+}
+.dock-icon.launching .icon-face, .list-row.launching { animation: launch-pulse 0.3s ease; }
+
+/* ---------- Modal de ajustes ---------- */
+#settings-overlay {
+  position: fixed; inset: 0; background: rgba(5,6,10,0.65);
+  display: flex; align-items: center; justify-content: center;
+  z-index: 100; backdrop-filter: blur(2px);
+}
+#settings-overlay[hidden] { display: none; }
+
+#settings-modal {
+  width: 640px; max-width: 92vw; max-height: 80vh;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 14px;
+  display: flex; flex-direction: column; overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+}
+#settings-header {
+  display: flex; align-items: center; gap: 14px;
+  padding: 16px 20px; border-bottom: 1px solid var(--border);
+}
+#settings-header h2 { font-size: 17px; font-weight: 800; }
+#settings-close {
+  margin-left: auto; background: var(--panel2); border: 1px solid var(--border); color: var(--dim);
+  border-radius: 7px; width: 30px; height: 30px; cursor: pointer; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+}
+#settings-close:hover { color: var(--text); border-color: var(--accent); }
+
+#settings-tabs { display: flex; gap: 6px; padding: 12px 20px 0; }
+.settings-tab {
+  background: none; border: none; color: var(--dim); font-size: 13px; font-weight: 700;
+  padding: 10px 14px; cursor: pointer; border-bottom: 2px solid transparent;
+}
+.settings-tab:hover { color: var(--text); }
+.settings-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+#settings-body { padding: 16px 20px 20px; overflow-y: auto; }
+.settings-panel[hidden] { display: none; }
+.settings-intro { font-size: 12.5px; color: var(--dim); line-height: 1.5; margin-bottom: 14px; }
+
+/* ---- Apariencia (grilla de temas) ---- */
+.theme-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
+.theme-card {
+  display: flex; flex-direction: column; gap: 0; border-radius: 12px; overflow: hidden;
+  cursor: pointer; border: 2px solid var(--border); background: var(--panel2);
+  padding: 0; font: inherit; text-align: left;
+  transition: border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.theme-card:hover { transform: translateY(-2px); }
+.theme-card.active { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.theme-swatch { display: flex; height: 48px; }
+.theme-swatch span { flex: 1; }
+.theme-name { padding: 8px 10px; font-size: 12px; font-weight: 700; color: var(--text); }
+
+.launcher-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 10px 4px; border-bottom: 1px solid var(--border);
+}
+.launcher-row:last-child { border-bottom: none; }
+.launcher-name { font-size: 13.5px; font-weight: 700; }
+.launcher-tag {
+  font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px;
+  text-transform: uppercase; letter-spacing: 0.5px;
+}
+.launcher-tag.clave { background: var(--accent-soft); color: #b6acff; }
+.launcher-tag.nicho { background: rgba(139,145,163,0.15); color: var(--dim); }
+.launcher-status { font-size: 11px; color: var(--dim); margin-left: 6px; }
+.launcher-status.planned { color: var(--warn); }
+
+/* ---- Guías colapsables (comprimen texto/tablas puramente informativas) ---- */
+.collapsible-guide {
+  border: 1px solid var(--border); border-radius: 10px; background: var(--panel2);
+  padding: 2px 14px;
+}
+.collapsible-guide summary {
+  cursor: pointer; padding: 10px 0; font-size: 12.5px; font-weight: 700; color: var(--text);
+  list-style: none; display: flex; align-items: center; gap: 8px;
+}
+.collapsible-guide summary::-webkit-details-marker { display: none; }
+.collapsible-guide summary::before {
+  content: '▸'; color: var(--dim); font-size: 11px; transition: transform 0.15s var(--ease);
+}
+.collapsible-guide[open] summary::before { transform: rotate(90deg); }
+.collapsible-guide summary:hover { color: #b6acff; }
+.collapsible-guide > *:not(summary) { margin-top: 4px; }
+.collapsible-guide .console-guide-intro { margin: 8px 0 10px; }
+.collapsible-guide[open] { padding-bottom: 14px; }
+
+/* ---- Skins de RetroArch ---- */
+.skin-card {
+  display: flex; align-items: flex-start; gap: 12px;
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 12px 14px; margin-bottom: 10px;
+}
+.skin-card-body { flex: 1; min-width: 0; }
+.skin-card-title { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.skin-card-driver {
+  font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+  padding: 2px 7px; border-radius: 5px; background: var(--accent-soft); color: #b6acff;
+}
+.skin-card-desc { font-size: 12px; color: var(--dim); margin: 4px 0 6px; line-height: 1.4; }
+.skin-card-credit { font-size: 11px; color: var(--dim); }
+.skin-card-credit a { color: #b6acff; text-decoration: none; }
+.skin-card-credit a:hover { text-decoration: underline; }
+.skin-card-actions { flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 120px; }
+.skin-card-actions .account-btn { width: auto; margin-bottom: 0; white-space: nowrap; }
+.skin-card.installed { border-color: rgba(74,222,128,0.4); }
+.skin-card-installed-badge {
+  font-size: 10.5px; font-weight: 700; color: var(--ok);
+  display: flex; align-items: center; gap: 4px; justify-content: center;
+}
+.skin-card-status { font-size: 10.5px; color: var(--dim); margin-top: 2px; text-align: center; min-height: 13px; }
+
+.toggle-switch {
+  margin-left: auto; position: relative; width: 40px; height: 22px; flex-shrink: 0;
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 999px;
+  cursor: pointer; transition: background 0.15s;
+}
+.toggle-switch::after {
+  content: ''; position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  border-radius: 50%; background: var(--dim); transition: transform 0.15s, background 0.15s;
+}
+.toggle-switch.on { background: var(--accent-soft); border-color: var(--accent); }
+.toggle-switch.on::after { transform: translateX(18px); background: var(--accent); }
+.toggle-switch.disabled { opacity: 0.4; cursor: default; }
+
+.retro-box {
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+  padding: 14px; margin-top: 6px;
+}
+.retro-box .retro-status { font-size: 12.5px; color: var(--dim); margin-top: 8px; line-height: 1.5; }
+.retro-box .retro-status b { color: var(--text); }
+
+.console-guide-intro { font-size: 12px; color: var(--dim); line-height: 1.5; margin: 16px 0 10px; }
+
+.gen-group { margin-bottom: 14px; }
+.gen-title {
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 800; margin-bottom: 6px; padding-left: 2px;
+}
+.console-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 7px 8px; border-radius: 8px;
+}
+.console-row:nth-child(odd) { background: var(--panel2); }
+.console-name { font-size: 12.5px; font-weight: 700; width: 150px; flex-shrink: 0; }
+.console-emu { font-size: 12.5px; color: var(--text); }
+.console-emu b { color: #b6acff; }
+.console-src {
+  margin-left: auto; font-size: 9.5px; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.5px; padding: 2px 7px; border-radius: 5px; flex-shrink: 0;
+  background: rgba(139,145,163,0.15); color: var(--dim);
+}
+.console-src.core { background: var(--accent-soft); color: #b6acff; }
+
+/* ---------- Vista Retro (consolas + catálogo) ---------- */
+#retro-wrap {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 22px 28px 30px; display: flex; flex-direction: column; gap: 18px;
+}
+#retro-wrap[hidden] { display: none; }
+
+#retro-disclaimer {
+  background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.35);
+  color: var(--warn); font-size: 12.5px; font-weight: 600; line-height: 1.5;
+  padding: 10px 16px; border-radius: 10px;
+}
+
+#retro-console-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 18px;
+}
+/* Marco pixel: borde duro tipo 8-bit (doble raya negra+gris, sin radio) en
+   vez del panel liso de antes — el diseño elegido de los 10 conceptos de
+   tarjeta presentados (concept c10, "Marco pixel"). */
+.console-card {
+  background: var(--panel2); border: none; border-radius: 4px;
+  box-shadow: 0 0 0 3px #000, 0 0 0 5px #3a3a44;
+  overflow: hidden; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s;
+  display: flex; flex-direction: column;
+}
+.console-card:hover, .console-card.selected {
+  transform: translateY(-4px);
+  box-shadow: 0 0 0 3px #000, 0 0 0 5px var(--accent), 0 10px 26px rgba(0,0,0,0.4), 0 0 18px rgba(109,93,240,0.25);
+}
+.console-card .console-photo-box {
+  width: 100%; aspect-ratio: 4 / 3;
+  background: #0c0c10;
+  display: flex; align-items: center; justify-content: center; position: relative;
+}
+/* Dither de puntos (::after, no ::before: .loading ya usa ::before para el
+   shimmer del skeleton y chocaría con este). */
+.console-card .console-photo-box::after {
+  content: ''; position: absolute; inset: 0; pointer-events: none;
+  background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+  background-size: 4px 4px;
+}
+/* Fondo oscuro (no el gris claro de antes): la mayoría de logos oficiales de
+   consola traen texto blanco/claro pensado para fondos oscuros o
+   transparentes — un fondo claro los volvía invisibles o ilegibles. */
+.console-card .console-photo-box img { width: 78%; height: 78%; object-fit: contain; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.4)); }
+/* Ícono de silueta (retroarch-assets, CC BY 4.0 — ver ui/console-icons/
+   CREDITS.txt) teñido por consola: son PNG monocromos blancos con fondo
+   transparente, así que en vez de un <img> se usan como mask-image sobre un
+   div con background-color — la CC BY 4.0 permite modificar (incluido
+   recolorear) mientras se mantenga la atribución. Doble color (aro + centro
+   con opacidad) para que se lea con volumen, no como un recorte plano. */
+.console-icon-stack {
+  width: 78%; height: 78%; position: relative;
+  /* Halo de color propio detrás del ícono — un solo drop-shadow en el
+     wrapper (barato), no repetido por capa. Respiración continua y lenta
+     (5.6s, sin pausas en los extremos): --glow-low/--glow-high son rgba()
+     fijos precalculados en JS (colorToRgba), no color-mix() — un color
+     dinámico dentro del @keyframes no se interpola de verdad entre fotogramas
+     (salta de un valor a otro), lo que se sentía como parpadeo en vez de
+     una transición suave de intensidad. */
+  animation: console-icon-glow-pulse 5.6s ease-in-out infinite;
+}
+@keyframes console-icon-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 2px 12px var(--glow-low)); }
+  50% { filter: drop-shadow(0 2px 17px var(--glow-high)); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .console-icon-stack { animation: none; filter: drop-shadow(0 2px 14px var(--glow-low)); }
+}
+.console-icon-stack .console-icon-mask,
+.console-icon-stack .console-icon-outline {
+  position: absolute; inset: 0; width: 100%; height: 100%;
+  -webkit-mask-image: var(--icon-url); mask-image: var(--icon-url);
+  -webkit-mask-size: contain; mask-size: contain;
+  -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat;
+  -webkit-mask-position: center; mask-position: center;
+}
+/* Contorno tipo sticker (negro afuera + tono propio de la consola adentro,
+   vía --ring-color) hecho apilando 2 copias de la MISMA silueta agrandadas
+   con transform: scale — no con drop-shadow apilado (16 pasadas de filtro
+   por ícono probado antes volvía la grilla de 39 consolas extremadamente
+   lenta). Escalar la silueta entera solo aproxima un contorno de grosor
+   uniforme — funciona bien porque estos íconos son formas compactas y
+   redondeadas, no siluetas con picos finos. El anillo interior usa un tono
+   oscurecido del propio color (no blanco fijo): en consolas claras (Wii)
+   un anillo blanco se perdía contra un ícono casi igual de claro. */
+.console-icon-outline--dark { background: #000; transform: scale(1.16); z-index: 1; }
+.console-icon-outline--light { background: var(--ring-color, #fff); transform: scale(1.08); z-index: 2; }
+.console-icon-mask {
+  z-index: 3;
+  background: linear-gradient(155deg, color-mix(in srgb, var(--icon-color) 100%, white 25%), var(--icon-color));
+  filter: drop-shadow(0 4px 8px rgba(0,0,0,0.5));
+}
+.console-card .console-photo-box .console-year-badge {
+  position: absolute; top: 8px; right: 8px; font-size: 11px; font-weight: 800;
+  padding: 3px 9px; border-radius: 0; background: rgba(0,0,0,0.7); color: var(--text);
+  font-family: monospace;
+  backdrop-filter: blur(4px);
+}
+/* Botón de consola en 3D (reemplaza el logo oficial de cada marca — ver
+   textureDownload.js/investigación de copyright): aro biselado + plato
+   cóncavo + inicial dibujada en canvas (centrada por su tinta real, no por
+   line-height — Press Start 2P tiene métricas verticales inconsistentes,
+   verificado midiendo el glyph) + anillo de brillo LED. Color por hash del
+   id de consola (mismo hueFromString que ya usaba el monograma). */
+/* height (no width) + aspect-ratio:1/1: si se pusieran width Y height en % a
+   la vez, .console-photo-box (4:3, no cuadrada) los estira en óvalo — el
+   ancho salía calculado sobre una base distinta al alto. Con solo el alto en
+   % y el ancho derivado por aspect-ratio, es un círculo de verdad sin
+   importar la proporción del contenedor. */
+.console-btn-wrap { height: 68%; width: auto; aspect-ratio: 1 / 1; }
+.console-btn {
+  --base: #6d5df0; --dark: #3a2fb0; --glow: #6d5df0;
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  position: relative;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--dark);
+  box-shadow: 0 8px 0 color-mix(in srgb, var(--dark) 100%, black 35%), 0 13px 18px rgba(0,0,0,0.5);
+  transform: translateY(0);
+  transition: transform 0.1s cubic-bezier(.34,1.56,.64,1), box-shadow 0.1s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.console-btn::before {
+  content: '';
+  position: absolute; inset: 4%;
+  border-radius: 50%;
+  /* Sin aclarar el extremo "claro" del aro con blanco: con --base ya casi
+     blanco (Wii, Nintendo DS) ese aclarado quedaba tan blanco como el brillo
+     del plato de adentro, y ahí se perdía el marco por completo. Arrancando
+     directo en --base (sin sumarle blanco) el aro nunca compite en blancura
+     con el plato — queda siempre un escalón visible entre los dos. */
+  /* "in hsl" (no "in srgb") para el paso intermedio: srgb pesa cada canal
+     distinto (el verde domina la luminancia, el azul casi no aporta), así que
+     el mismo % de mezcla se veía mucho menos oscuro en azules que en verdes.
+     Mezclando en HSL se reduce el mismo tanto de luminosidad sin importar el
+     matiz — igual que --dark, ya recalculado así en JS. */
+  background: linear-gradient(155deg, var(--base), color-mix(in hsl, var(--base), black 45%) 55%, var(--dark));
+}
+.console-btn::after {
+  content: '';
+  position: absolute; inset: 12%;
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px var(--glow), 0 0 14px 3px var(--glow);
+  opacity: 0.55;
+  animation: console-btn-ring-pulse 2.2s ease-in-out infinite;
+  pointer-events: none;
+}
+@keyframes console-btn-ring-pulse {
+  0%, 100% { opacity: 0.4; box-shadow: 0 0 0 2px var(--glow), 0 0 8px 1px var(--glow); }
+  50% { opacity: 0.9; box-shadow: 0 0 0 2px var(--glow), 0 0 20px 6px var(--glow); }
+}
+.console-btn .console-btn-dish {
+  position: absolute; inset: 16%;
+  border-radius: 50%;
+  /* Esfera brillante de verdad: núcleo mucho más claro cerca del punto de luz,
+     caída rápida al color base, y un borde oscurecido para dar curvatura —
+     antes era un degradado plano de 3 paradas, se leía como un círculo pintado. */
+  background: radial-gradient(circle at 35% 28%,
+    #fff 0%,
+    color-mix(in srgb, var(--base) 100%, white 55%) 8%,
+    var(--base) 42%,
+    color-mix(in srgb, var(--base) 100%, black 35%) 78%,
+    color-mix(in srgb, var(--base) 100%, black 55%) 100%);
+  box-shadow: inset 0 4px 6px rgba(0,0,0,0.4), inset 0 -3px 5px rgba(255,255,255,0.15);
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.console-btn .console-btn-dish canvas {
+  image-rendering: pixelated;
+  animation: console-btn-glow-pulse 2.2s ease-in-out infinite;
+}
+@keyframes console-btn-glow-pulse {
+  0%, 100% { filter: drop-shadow(0 0 3px var(--glow)) drop-shadow(0 0 1px #fff); }
+  50% { filter: drop-shadow(0 0 9px var(--glow)) drop-shadow(0 0 3px #fff); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .console-btn .console-btn-dish canvas, .console-btn::after { animation: none !important; }
+}
+
+/* Óvalo real (Genesis/Mega Drive, Sega CD comparte el mismo control) — sus
+   botones son alargados de verdad, no redondos como el resto. */
+.console-btn--oval, .console-btn--oval::before, .console-btn--oval::after, .console-btn--oval .console-btn-dish {
+  border-radius: 50% / 62%;
+}
+.console-btn-wrap:has(.console-btn--oval) { aspect-ratio: 1.35 / 1; }
+
+/* Era joystick (2ª gen/8 bits/recreativas): perfil más chato y anguloso, menos
+   glossy — más parecido a un botón de plástico duro de los 70s/80s que a una
+   esfera moderna. */
+.console-btn--retro { box-shadow: 0 5px 0 color-mix(in srgb, var(--dark) 100%, black 35%), 0 9px 12px rgba(0,0,0,0.5); }
+.console-btn--retro .console-btn-dish { inset: 20%; box-shadow: inset 0 2px 3px rgba(0,0,0,0.45), inset 0 -1px 2px rgba(255,255,255,0.08); }
+
+/* Era moderna (6ª/7ª gen): brillo más suave y amplio, MISMO margen de plato
+   que el resto (16%) — con inset:13% el aro exterior casi desaparecía y esas
+   consolas quedaban "lisas" sin marco, inconsistente con las demás. */
+.console-btn--modern.console-btn:hover { transform: translateY(-2px); }
+.console-btn:hover { transform: translateY(-1px); }
+.console-btn:active {
+  transform: translateY(7px);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--dark) 100%, black 35%), 0 3px 6px rgba(0,0,0,0.4);
+  transition: transform 0.05s ease, box-shadow 0.05s ease;
+}
+.console-btn:active .console-btn-dish { box-shadow: inset 0 5px 8px rgba(0,0,0,0.5); }
+.console-btn:focus-visible { outline: 2px solid #fff; outline-offset: 4px; }
+.console-card .console-card-body { padding: 12px 14px 14px; border-top: 2px solid #000; }
+.console-card .console-card-name { font-size: 14.5px; font-weight: 800; margin-bottom: 4px; }
+.console-card .console-card-gen {
+  font-size: 10.5px; color: var(--dim); text-transform: uppercase; letter-spacing: 0.5px;
+}
+.console-card .console-card-owned {
+  margin-top: 6px; font-size: 11px; font-weight: 700; color: var(--ok);
+}
+.console-card .console-card-owned.none { color: var(--dim); font-weight: 500; }
+
+/* ---- Detalle de consola ---- */
+#retro-detail-header { display: flex; align-items: center; gap: 18px; }
+#retro-back {
+  background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+  border-radius: 8px; padding: 8px 14px; font-size: 13px; font-weight: 700; cursor: pointer;
+  flex-shrink: 0;
+}
+#retro-back:hover { border-color: var(--accent); }
+#retro-detail-photo {
+  width: 96px; height: 72px; border-radius: 10px;
+  background: radial-gradient(120% 120% at 30% 20%, #232838, #14171f); flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+#retro-detail-photo img { width: 82%; height: 82%; object-fit: contain; }
+#retro-detail-photo .console-icon-stack { width: 82%; height: 82%; }
+#retro-detail-name { font-size: 20px; font-weight: 800; }
+#retro-detail-meta { font-size: 12.5px; color: var(--dim); margin-top: 4px; display: flex; gap: 10px; flex-wrap: wrap; }
+#retro-detail-meta span { padding: 2px 9px; border-radius: 999px; background: var(--panel2); border: 1px solid var(--border); }
+
+#retro-game-grid {
+  margin-top: 18px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 14px; align-content: start;
+}
+.retro-game-card {
+  cursor: pointer; border-radius: 10px; overflow: hidden;
+  background: var(--panel2); border: 2px solid transparent; transition: border-color 0.12s, transform 0.12s;
+}
+.retro-game-card:hover { transform: translateY(-2px); }
+.retro-game-card.selected { border-color: var(--accent); box-shadow: 0 0 16px rgba(109,93,240,0.35); }
+.retro-game-card .rg-cover {
+  /* --cover-aspect se mide en vivo por consola (ver detectCoverAspect en
+     app.js) y se hereda desde #retro-game-grid — 2/3 es solo el default
+     mientras se mide o si la muestra no alcanzó para decidir. */
+  width: 100%; aspect-ratio: var(--cover-aspect, 2 / 3); background: #05060a; position: relative; overflow: hidden;
+  transition: aspect-ratio 0.25s var(--ease);
+}
+/* cover (no contain): rellena la tarjeta entera recortando el sobrante en vez
+   de dejar franjas vacías cuando la portada real no calza con --cover-aspect
+   — mismo criterio que cualquier grilla de tienda de juegos (Steam, etc.). */
+.retro-game-card .rg-cover img { width: 100%; height: 100%; object-fit: cover; }
+.retro-game-card .rg-owned {
+  position: absolute; top: 6px; right: 6px; font-size: 9px; font-weight: 800;
+  padding: 2px 7px; border-radius: 5px; background: rgba(74,222,128,0.85); color: #0b0d12;
+  text-transform: uppercase;
+}
+.retro-game-card .rg-rerelease {
+  position: absolute; bottom: 6px; left: 6px; font-size: 8.5px; font-weight: 800;
+  padding: 2px 6px; border-radius: 5px; background: rgba(251,191,36,0.9); color: #0b0d12;
+  text-transform: uppercase;
+}
+/* Solo aparece en juegos NO obtenidos (ver TEXTURE_PACK_CONSOLES en app.js) —
+   esquina libre: rg-owned no puede coexistir (es solo para obtenidos) y
+   rg-rerelease vive en la esquina opuesta. */
+.retro-game-card .rg-texture-hd {
+  position: absolute; bottom: 6px; right: 6px; font-size: 7.5px; font-weight: 800;
+  padding: 2px 6px; border-radius: 5px; background: rgba(109,93,240,0.92); color: #fff;
+  text-transform: uppercase; text-align: right; line-height: 1.25; max-width: calc(100% - 12px);
+}
+.retro-game-card .rg-title {
+  font-size: 11.5px; font-weight: 600; padding: 6px 8px; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+#retro-game-grid .empty { grid-column: 1/-1; text-align: center; color: var(--dim); padding: 40px 0; }
+
+/* Placeholder de portada retro: sin esto, un juego sin miniatura (o cuya
+   imagen falla) se veía como un cuadro negro con "??" — un gradiente en el
+   tono de la consola actual + su monograma se lee como "sin portada
+   disponible", no como un error. */
+.retro-game-card .rg-cover .placeholder.placeholder-retro {
+  background: linear-gradient(155deg, hsl(var(--ph-hue, 260) 45% 24%), hsl(calc(var(--ph-hue, 260) + 35) 45% 14%));
+}
+.retro-game-card .rg-cover .placeholder.placeholder-retro .plat-abbr {
+  font-size: 20px; background: rgba(0,0,0,0.25);
+}
+/* El título ya se muestra debajo en .rg-title — sin esto se veía repetido
+   dos veces (una encima del placeholder, otra debajo de la carátula). */
+.retro-game-card .rg-cover .placeholder .plat-title { display: none; }
+
+/* ---- Logros (RetroAchievements) ---- */
+#achievements-wrap { padding: 28px 32px; overflow-y: auto; }
+#ra-empty-state { max-width: 560px; margin: 60px auto; text-align: center; }
+#ra-empty-state h2 { font-size: 26px; margin-bottom: 12px; }
+#ra-empty-state p { color: var(--dim); line-height: 1.6; margin-bottom: 20px; }
+.ra-connect-row { display: flex; gap: 8px; margin-bottom: 10px; }
+.ra-connect-row input {
+  flex: 1; min-width: 0; background: var(--panel2); border: 1px solid var(--border);
+  border-radius: 7px; color: var(--text); padding: 9px 12px; font-size: 13px; outline: none;
+}
+.ra-connect-row input:focus { border-color: var(--accent); }
+/* .account-btn trae width:100% (pensado para botones apilados del sidebar) —
+   dentro de esta fila flex eso lo hace reclamar el 100% del ancho como base,
+   dejando sin espacio a los inputs (flex:1) para crecer y colapsándolos a
+   casi nada. Aquí el botón debe medirse por su contenido, no estirarse. */
+.ra-connect-row .account-btn { width: auto; flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; }
+#ra-empty-state .side-note { text-align: left; margin-top: 8px; }
+#ra-empty-state .side-note a { color: #b6acff; }
+
+#ra-header {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 16px; margin-bottom: 18px; flex-wrap: wrap;
+}
+#ra-username-label { font-size: 22px; font-weight: 800; }
+#ra-stats { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
+.ra-stat-pill {
+  font-size: 12.5px; font-weight: 700; padding: 5px 12px; border-radius: 999px;
+  background: var(--panel2); border: 1px solid var(--border); color: var(--dim);
+}
+.ra-stat-pill b { color: var(--text); }
+.ra-stat-pill.ra-points { color: var(--warn); border-color: rgba(251,191,36,0.35); }
+.ra-stat-pill.ra-points b { color: var(--warn); }
+#ra-header-actions { display: flex; gap: 8px; }
+#ra-header-actions .account-btn, #mh-header .account-btn, .mh-header-layout .account-btn { width: auto; flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; }
+
+#ra-tabs { margin-bottom: 18px; }
+
+#ra-panel-games {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px;
+}
+.ra-game-card {
+  cursor: pointer; display: flex; gap: 12px; padding: 12px;
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 12px;
+  transition: border-color 0.12s, transform 0.12s;
+}
+.ra-game-card:hover { transform: translateY(-2px); border-color: var(--accent); }
+.ra-game-card .ra-icon { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #05060a; }
+.ra-game-card .ra-game-info { flex: 1; min-width: 0; }
+.ra-game-card .ra-game-title {
+  font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.ra-game-card .ra-game-console { font-size: 10.5px; color: var(--dim); margin-bottom: 6px; }
+.ra-progress-bar { height: 6px; border-radius: 999px; background: var(--panel); overflow: hidden; }
+.ra-progress-bar > div { height: 100%; background: var(--accent); border-radius: 999px; }
+.ra-progress-bar.mastered > div { background: var(--warn); }
+.ra-progress-label { font-size: 11px; color: var(--dim); margin-top: 4px; display: flex; justify-content: space-between; gap: 6px; }
+.ra-mastery-badge {
+  font-size: 9px; font-weight: 800; text-transform: uppercase; padding: 2px 7px; border-radius: 5px;
+  background: rgba(251,191,36,0.15); color: var(--warn); border: 1px solid rgba(251,191,36,0.35);
+  display: inline-flex; align-items: center; gap: 3px;
+}
+.ra-mastery-badge .icon { width: 10px; height: 10px; }
+
+#ra-panel-recent { display: flex; flex-direction: column; gap: 8px; }
+.ra-history-item {
+  display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+  background: var(--panel2); border: 1px solid var(--border); border-radius: 10px;
+}
+.ra-history-item img { width: 40px; height: 40px; border-radius: 6px; flex-shrink: 0; background: #05060a; }
+.ra-history-item .ra-hist-main { flex: 1; min-width: 0; }
+.ra-history-item .ra-hist-title { font-size: 13px; font-weight: 700; }
+.ra-history-item .ra-hist-meta { font-size: 11px; color: var(--dim); margin-top: 2px; }
+.ra-history-item .ra-hist-points {
+  font-size: 12px; font-weight: 800; color: var(--warn); flex-shrink: 0;
+}
+
+#ra-game-detail-header { display: flex; align-items: center; gap: 14px; margin: 16px 0 20px; }
+#ra-game-detail-header img { width: 64px; height: 64px; border-radius: 10px; }
+#ra-game-detail-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 10px;
+}
+.ra-ach-card {
+  display: flex; gap: 10px; padding: 10px; border-radius: 10px;
+  background: var(--panel2); border: 1px solid var(--border); position: relative;
+}
+.ra-ach-card.locked { opacity: 0.45; }
+.ra-ach-card img { width: 48px; height: 48px; border-radius: 8px; flex-shrink: 0; }
+.ra-ach-card .ra-ach-title { font-size: 13px; font-weight: 700; }
+.ra-ach-card .ra-ach-desc { font-size: 11.5px; color: var(--dim); margin-top: 2px; line-height: 1.4; }
+.ra-ach-card .ra-ach-points { font-size: 11px; color: var(--warn); font-weight: 700; margin-top: 4px; }
+
+#ra-panel-games .empty, #ra-panel-recent .empty { grid-column: 1/-1; text-align: center; color: var(--dim); padding: 40px 0; }
+
+#ach-source-tabs { margin-bottom: 20px; }
+.ach-source-panel { min-height: 200px; }
+
+#mh-header, .mh-header-layout { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 16px; }
+#mh-header h2, .mh-header-layout h2 { font-size: 20px; margin-bottom: 6px; }
+#mh-header p, .mh-header-layout p { max-width: 640px; }
+#mh-tabs { margin-bottom: 18px; }
+
+.ach-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; }
+.ach-card {
+  padding: 12px 14px; border-radius: 12px; background: var(--panel2); border: 1px solid var(--border);
+  position: relative; transition: border-color 0.2s var(--ease), transform 0.2s var(--ease);
+}
+.ach-card.earned { border-color: rgba(74,222,128,0.4); }
+.ach-card .ach-title { font-size: 13px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.ach-card.earned .ach-title .icon { color: var(--ok); }
+.ach-card:not(.earned) .ach-title { color: var(--dim); }
+.ach-card .ach-desc { font-size: 11.5px; color: var(--dim); margin: 4px 0 8px; line-height: 1.4; }
+.ach-card .ach-sub { font-size: 10.5px; color: var(--dim); margin-bottom: 6px; }
+.ach-grid .empty { grid-column: 1/-1; text-align: center; color: var(--dim); padding: 40px 0; }
+
+/* ---- Logro recién desbloqueado (últimos 5 min): destello + cinta ---- */
+.ach-card.recent, .ra-ach-card.recent {
+  border-color: var(--warn); animation: ach-glow 2.2s ease-in-out 3;
+}
+@keyframes ach-glow {
+  0%, 100% { box-shadow: 0 0 0 rgba(251,191,36,0); }
+  50% { box-shadow: 0 0 18px rgba(251,191,36,0.55); }
+}
+.ach-new-ribbon {
+  position: absolute; top: -8px; right: 10px; font-size: 9.5px; font-weight: 800;
+  text-transform: uppercase; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 999px;
+  background: var(--warn); color: #1a1200; box-shadow: 0 2px 8px rgba(251,191,36,0.4);
+}
+
+/* ---------- Skeletons de carga ---------- */
+@keyframes skeleton-shimmer {
+  0% { background-position: -300px 0; }
+  100% { background-position: 300px 0; }
+}
+.skeleton {
+  background: linear-gradient(90deg, var(--panel2) 25%, #232838 37%, var(--panel2) 63%);
+  background-size: 600px 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  border-radius: 8px;
+}
+.skeleton-line { display: block; height: 12px; margin: 6px 0; border-radius: 4px; }
+.skeleton-line.short { width: 40%; }
+.skeleton-line.medium { width: 65%; }
+.skeleton-line.long { width: 90%; }
+.skeleton-card {
+  border-radius: 10px; overflow: hidden; background: var(--panel2);
+}
+.skeleton-card .skeleton-cover { width: 100%; aspect-ratio: var(--cover-aspect, 2 / 3); }
+.skeleton-card .skeleton-title { height: 11px; margin: 8px; border-radius: 4px; }
+.skeleton-pill { height: 24px; width: 90px; border-radius: 999px; display: inline-block; }
+.console-photo-box.loading::before {
+  content: ''; position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 25%, rgba(255,255,255,0.06) 37%, transparent 63%);
+  background-size: 600px 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+/* ---------- Toasts (esquina inferior) ---------- */
+#toast-container {
+  position: fixed; right: 20px; bottom: 20px; z-index: 10000;
+  display: flex; flex-direction: column-reverse; gap: 10px;
+  pointer-events: none;
+}
+.toast {
+  pointer-events: auto;
+  display: flex; align-items: center; gap: 10px;
+  min-width: 240px; max-width: 360px;
+  background: var(--panel); border: 1px solid var(--border); border-left: 3px solid var(--accent);
+  border-radius: 10px; padding: 12px 14px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  font-size: 13px; font-weight: 600; color: var(--text);
+  animation: toast-in 0.22s var(--ease);
+}
+.toast.leaving { animation: toast-out 0.22s var(--ease) forwards; }
+.toast .icon { flex-shrink: 0; }
+.toast-msg { flex: 1; line-height: 1.4; }
+.toast.success { border-left-color: var(--ok); }
+.toast.success .icon { color: var(--ok); }
+.toast.error { border-left-color: var(--bad); }
+.toast.error .icon { color: var(--bad); }
+.toast.info { border-left-color: var(--accent); }
+@keyframes toast-in {
+  0% { opacity: 0; transform: translateX(30px) scale(0.95); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
+@keyframes toast-out {
+  0% { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(30px) scale(0.95); }
+}
+
+/* ---------- Búsqueda con resaltado ---------- */
+mark.search-hl {
+  background: rgba(109,93,240,0.4); color: #fff;
+  border-radius: 3px; padding: 0 1px;
+}
+
+/* ---------- Ordenar consolas retro ---------- */
+#retro-console-sort { align-items: center; margin-bottom: 4px; }
+#retro-console-sort .sort-label { font-size: 11px; color: var(--dim); font-weight: 700; margin-right: 2px; }
+.console-gen-header {
+  grid-column: 1/-1;
+  font-size: 11px; text-transform: uppercase; letter-spacing: 1.5px;
+  color: var(--accent); font-weight: 800; margin: 10px 0 -4px; padding-left: 2px;
+}
+.console-gen-header:first-child { margin-top: 0; }
+
+/* ---------- Indicador deslizante de pestañas de Ajustes ---------- */
+#settings-tabs { position: relative; }
+.settings-tab.active { border-bottom-color: transparent; }
+#settings-tab-indicator {
+  position: absolute; bottom: 0; height: 2px; left: 0; width: 0;
+  background: var(--accent);
+  transition: left 0.25s var(--ease), width 0.25s var(--ease);
+  border-radius: 2px;
+}
+
+/* ---- Lista de juegos con logros desplegables (Por juego: Steam/Retro) ---- */
+.ach-game-list { display: flex; flex-direction: column; gap: 10px; }
+.ach-game-list .empty { text-align: center; color: var(--dim); padding: 40px 0; }
+.ach-game-row { background: var(--panel2); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+.ach-game-row-head {
+  width: 100%; display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+  background: none; border: none; color: var(--text); cursor: pointer; text-align: left; font: inherit;
+}
+.ach-game-row-head:hover { background: color-mix(in srgb, var(--text) 5%, transparent); }
+.ach-game-icon { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #05060a; }
+.ach-game-icon-placeholder { display: flex; align-items: center; justify-content: center; font-size: 22px; }
+.ach-game-icon-mono {
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 15px; letter-spacing: 0.5px; color: rgba(255,255,255,0.92);
+  text-shadow: 0 2px 6px rgba(0,0,0,0.4);
+}
+.ach-game-row-info { flex: 1; min-width: 0; }
+.ach-game-row-title { font-size: 14px; font-weight: 700; margin-bottom: 5px; }
+.ach-game-row-title .ach-sub { font-size: 11px; color: var(--dim); font-weight: 500; }
+.ach-game-row-chevron { color: var(--dim); flex-shrink: 0; transition: transform 0.2s var(--ease); display: flex; }
+.ach-game-row-chevron.open { transform: rotate(180deg); }
+.ach-game-row-body {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 8px;
+  padding: 4px 14px 14px;
+}
+/* Sin esto, [hidden] pierde contra el display:grid de arriba (misma
+   especificidad, pero esta regla va después en la hoja) y el desplegable se
+   ve siempre expandido sin importar lo que haga el JS. */
+.ach-game-row-body[hidden] { display: none; }
+.ach-card.small { padding: 8px 10px; }
+.ach-card.small .ach-title { font-size: 12px; }
+.ach-card.small .ach-desc { font-size: 10.5px; margin: 2px 0 6px; }

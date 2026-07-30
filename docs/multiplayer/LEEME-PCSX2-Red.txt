@@ -1,0 +1,43 @@
+MULTIJUGADOR — PCSX2 (adaptador de red del PS2)
+================================================
+Aplica a: PS2.
+
+Requisito de base
+-------------------
+Esto SOLO funciona con juegos que YA tenían modo online en el PS2 real
+(usaban el Adaptador de Red / Network Adapter oficial de Sony). PCSX2 no
+agrega online a un juego que nunca lo tuvo — emula el hardware de red,
+no inventa un servidor nuevo.
+
+Configurar el adaptador de red (una sola vez)
+-------------------------------------------------
+1. En PCSX2: Ajustes > Adaptador de red (DEV9).
+2. Elegí el modo según tu conexión:
+   - Si usás WiFi: elegí "SOCKETS".
+   - Si usás cable (Ethernet) y tu placa de red soporta "modo
+     promiscuo": elegí "PCAP Switched" (mejor compatibilidad).
+   - Si "PCAP Switched" no anda: usá "Bridged" en su lugar.
+3. Activá el adaptador de red (tildá la casilla de habilitarlo).
+
+Configurar la red DENTRO del juego
+-------------------------------------
+1. Entrá al juego y buscá su menú de "Configuración de red" / "Network
+   Setup" (varía según el juego, pero casi todos lo tienen en el menú
+   principal online).
+2. Estos juegos casi nunca soportan DHCP en el emulador — vas a tener
+   que poner una IP fija a mano. Coordinen entre los jugadores qué IPs
+   va a usar cada uno para que no se pisen.
+3. Guardá la configuración de red en la memory card cuando el juego lo
+   pida (algunos títulos la guardan ahí, no en el propio PCSX2).
+
+Antes de jugar con amigos
+----------------------------
+- Todos necesitan la MISMA versión de PCSX2 y la MISMA región de BIOS
+  (NTSC-U/PAL/NTSC-J) — si no coincide, la conexión falla o se
+  desincroniza.
+- Esto es más manual que RetroArch/Dolphin: cada juego de PS2 configura
+  su red de forma distinta, así que puede haber prueba y error la
+  primera vez.
+
+MegaHUB no gestiona la conexión por vos — esto se configura DENTRO de
+PCSX2 y del propio juego, MegaHUB solo te deja el juego listo para abrir.

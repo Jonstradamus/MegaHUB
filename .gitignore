@@ -1,0 +1,21 @@
+# Dependencias (se reinstalan con npm install)
+node_modules/
+
+# Build de electron-builder
+dist/
+
+# ROMs y emuladores del usuario — MegaHUB no distribuye ni versiona esto,
+# son archivos del propio usuario (grandes, y las ROMs con copyright de por
+# medio no deben terminar en un repo de código).
+roms/
+emulators/
+
+# Carpeta de pruebas/temporales
+scratch/
+
+# Logs
+*.log
+
+# Configuración local de electron-builder / firma de código (si aparece)
+.env
+.env.local
