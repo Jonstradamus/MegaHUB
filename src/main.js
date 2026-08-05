@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, dialog, screen } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, dialog, screen } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -44,8 +44,165 @@ const installSizeSvc = require('./services/installSize');
 const steamMatch = require('./services/steamMatch');
 const retroSkins = require('./services/retroSkins');
 const riotRequirements = require('./services/riotRequirements');
+const dealsEngine = require('./services/dealsEngine');
+const activityLog = require('./services/activityLog');
+const processWatcher = require('./services/processWatcher');
+const store = require('./util/store');
 
 let mainWindow = null;
+let tray = null;
+let isQuitting = false; // solo true cuando se elige "Salir" del tray — un close normal de ventana solo la oculta
+// Modo widget: MISMA ventana (mainWindow) se encoge a un tamaño chico en vez de
+// abrir una segunda ventana — evita re-escanear toda la biblioteca dos veces
+// (lo que causaba el "se congela por un rato prolongado" reportado) y
+// mantiene un solo proceso/estado. Ver win-enter-widget-mode más abajo.
+let normalBounds = null;   // bounds a restaurar al salir del modo widget
+let inWidgetMode = false;
+let widgetShape = 'rect';
+// 3 formas — ver ui/app.js initWidgetMode para qué muestra cada una:
+// cuadro (grid de iconos), rectángulo (lista con títulos, la de por defecto),
+// vertical (dock angosto de una sola columna, lanza directo al hacer clic).
+const WIDGET_SHAPES = {
+  square:   { width: 236, height: 256 },
+  rect:     { width: 260, height: 400 },
+  // 124px (antes 110): a 110 la barra superior (tabs PC/RETRO + selector de
+  // forma) no entraba de canto y se salía por el borde derecho de la
+  // ventana — ver el bloque de #widget-bar en column para esta forma en
+  // app.css, que además necesita este ancho mínimo para quedar centrado.
+  vertical: { width: 124, height: 440 },
+};
+
+/* ---- Auto-ocultar pegado al borde (estilo barra de tareas de Windows) ----
+   Al soltar el widget cerca de un borde de la pantalla, queda "pegado" (ver
+   el listener 'moved' en createWindow). Mientras esté pegado, sacar el mouse
+   de la ventana lo retrae a una tira fina (PEEK_SIZE) contra ese borde; volver
+   a pasar el mouse por esa tira lo despliega de nuevo — el hover lo maneja el
+   renderer (mouseenter/mouseleave sobre #widget-view, ver initWidgetMode en
+   ui/app.js) avisando acá por IPC, porque una ventana frameless no recibe
+   eventos de mouse del sistema fuera de sus propios bounds. */
+const SNAP_THRESHOLD = 28;
+const PEEK_SIZE = 10;
+const RETRACT_DELAY_MS = 260;
+let edgeSnap = null;        // 'left' | 'right' | 'top' | 'bottom' | null (no pegado a ningún borde)
+let retracted = false;      // true = actualmente reducido a la tira fina
+let retractTimer = null;
+let boundsAnimTimer = null; // tween en curso de doRetract()/doExpand() — ver animateBounds()
+let suppressMoveHandling = false; // evita que nuestros propios setBounds() se reinterpreten como un drag del usuario
+// Preferencia del usuario (Ajustes → Apariencia → "Auto-ocultar al pegarlo a
+// un borde"), la manda el renderer por IPC — ver win-widget-set-autohide más
+// abajo. Con esto en false el widget SIGUE pudiéndose pegar a un borde (es
+// solo una ayuda de posicionado, no molesta) pero nunca se retrae solo: se
+// queda fijo como un dock normal, tal como pidió el usuario.
+let autoHideEnabled = true;
+
+function clamp(v, min, max) { return Math.max(min, Math.min(v, max)); }
+
+function detectSnapEdge(bounds) {
+  const work = screen.getPrimaryDisplay().workArea;
+  const distances = {
+    left: bounds.x - work.x,
+    right: (work.x + work.width) - (bounds.x + bounds.width),
+    top: bounds.y - work.y,
+    bottom: (work.y + work.height) - (bounds.y + bounds.height),
+  };
+  let best = null, bestDist = SNAP_THRESHOLD + 1;
+  for (const [edge, d] of Object.entries(distances)) {
+    if (d >= 0 && d < bestDist) { bestDist = d; best = edge; }
+  }
+  return bestDist <= SNAP_THRESHOLD ? best : null;
+}
+
+// Bounds pegados al borde `edge` con las dimensiones dadas, conservando la
+// posición del otro eje (clampeada para que no se salga de la pantalla).
+function flushBoundsForEdge(edge, width, height, anchorBounds) {
+  const work = screen.getPrimaryDisplay().workArea;
+  if (edge === 'left' || edge === 'right') {
+    const y = clamp(anchorBounds.y, work.y, work.y + work.height - height);
+    const x = edge === 'left' ? work.x : work.x + work.width - width;
+    return { x, y, width, height };
+  }
+  const x = clamp(anchorBounds.x, work.x, work.x + work.width - width);
+  const y = edge === 'top' ? work.y : work.y + work.height - height;
+  return { x, y, width, height };
+}
+
+function withProgrammaticMove(fn) {
+  suppressMoveHandling = true;
+  fn();
+  setImmediate(() => { suppressMoveHandling = false; });
+}
+
+function notifyRetractChange() {
+  mainWindow?.webContents.send('widget-retract-change', retracted, edgeSnap);
+}
+
+// Anima el redimensionado/movimiento de la ventana en varios pasos en vez de
+// un solo setBounds() instantáneo — el segundo argumento `true` de
+// setBounds() solo anima en macOS, en Windows lo ignora por completo y el
+// widget se plegaba/desplegaba de un salto seco. Se interpola x/y/width/
+// height a mano con easeOutCubic (rápido al arrancar, se frena al llegar),
+// el mismo gesto que cualquier panel/drawer nativo.
+function animateBounds(target, duration = 190) {
+  if (!mainWindow) return;
+  clearTimeout(boundsAnimTimer);
+  const start = mainWindow.getBounds();
+  const startTime = Date.now();
+  suppressMoveHandling = true;
+  // Sin límites de tamaño durante el tween — min=max ya fijados al tamaño
+  // ANTERIOR bloquearían los frames intermedios apenas se aparta de ese valor.
+  mainWindow.setMinimumSize(1, 1);
+  mainWindow.setMaximumSize(0, 0);
+  function tick() {
+    if (!mainWindow) return;
+    const t = Math.min(1, (Date.now() - startTime) / duration);
+    const eased = 1 - Math.pow(1 - t, 3);
+    mainWindow.setBounds({
+      x: Math.round(start.x + (target.x - start.x) * eased),
+      y: Math.round(start.y + (target.y - start.y) * eased),
+      width: Math.round(start.width + (target.width - start.width) * eased),
+      height: Math.round(start.height + (target.height - start.height) * eased),
+    });
+    if (t < 1) {
+      boundsAnimTimer = setTimeout(tick, 16);
+    } else {
+      mainWindow.setMinimumSize(target.width, target.height);
+      mainWindow.setMaximumSize(target.width, target.height);
+      mainWindow.setBounds(target);
+      setImmediate(() => { suppressMoveHandling = false; });
+    }
+  }
+  tick();
+}
+
+function doRetract() {
+  if (!mainWindow || !edgeSnap || retracted) return;
+  const b = mainWindow.getBounds();
+  const vertical = edgeSnap === 'left' || edgeSnap === 'right';
+  const width = vertical ? PEEK_SIZE : b.width;
+  const height = vertical ? b.height : PEEK_SIZE;
+  animateBounds(flushBoundsForEdge(edgeSnap, width, height, b));
+  retracted = true;
+  notifyRetractChange();
+}
+
+function doExpand() {
+  if (!mainWindow || !edgeSnap || !retracted) return;
+  const { width, height } = WIDGET_SHAPES[widgetShape] || WIDGET_SHAPES.rect;
+  const b = mainWindow.getBounds();
+  animateBounds(flushBoundsForEdge(edgeSnap, width, height, b));
+  retracted = false;
+  notifyRetractChange();
+}
+
+function resetEdgeSnapState() {
+  clearTimeout(retractTimer);
+  retractTimer = null;
+  clearTimeout(boundsAnimTimer);
+  boundsAnimTimer = null;
+  suppressMoveHandling = false;
+  edgeSnap = null;
+  retracted = false;
+}
 
 function createWindow() {
   // Sin x/y, Electron debería centrar en la pantalla primaria — pero en
@@ -89,6 +246,17 @@ function createWindow() {
   });
   mainWindow.loadFile(path.join(__dirname, '..', 'ui', 'index.html'));
 
+  // Cerrar la ventana (X de la titlebar propia o win-close) ya NO mata la app:
+  // la oculta y sigue viva en la bandeja, igual que DERIVA Companion ("el
+  // gato") — así el monitor de procesos (processWatcher.js) sigue detectando
+  // sesiones aunque no se esté viendo la ventana. Solo "Salir" desde el tray
+  // realmente cierra.
+  mainWindow.on('close', (e) => {
+    if (isQuitting) return;
+    e.preventDefault();
+    mainWindow.hide();
+  });
+
   // El botón de maximizar/restaurar de la titlebar propia necesita saber el
   // estado real de la ventana (también cambia con doble-clic en la titlebar,
   // Win+Up, snap, etc. — no solo con el botón), así que se avisa al renderer
@@ -96,6 +264,25 @@ function createWindow() {
   const notifyMaximized = () => mainWindow.webContents.send('window-maximized-change', mainWindow.isMaximized());
   mainWindow.on('maximize', notifyMaximized);
   mainWindow.on('unmaximize', notifyMaximized);
+
+  // Detecta cuando el usuario suelta el widget cerca de un borde de la
+  // pantalla y lo deja pegado ahí (ver bloque "Auto-ocultar" más arriba).
+  // 'moved' (no 'move') dispara una sola vez al terminar el arrastre, no en
+  // cada pixel — evita pelearse con el drag del usuario mientras todavía
+  // está en curso.
+  mainWindow.on('moved', () => {
+    if (!inWidgetMode || suppressMoveHandling || retracted) return;
+    const bounds = mainWindow.getBounds();
+    const edge = detectSnapEdge(bounds);
+    edgeSnap = edge;
+    if (edge) {
+      const flush = flushBoundsForEdge(edge, bounds.width, bounds.height, bounds);
+      if (flush.x !== bounds.x || flush.y !== bounds.y) {
+        withProgrammaticMove(() => mainWindow.setBounds(flush, true));
+      }
+    }
+    notifyRetractChange();
+  });
 }
 
 /* ---------- Titlebar propia (frame:false) ---------- */
@@ -110,9 +297,90 @@ ipcMain.handle('win-maximize-toggle', () => {
 ipcMain.handle('win-close', () => mainWindow?.close());
 ipcMain.handle('win-is-maximized', () => !!mainWindow?.isMaximized());
 
+/* ---------- Modo widget (MegaHUB compacto en la misma ventana) ---------- */
+ipcMain.handle('win-enter-widget-mode', () => {
+  if (!mainWindow) return false;
+  if (!inWidgetMode) {
+    normalBounds = mainWindow.getBounds();
+    inWidgetMode = true;
+  }
+  resetEdgeSnapState();
+  const { width, height } = WIDGET_SHAPES[widgetShape] || WIDGET_SHAPES.rect;
+  const work = screen.getPrimaryDisplay().workArea;
+  const b = mainWindow.getBounds();
+  // Mantiene la esquina donde ya estaba la ventana en vez de saltar al centro.
+  const x = Math.max(work.x, Math.min(b.x, work.x + work.width - width));
+  const y = Math.max(work.y, Math.min(b.y, work.y + work.height - height));
+  // Tamaño fijo por forma: el widget es un panel chico "de un vistazo", no
+  // una ventana normal — si se pudiera arrastrar del borde para agrandarlo,
+  // la grilla de iconos (auto-fill/1fr) los infla hasta ocupar el hueco en
+  // vez de simplemente mostrar más, dejando cuadros gigantes con solo la
+  // letra de respaldo. Min = max = tamaño de la forma → resizable a secas
+  // ni hace falta, pero se deja también por las dudas (snap de Windows, etc).
+  mainWindow.setMinimumSize(width, height);
+  mainWindow.setMaximumSize(width, height);
+  mainWindow.setResizable(false);
+  mainWindow.setBounds({ x, y, width, height }, true);
+  mainWindow.setAlwaysOnTop(true);
+  mainWindow.setSkipTaskbar(true);
+  return true;
+});
+ipcMain.handle('win-set-widget-shape', (_ev, shape) => {
+  if (!mainWindow || !inWidgetMode || !WIDGET_SHAPES[shape]) return false;
+  widgetShape = shape;
+  const { width, height } = WIDGET_SHAPES[shape];
+  const b = mainWindow.getBounds();
+  clearTimeout(retractTimer);
+  retracted = false; // una forma nueva siempre entra expandida
+  const bounds = edgeSnap ? flushBoundsForEdge(edgeSnap, width, height, b) : { x: b.x, y: b.y, width, height };
+  withProgrammaticMove(() => {
+    mainWindow.setMinimumSize(width, height);
+    mainWindow.setMaximumSize(width, height);
+    mainWindow.setBounds(bounds, true);
+  });
+  notifyRetractChange();
+  return true;
+});
+ipcMain.handle('win-exit-widget-mode', () => {
+  if (!mainWindow) return false;
+  inWidgetMode = false;
+  resetEdgeSnapState();
+  mainWindow.setAlwaysOnTop(false);
+  mainWindow.setSkipTaskbar(false);
+  mainWindow.setResizable(true);
+  mainWindow.setMinimumSize(980, 600);
+  mainWindow.setMaximumSize(0, 0); // 0,0 = Electron: sin límite máximo
+  if (normalBounds) mainWindow.setBounds(normalBounds, true);
+  normalBounds = null;
+  return true;
+});
+ipcMain.handle('win-widget-hover-enter', () => {
+  clearTimeout(retractTimer);
+  if (edgeSnap && retracted) doExpand();
+  return true;
+});
+ipcMain.handle('win-widget-hover-leave', () => {
+  if (!edgeSnap || retracted || !autoHideEnabled) return false;
+  clearTimeout(retractTimer);
+  retractTimer = setTimeout(doRetract, RETRACT_DELAY_MS);
+  return true;
+});
+ipcMain.handle('win-widget-set-autohide', (_ev, enabled) => {
+  autoHideEnabled = !!enabled;
+  if (!autoHideEnabled) {
+    clearTimeout(retractTimer);
+    if (retracted) doExpand();
+  }
+  return true;
+});
+
 /* ---------- Companion (pill "DERIVA Companion") ---------- */
+// Solo el estado de conexión — la radio se sacó del pill (ver ui/app.js), así
+// que ya no hace falta exponer companion-send-command a la UI. La función de
+// enviar comandos sigue viva en companionBridge.js por si vuelve a usarse.
 ipcMain.handle('companion-get-status', () => companionBridge.getCompanionStatus());
-ipcMain.handle('companion-send-command', (_ev, cmd, value) => companionBridge.sendCommand(cmd, value));
+ipcMain.handle('companion-get-weekly-activity', () => activityLog.getWeeklyActivity());
+ipcMain.handle('companion-get-recently-played', (_ev, limit) => activityLog.getRecentlyPlayed(limit));
 
 /* ---------- Escaneo ---------- */
 
@@ -139,6 +407,11 @@ ipcMain.handle('scan-games', async () => {
 
   const games = [...installed, ...owned];
   games.sort((a, b) => a.title.localeCompare(b.title, 'es'));
+  // La lista de juegos de battlenet/riot/xbox instalados puede cambiar entre
+  // escaneos — el watcher de procesos (historial semanal del pill de
+  // Companion) necesita saber a qué .exe prestarle atención ahora.
+  processWatcher.setWatchTargets(installed);
+  activityLog.recordSteamSnapshotsIfNeeded();
   return {
     games,
     accounts: { gog: gogAccount.isConnected(), epic: epicAccount.isConnected() },
@@ -169,6 +442,10 @@ ipcMain.handle('launch-game', async (_ev, game) => {
     else if (game.platform === 'retroarch') { companionOverlay.ensureRetroArchBorderless(); scanRetroArch.launch(game); ok = true; }
     else if (game.launchUri) { await shell.openExternal(game.launchUri); ok = true; }
     else if (game.exePath) {
+      // La sesión de Rockstar/Ubisoft/EA la mide el watcher de procesos (ver
+      // processWatcher.js) por su nombre de .exe, no un listener acá — así
+      // cuenta la duración real sin importar si se abrió desde MegaHUB o
+      // desde el launcher nativo, y no se cuenta doble.
       spawn(game.exePath, [], { cwd: game.workDir || path.dirname(game.exePath), detached: true, stdio: 'ignore' }).unref();
       ok = true;
     }
@@ -332,10 +609,14 @@ ipcMain.handle('retro-scan-roms', async (_ev, { id, repo }) => {
 // -L <core> <rom>; para las standalone, abre el emulador con la ROM como
 // argumento. Si falta el emulador o el core, avisa qué falta en vez de fallar
 // en silencio.
-ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulatorName, romPath }) => {
+ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulatorName, romPath, title: providedTitle }) => {
   try {
     if (!romPath || !fs.existsSync(romPath)) return { error: 'No se encontró el archivo de la ROM.' };
-    const title = romMetadata.detectTitle(consoleId, romPath) || path.basename(romPath).replace(/\.[^.]+$/, '');
+    // El renderer manda el título ya cotejado contra el catálogo libretro-
+    // thumbnails (el mismo que muestra la biblioteca) cuando lo tiene — evita
+    // que la sesión/logro se guarde con el nombre crudo del archivo (ej.
+    // "hotd2") en vez del real ("The House of the Dead 2").
+    const title = providedTitle || romMetadata.detectTitle(consoleId, romPath) || path.basename(romPath).replace(/\.[^.]+$/, '');
     // MegaHUB SÍ lanza el proceso del emulador él mismo aquí (a diferencia de
     // Steam/Epic/etc., que delegan en un launcher externo) — así que puede
     // medir la sesión real de juego para los logros por juego/por consola.
@@ -350,6 +631,9 @@ ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulato
       });
       child.on('exit', () => {
         achievementEngine.endRetroSession(session);
+        const minutes = (Date.now() - session.startedAt) / 60000;
+        activityLog.logSession({ platform: 'retro', title: session.title, minutes });
+        derivaBridge.setLastSession({ platform: 'retro', title: session.title, minutes });
         derivaBridge.setNowPlaying(null);
       });
     };
@@ -443,6 +727,17 @@ ipcMain.handle('retro-pick-roms-folder', async (_ev, consoleId) => {
 ipcMain.handle('retro-clear-emulator-location', (_ev, consoleId) => { retroFolders.clearCustomEmuDir(consoleId); return retroFolders.getLocationInfo(consoleId); });
 ipcMain.handle('retro-clear-roms-location', (_ev, consoleId) => { retroFolders.clearCustomRomDir(consoleId); return retroFolders.getLocationInfo(consoleId); });
 
+// Raíz por defecto para TODAS las consolas que no tengan su propio ubicador
+// (ver arriba) — por defecto Documentos\MegaHUB, cambiable desde Ajustes
+// generales (Modo Retro) para quien prefiera otro disco/carpeta.
+ipcMain.handle('retro-get-default-root', () => ({ root: retroFolders.ROOT, isDefault: retroFolders.ROOT === retroFolders.DOCUMENTS_ROOT, defaultRoot: retroFolders.DOCUMENTS_ROOT }));
+ipcMain.handle('retro-pick-default-root', async () => {
+  const res = await dialog.showOpenDialog(mainWindow, { title: 'Selecciona dónde guardar emuladores y ROMs por defecto', properties: ['openDirectory', 'createDirectory'] });
+  if (res.canceled || !res.filePaths[0]) return null;
+  return retroFolders.setDefaultRoot(res.filePaths[0]);
+});
+ipcMain.handle('retro-reset-default-root', () => retroFolders.resetDefaultRoot());
+
 // Presets de resolución/rendimiento (1080p/2K/4K/nativo): escriben directamente
 // en el archivo de configuración real de cada emulador — ver resolutionPresets.js.
 ipcMain.handle('retro-apply-resolution-preset', (_ev, { id, tier }) => resolutionPresets.applyPreset(id, tier));
@@ -514,6 +809,17 @@ ipcMain.handle('backup-import', async () => {
   } catch (e) { return { error: String(e.message || e) }; }
 });
 
+// Ofertas de Steam/GOG/Epic (CheapShark) + recomendación personalizada según
+// microgénero más jugado — ver services/dealsEngine.js.
+ipcMain.handle('deals-get-top', async (_ev, force) => {
+  try { return await dealsEngine.getTopDeals({ force }); }
+  catch (e) { return { error: String(e.message || e), steam: [], gog: [], epic: [], other: [] }; }
+});
+ipcMain.handle('deals-get-recommendation', async (_ev, force) => {
+  try { return { recommendation: await dealsEngine.getRecommendations({ force }) }; }
+  catch (e) { return { error: String(e.message || e) }; }
+});
+
 // Motor de logros propio de MegaHUB (ver achievementEngine.js): global +
 // por-juego de Steam (horas reales) + por-juego/por-consola de Retro
 // (sesiones reales medidas por MegaHUB) + "coleccionista" por consola.
@@ -572,10 +878,65 @@ ipcMain.handle('mh-ach-get-progress', async (_ev, { libraryGamesCount, consoleNa
     const earned = full.filter(a => a.earned && a.earnedAt).sort((a, b) => b.earnedAt - a.earnedAt);
     derivaBridge.setAchievementsSummary({
       unlockedTotal: full.filter(a => a.earned).length,
-      recentlyUnlocked: earned.slice(0, 3).map(a => ({ title: a.title, earnedAt: new Date(a.earnedAt).toISOString() })),
+      // scope/consoleId/appid/gameTitle (cuando el logro es "por juego", no
+      // global — ver evaluate() en achievementEngine.js) viajan también, para
+      // que DERIVA pueda agrupar logros por juego (misma idea que ya hace
+      // Steam en su propia sección de logros) en vez de solo mostrar el total.
+      recentlyUnlocked: earned.slice(0, 3).map(a => ({
+        title: a.title, description: a.description || null, earnedAt: new Date(a.earnedAt).toISOString(),
+        scope: a.scope || null, consoleId: a.consoleId ?? null, appid: a.appid ?? null, gameTitle: a.gameTitle ?? null,
+      })),
     });
 
     return full;
+  } catch (e) { return { error: String(e.message || e) }; }
+});
+
+// Perfil — estadísticas unificadas (Fase 2 del plan de Inicio/Perfil). Cruza
+// las DOS únicas fuentes con horas reales de por vida (Steam vía
+// localconfig.vdf y Retro vía las sesiones que MegaHUB mismo mide) — el
+// resto de launchers (Epic/GOG/Battle.net/Riot/Rockstar/Ubisoft/EA/Xbox) se
+// abren por protocolo y MegaHUB nunca ve cuánto duró la sesión, así que acá
+// se listan como "sin datos de horas" en vez de inventar un número (mismo
+// criterio que ya documenta activityLog.js). consoleNames viene del
+// renderer, igual que en mh-ach-get-progress — main.js no tiene el
+// CONSOLE_REGISTRY.
+ipcMain.handle('get-profile-stats', async (_ev, { consoleNames = {} } = {}) => {
+  try {
+    const steamTimes = steamPlaytimeSvc.getAllPlaytimes(); // { appid: { playtimeMinutes, lastPlayed } }
+    const steamTitles = {};
+    for (const appid of Object.keys(steamTimes)) {
+      const meta = await getSteamMeta(appid);
+      steamTitles[appid] = (meta && meta.name) || `Steam App ${appid}`;
+    }
+    const topSteamGames = Object.entries(steamTimes)
+      .map(([appid, info]) => ({ appid, title: steamTitles[appid], minutes: info.playtimeMinutes || 0 }))
+      .filter(g => g.minutes > 0)
+      .sort((a, b) => b.minutes - a.minutes)
+      .slice(0, 8);
+    const totalSteamMinutes = Object.values(steamTimes).reduce((s, g) => s + (g.playtimeMinutes || 0), 0);
+
+    const retro = achievementEngine.getRetroStats(); // { byConsole, byGame }
+    const topRetroGames = Object.entries(retro.byGame)
+      .map(([key, g]) => ({ key, title: g.title, consoleId: g.consoleId, minutes: Math.round(g.playtimeMs / 60000) }))
+      .filter(g => g.minutes > 0)
+      .sort((a, b) => b.minutes - a.minutes)
+      .slice(0, 8);
+    const byConsole = Object.entries(retro.byConsole)
+      .map(([consoleId, c]) => ({ consoleId, name: consoleNames[consoleId] || consoleId, minutes: Math.round(c.playtimeMs / 60000) }))
+      .filter(c => c.minutes > 0)
+      .sort((a, b) => b.minutes - a.minutes);
+    const totalRetroMinutes = byConsole.reduce((s, c) => s + c.minutes, 0);
+
+    const generic = achievementEngine.getGenericActivity(); // { platformsUsed, launchCount, daysPlayed, ... }
+    const untrackedPlatforms = (generic.platformsUsed || []).filter(p => p !== 'steam' && p !== 'retroarch');
+
+    return {
+      totalSteamMinutes, totalRetroMinutes,
+      topSteamGames, topRetroGames, byConsole,
+      untrackedPlatforms,
+      daysPlayed: (generic.daysPlayed || []).length,
+    };
   } catch (e) { return { error: String(e.message || e) }; }
 });
 
@@ -595,10 +956,10 @@ ipcMain.handle('retro-download-emulator', async (_ev, { id, name, emulator }) =>
 // el renderer YA mostró nombre/tamaño y el usuario confirmó antes de llegar
 // a texture-download-install.
 ipcMain.handle('texture-search-game', (_ev, title) => textureDownload.searchGame(title));
-ipcMain.handle('texture-list-mods', (_ev, { gameId, page }) => textureDownload.listMods(gameId, page));
+ipcMain.handle('texture-list-mods', (_ev, { gameId, page, sort, perPage }) => textureDownload.listMods(gameId, page, sort, perPage));
 ipcMain.handle('texture-get-download-info', (_ev, modId) => textureDownload.getModDownloadInfo(modId));
-ipcMain.handle('texture-download-install', async (_ev, { consoleId, romPath, modId }) => {
-  try { return await textureDownload.downloadAndInstall(consoleId, romPath, modId); }
+ipcMain.handle('texture-download-install', async (_ev, { consoleId, romPath, mod }) => {
+  try { return await textureDownload.downloadAndInstall(consoleId, romPath, mod); }
   catch (e) { return { error: String(e.message || e) }; }
 });
 // Para el badge "Texturas HD disponibles" en el catálogo de juegos NO
@@ -759,10 +1120,53 @@ ipcMain.handle('get-install-size', async (_ev, dir) => {
   return bytes;
 });
 
+/* ---------- Bandeja del sistema + inicio con Windows ("como el gato") ----------
+   MegaHUB necesita seguir corriendo en segundo plano para que processWatcher.js
+   detecte sesiones aunque la ventana esté cerrada/oculta — sin esto, cerrar la
+   ventana mataba el proceso y con él todo el monitor de actividad semanal. */
+function buildTray() {
+  if (!tray) {
+    let icon;
+    try { icon = nativeImage.createFromPath(path.join(__dirname, '..', 'build', 'icon.ico')); } catch { icon = null; }
+    tray = new Tray(icon && !icon.isEmpty() ? icon : nativeImage.createEmpty());
+    tray.setToolTip('DERIVA MegaHUB');
+    tray.on('double-click', () => { mainWindow?.show(); mainWindow?.focus(); });
+  }
+  const autostart = app.getLoginItemSettings().openAtLogin;
+  tray.setContextMenu(Menu.buildFromTemplate([
+    { label: 'Abrir MegaHUB', click: () => { mainWindow?.show(); mainWindow?.focus(); } },
+    { label: 'Iniciar con Windows', type: 'checkbox', checked: autostart,
+      click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked }) },
+    { type: 'separator' },
+    { label: 'Salir', click: () => { isQuitting = true; app.quit(); } },
+  ]));
+}
+
 app.whenReady().then(() => {
+  // Primera vez que corre esta versión con soporte de bandeja: activa el
+  // inicio automático por defecto una sola vez — después el usuario decide
+  // libremente desde el menú del tray, sin que un reinicio de MegaHUB se lo
+  // vuelva a pisar.
+  const autostartDefault = store.load('autostart-default-applied', { applied: false });
+  if (!autostartDefault.applied) {
+    try { app.setLoginItemSettings({ openAtLogin: true }); } catch { /* no soportado */ }
+    store.save('autostart-default-applied', { applied: true });
+  }
+
   createWindow();
+  buildTray();
+  // Si Windows lanzó MegaHUB al iniciar sesión, se queda en segundo plano en
+  // la bandeja en vez de abrir la ventana de golpe — igual que el gato.
+  if (app.getLoginItemSettings().wasOpenedAtLogin) mainWindow.hide();
+
   // Puente Deriva MegaHUB (Fase 4): anuncia cómo relanzarme, para el botón
   // "Abrir MegaHUB" de DERIVA Companion.
   derivaBridge.setAppInfo({ exePath: app.isPackaged ? process.execPath : null });
+  // Historial semanal del pill de Companion (ver activityLog.js/processWatcher.js) —
+  // arranca ya con lo que haya en disco; setWatchTargets() se completa recién
+  // con el primer scan-games.
+  activityLog.recordSteamSnapshotsIfNeeded();
+  processWatcher.start();
 });
-app.on('window-all-closed', () => app.quit());
+app.on('window-all-closed', () => { /* vive en el tray */ });
+app.on('before-quit', () => { isQuitting = true; });

@@ -32,6 +32,9 @@ const ICON_PATHS = {
   winRestore: '<rect x="7.5" y="4.5" width="10" height="10" rx="1.3"/><path d="M6.5 8.5H5.8A1.3 1.3 0 0 0 4.5 9.8v8.4a1.3 1.3 0 0 0 1.3 1.3h8.4a1.3 1.3 0 0 0 1.3-1.3v-0.7"/>',
   winClose: '<line x1="6" y1="6" x2="18" y2="18"/><line x1="6" y1="18" x2="18" y2="6"/>',
   users: '<circle cx="9" cy="8" r="3.2"/><path d="M3.5 19.5c0-3.6 2.9-6 5.5-6s5.5 2.4 5.5 6"/><circle cx="17" cy="9" r="2.6"/><path d="M15 13.2c2.3.4 4 2.3 4 6.3"/>',
+  tag: '<path d="M12.7 3.5H5.8A2.3 2.3 0 0 0 3.5 5.8v6.9c0 .6.24 1.19.67 1.62l8.4 8.4a2.3 2.3 0 0 0 3.26 0l5.03-5.03a2.3 2.3 0 0 0 0-3.26l-8.4-8.4A2.3 2.3 0 0 0 12.7 3.5z"/><circle cx="8.6" cy="8.6" r="1.6" fill="currentColor" stroke="none"/>',
+  home: '<path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5v-6h4v6"/>',
+  chart: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M3 20h18"/>',
 };
 function icon(name, cls) {
   const body = ICON_PATHS[name];
@@ -53,7 +56,7 @@ const PLAT_LABEL = {
   steam: 'Steam', epic: 'Epic Games', gog: 'GOG',
   battlenet: 'Battle.net', riot: 'Riot Games', xbox: 'Xbox',
   rockstar: 'Rockstar Games', ubisoft: 'Ubisoft Connect', ea: 'EA App',
-  retroarch: 'RetroArch',
+  retroarch: 'RetroArch', retro: 'Retro',
 };
 // Abreviaturas en texto, no emojis: un emoji mal renderizado en Windows puede
 // confundirse con el icono nativo de "imagen rota" del navegador.
@@ -213,12 +216,19 @@ let allGames = [];
 let visible = [];
 let selectedIndex = 0;
 let metaById = {};   // id → metadata (géneros, fecha, requisitos, trailer)
-let viewMode = localStorage.getItem('megahub-view') || 'dock'; // dock | list
+// Instalaciones nuevas (sin nada guardado todavía) aterrizan en Inicio, no
+// en la grilla completa — quien ya tenía una vista elegida (dock/list/etc.)
+// conserva la suya tal cual, esto solo cambia el default de un perfil nuevo.
+let viewMode = localStorage.getItem('megahub-view') || 'home'; // home | dock | list
 let videoAllowedFor = null; // id del juego donde el usuario hizo click explícito (habilita el video)
 
 // Plataformas ocultas por el usuario desde Ajustes (persistido)
 const disabledPlatforms = new Set(JSON.parse(localStorage.getItem('megahub-disabled-platforms') || '[]'));
 let retroEnabled = localStorage.getItem('megahub-retro-enabled') !== 'off';
+// Ajustes → Apariencia → "Auto-ocultar al pegarlo a un borde": si está en
+// 'off', el widget se puede seguir pegando a un borde (posicionado) pero
+// nunca se retrae solo — ver setupAppearanceTab() y win-widget-set-autohide en main.js.
+let widgetAutoHide = localStorage.getItem('megahub-widget-autohide') !== 'off';
 
 // Juegos ocultos individualmente (acción en lote u "Ocultar" — ver más abajo),
 // distinto de las plataformas enteras deshabilitadas en Ajustes.
@@ -244,6 +254,9 @@ const sgdbInput = document.getElementById('sgdb-key');
 const sgdbSaveBtn = document.getElementById('sgdb-save');
 const retroWrap = document.getElementById('retro-wrap');
 const achievementsWrap = document.getElementById('achievements-wrap');
+const dealsWrap = document.getElementById('deals-wrap');
+const homeWrap = document.getElementById('home-wrap');
+const profileWrap = document.getElementById('profile-wrap');
 
 // Estado de la vista Retro — declarado aquí (antes de applyViewMode()/updateSidebarMode(),
 // que ya se invocan más abajo) para evitar un ReferenceError de zona muerta temporal.
@@ -417,6 +430,43 @@ function showToast(message, type = 'info', duration = 4200) {
   setTimeout(remove, duration);
 }
 
+// Toast de logro desbloqueado — antes compartía el mismo componente genérico
+// que "mod instalado" o "carpeta creada" (Fase 4, pulido): un logro es el
+// único aviso que un jugador quiere que se sienta como un evento, así que
+// tiene su propio look (dorado, trofeo grande, más tiempo en pantalla) en
+// vez de reusar showToast() con el ícono de rayo genérico.
+function showAchievementToast(a) {
+  const el = document.createElement('div');
+  el.className = 'toast achievement';
+  el.innerHTML = `
+    ${icon('trophy')}
+    <span class="toast-ach-body">
+      <span class="toast-ach-eyebrow">Logro desbloqueado</span>
+      <span class="toast-msg"></span>
+    </span>`;
+  el.querySelector('.toast-msg').textContent = a.title;
+  el.title = a.description || '';
+  toastContainer.appendChild(el);
+  const remove = () => {
+    el.classList.add('leaving');
+    el.addEventListener('animationend', () => el.remove(), { once: true });
+  };
+  setTimeout(remove, 6500);
+}
+
+// Nunca se re-avisa el mismo logro 2 veces en la misma sesión, aunque
+// fetchMhAchievements() se llame de nuevo (abrir Logros, abrir otra ficha de
+// juego, etc. todos comparten mhAchCache).
+const toastedAchievementIds = new Set();
+function toastNewlyUnlockedAchievements(list) {
+  if (!Array.isArray(list)) return;
+  for (const a of list) {
+    if (!isRecentlyEarned(a) || toastedAchievementIds.has(a.id)) continue;
+    toastedAchievementIds.add(a.id);
+    showAchievementToast(a);
+  }
+}
+
 /* ---- Portada compartida por los modos ---- */
 
 // Renderiza SIEMPRE desde cero (usar solo cuando llega una portada nueva de
@@ -444,7 +494,18 @@ function renderCoverInto(slot, game) {
     img.onload = () => {
       // Algunas CDNs (visto en Steam para lanzamientos muy nuevos) devuelven 200
       // con una imagen "no disponible" minúscula en vez de un 404 real.
-      if (img.naturalWidth < 40 || img.naturalHeight < 40) fail();
+      if (img.naturalWidth < 40 || img.naturalHeight < 40) { fail(); return; }
+      // El respaldo header_image (banner ANCHO horizontal de la ficha de
+      // Steam) puede ser la única imagen que exista para un lanzamiento muy
+      // reciente — la cápsula vertical library_600x900 a veces se sube recién
+      // días/semanas después (visto en vivo con Resident Evil Requiem y Halo:
+      // Campaign Evolved). Se ve mal recortada en un slot vertical, pero
+      // antes se quedaba así para siempre porque "cargó bien" y nadie volvía
+      // a intentar nada. Ahora, en cuanto se muestra ese recorte de urgencia,
+      // se pide en silencio una portada vertical real (SteamGridDB si el
+      // usuario tiene key, si no Wikipedia) y la reemplaza sola si aparece —
+      // sin bloquear lo que ya se ve mientras tanto.
+      if (isFallback && game.platform === 'steam') retryCoverViaExternalFallback(game);
     };
     // NOTA: se probó un timeout fijo acá como red de seguridad para portadas
     // que ni cargan ni fallan — se revirtió porque con una biblioteca grande
@@ -593,10 +654,13 @@ function refreshSelection() {
 /* ================= Modo de vista ================= */
 
 function applyViewMode() {
+  homeWrap.hidden = viewMode !== 'home';
   dockWrap.hidden = viewMode !== 'dock';
   list.hidden = viewMode !== 'list';
   retroWrap.hidden = viewMode !== 'retro';
   achievementsWrap.hidden = viewMode !== 'achievements';
+  dealsWrap.hidden = viewMode !== 'deals';
+  profileWrap.hidden = viewMode !== 'profile';
   document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === viewMode));
   updateSidebarMode();
   updateSearchContext();
@@ -610,10 +674,13 @@ const modeTransitionOverlay = document.getElementById('mode-transition-overlay')
 const modeTransitionLabel = document.getElementById('mode-transition-label');
 const modeTransitionIcon = document.getElementById('mode-transition-icon');
 const MODE_TRANSITION_META = {
+  home: { label: 'Inicio', color: 'var(--accent)', icon: 'home' },
   dock: { label: 'PC', color: 'var(--accent)', icon: 'grid' },
   list: { label: 'PC', color: 'var(--accent)', icon: 'grid' },
   retro: { label: 'Modo Retro', color: 'var(--retro-accent)', icon: 'gamepad' },
   achievements: { label: 'Logros', color: 'var(--warn)', icon: 'trophy' },
+  deals: { label: 'Ofertas', color: 'var(--ok)', icon: 'tag' },
+  profile: { label: 'Perfil', color: 'var(--great)', icon: 'chart' },
 };
 function switchViewMode(nextMode) {
   if (nextMode === viewMode) return;
@@ -640,6 +707,16 @@ function switchViewMode(nextMode) {
       } else if (viewMode === 'achievements') {
         renderDetails(null);
         initAchievementsView();
+      } else if (viewMode === 'deals') {
+        renderDetails(null);
+        selectedDealKey = null;
+        initDealsView();
+      } else if (viewMode === 'home') {
+        renderDetails(null);
+        initHomeView();
+      } else if (viewMode === 'profile') {
+        renderDetails(null);
+        initProfileView();
       } else {
         refreshSelection();
       }
@@ -658,6 +735,9 @@ document.querySelectorAll('.view-btn').forEach(btn => {
 applyViewMode();
 if (viewMode === 'retro') initRetroView();
 if (viewMode === 'achievements') initAchievementsView();
+if (viewMode === 'deals') initDealsView();
+if (viewMode === 'home') initHomeView();
+if (viewMode === 'profile') initProfileView();
 
 // Biblioteca y modo retro son secciones separadas dentro del mismo hub: la barra
 // lateral y el buscador cambian de contexto según dónde estés, en vez de ser
@@ -666,8 +746,16 @@ function updateSidebarMode() {
   const mainSidebar = document.getElementById('sidebar');
   const retroSidebar = document.getElementById('retro-sidebar');
   const showRetro = viewMode === 'retro';
-  // Logros es un dashboard a ancho completo, sin panel lateral de filtros.
-  mainSidebar.hidden = showRetro || viewMode === 'achievements';
+  // Logros y Ofertas son dashboards a ancho completo, sin filtros de
+  // biblioteca — pero antes esto ocultaba el sidebar ENTERO, logo incluido,
+  // así que la columna de la izquierda desaparecía de golpe y la topbar
+  // quedaba arrancando en otra posición que en PC/Retro (el "desnivel"
+  // reportado). Ahora se mantiene visible, solo se esconden sus secciones de
+  // filtros (ver .sidebar-minimal en app.css) y queda el logo + el pill de
+  // Companion, igual que en el resto de vistas.
+  const minimal = viewMode === 'achievements' || viewMode === 'deals' || viewMode === 'home' || viewMode === 'profile';
+  mainSidebar.hidden = showRetro;
+  mainSidebar.classList.toggle('sidebar-minimal', minimal);
   retroSidebar.hidden = !showRetro;
   if (showRetro) {
     // Dentro de retro, el sidebar solo tiene sentido con una consola elegida:
@@ -682,6 +770,12 @@ function updateSearchContext() {
     searchInput.placeholder = currentConsole ? 'Buscar en el catálogo…  ( / )' : 'Buscar consola…  ( / )';
   } else if (viewMode === 'achievements') {
     searchInput.placeholder = 'Logros — usa las pestañas de abajo';
+  } else if (viewMode === 'deals') {
+    searchInput.placeholder = 'Ofertas — sin buscador, revisa las secciones';
+  } else if (viewMode === 'home') {
+    searchInput.placeholder = 'Inicio — buscá desde PC o Retro  ( / )';
+  } else if (viewMode === 'profile') {
+    searchInput.placeholder = 'Perfil — sin buscador, revisa las secciones';
   } else {
     searchInput.placeholder = 'Buscar juego…  ( / )';
   }
@@ -707,57 +801,284 @@ document.getElementById('sidebar-toggle').addEventListener('click', () => {
   window.megahub.onWindowMaximizedChange(setMaximizedIcon);
 })();
 
-/* ---- Pill "DERIVA Companion" (estado + mini-control de radio) ----
+/* ---- Modo widget: MegaHUB compacto en la MISMA ventana (no una segunda
+   ventana aparte) — reusa allGames tal cual ya lo dejó rescan(), sin volver a
+   escanear la biblioteca. Se activa/desactiva con el botón de la esquina
+   superior izquierda de la titlebar (#tb-widget), del lado contrario a
+   minimizar/maximizar/cerrar. ---- */
+// Asignada dentro de initWidgetMode() — puente para que applyCoverToElements()
+// pueda refrescar un tile ya montado del widget cuando llega una portada tardía.
+let widgetRefreshTile = null;
+(function initWidgetMode() {
+  const toggleBtn   = document.getElementById('tb-widget');
+  const exitBtn     = document.getElementById('widget-exit');
+  const view        = document.getElementById('widget-view');
+  const tabBtns     = [...document.querySelectorAll('.wg-tab')];
+  const shapeBtns   = [...document.querySelectorAll('.wg-shape')];
+  const listEl      = document.getElementById('widget-list');
+  const emptyEl     = document.getElementById('widget-empty');
+  const detailEl    = document.getElementById('widget-detail');
+  const detailCover = document.getElementById('widget-detail-cover');
+  const detailTitle = document.getElementById('widget-detail-title');
+  const detailPlay  = document.getElementById('widget-detail-play');
+  const detailBack  = document.getElementById('widget-detail-back');
+
+  let active = false;
+  let tab = 'pc'; // 'pc' | 'retro'
+  let shape = 'rect'; // 'square' | 'rect' | 'vertical'
+  let selectedGame = null;
+
+  function initialLetter(title) {
+    return (title || '?').trim().charAt(0).toUpperCase() || '?';
+  }
+
+  function tileInnerHtml(g) {
+    return `
+      ${g.coverUrl
+        ? `<img src="${g.coverUrl}" alt="" loading="lazy" />`
+        : `<span class="wg-fallback">${initialLetter(g.title)}</span>`}
+      <span class="wg-title">${g.title}</span>
+    `;
+  }
+  function tileHtml(g) {
+    return `
+      <button type="button" class="wg-tile" data-id="${g.id}" title="${g.title.replace(/"/g, '&quot;')}">
+        ${tileInnerHtml(g)}
+      </button>
+    `;
+  }
+  function findTileEl(id) {
+    return [...listEl.querySelectorAll('.wg-tile')].find(t => t.dataset.id === String(id));
+  }
+  // La carátula de un juego suele llegar en segundo plano (backfill) DESPUÉS
+  // de que la lista del widget ya se pintó con la letra de respaldo — y a
+  // diferencia del dock/lista principal (ver applyCoverToElements), acá nadie
+  // volvía a pintar el tile una vez montado, así que el ícono se quedaba
+  // pegado a "sin imagen" para siempre si el widget ya estaba abierto cuando
+  // llegó la portada. refreshTile() se llama desde applyCoverToElements() para
+  // que también se actualice en caliente, sin rehacer toda la lista.
+  function refreshTile(game) {
+    if (!active || !game.coverUrl) return;
+    const tile = findTileEl(game.id);
+    if (tile && !tile.querySelector('img')) tile.innerHTML = tileInnerHtml(game);
+    if (selectedGame && selectedGame.id === game.id && !detailCover.querySelector('img')) {
+      detailCover.innerHTML = `<img src="${game.coverUrl}" alt="" />`;
+    }
+  }
+  widgetRefreshTile = refreshTile;
+
+  // Juegos instalados de PC (todo lo que no sea una ROM de RetroArch).
+  function pcGames() {
+    return allGames.filter(g => g.installed && g.platform !== 'retroarch')
+      .sort((a, b) => a.title.localeCompare(b.title, 'es'));
+  }
+
+  // ROMs de RetroArch agrupadas por consola (system = repo de libretro-thumbnails,
+  // ver CONSOLE_REGISTRY más arriba en este archivo) — nombre bonito si está
+  // catalogada, o el system tal cual si es una consola no listada.
+  function retroGroups() {
+    const games = allGames.filter(g => g.installed && g.platform === 'retroarch');
+    const bySystem = new Map();
+    for (const g of games) {
+      const key = g.system || '?';
+      if (!bySystem.has(key)) bySystem.set(key, []);
+      bySystem.get(key).push(g);
+    }
+    const groups = [...bySystem.entries()].map(([system, list]) => ({
+      system,
+      name: CONSOLE_REGISTRY.find(c => c.repo === system)?.name || system.replace(/_/g, ' '),
+      games: list.sort((a, b) => a.title.localeCompare(b.title, 'es')),
+    }));
+    groups.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    return groups;
+  }
+
+  function findGameById(id) {
+    return allGames.find(g => g.id === id) || null;
+  }
+
+  async function launchDirect(game) {
+    const res = await window.megahub.launchGame(game);
+    if (!res?.ok) showToast(res?.error || 'No se pudo lanzar el juego', 'error');
+  }
+
+  function renderList() {
+    detailEl.hidden = true;
+    listEl.hidden = false;
+
+    let isEmpty = false;
+    let grouped = false;
+    if (tab === 'pc') {
+      const games = pcGames();
+      isEmpty = games.length === 0;
+      if (isEmpty) emptyEl.textContent = 'Sin juegos de PC instalados todavía.';
+      else listEl.innerHTML = games.map(tileHtml).join('');
+    } else {
+      const groups = retroGroups();
+      isEmpty = groups.length === 0;
+      if (isEmpty) {
+        emptyEl.textContent = 'Sin ROMs de RetroArch detectadas todavía.';
+      } else {
+        // Un título con el nombre de la consola y abajo sus iconos, nada
+        // más (sin contadores ni iconitos extra) — en cuadro/vertical el
+        // grid de íconos de cada consola lo arma #widget-view[data-shape]
+        // .wg-console-games (ver app.css); acá solo se agrupan los juegos.
+        grouped = true;
+        listEl.innerHTML = groups.map(group => `
+          <div class="wg-console-group">
+            <div class="wg-console-name">${escapeHtml(group.name)}</div>
+            <div class="wg-console-games">${group.games.map(tileHtml).join('')}</div>
+          </div>
+        `).join('');
+      }
+    }
+    listEl.classList.toggle('wg-grouped', grouped);
+
+    emptyEl.hidden = !isEmpty;
+    if (isEmpty) { listEl.innerHTML = ''; return; }
+
+    listEl.querySelectorAll('.wg-tile').forEach(tile => {
+      tile.addEventListener('click', () => {
+        const game = findGameById(tile.dataset.id);
+        if (!game) return;
+        // Confirmación visual de que el clic registró (pulso + resplandor del
+        // acento) — antes no había NADA salvo el hover de `:active` del
+        // navegador, casi imperceptible en un clic normal, y en el dock
+        // vertical (que lanza directo, sin pantalla de detalle de por medio)
+        // ese era el único indicio de que había pasado algo.
+        tile.classList.remove('wg-pressed');
+        void tile.offsetWidth; // reinicia la animación si se clickea 2 veces seguidas
+        tile.classList.add('wg-pressed');
+        // Dock vertical: sin vista de detalle (no entra) — un solo clic lanza directo.
+        if (shape === 'vertical') launchDirect(game);
+        else showDetail(game);
+      });
+    });
+  }
+
+  function showDetail(game) {
+    if (!game) return;
+    selectedGame = game;
+    listEl.hidden = true;
+    detailEl.hidden = false;
+    detailTitle.textContent = game.title;
+    detailCover.innerHTML = game.coverUrl
+      ? `<img src="${game.coverUrl}" alt="" />`
+      : `<span class="wg-fallback">${initialLetter(game.title)}</span>`;
+  }
+
+  function backToList() {
+    selectedGame = null;
+    renderList();
+  }
+
+  async function playSelected() {
+    if (!selectedGame) return;
+    const res = await window.megahub.launchGame(selectedGame);
+    if (!res?.ok) showToast(res?.error || 'No se pudo lanzar el juego', 'error');
+  }
+
+  async function enter() {
+    active = true;
+    document.body.classList.add('widget-mode');
+    renderList();
+    await window.megahub.widgetEnterMode();
+    // main.js arranca cada sesión asumiendo auto-ocultar activado — si el
+    // usuario lo apagó en Ajustes en una sesión anterior (persistido en
+    // localStorage), hay que avisarle recién ahora que existe la ventana.
+    window.megahub.widgetSetAutoHide(widgetAutoHide);
+  }
+  async function exit() {
+    active = false;
+    document.body.classList.remove('widget-mode');
+    document.body.classList.remove('widget-retracted');
+    await window.megahub.widgetExitMode();
+  }
+
+  // Pegado a un borde + auto-ocultar (ver bloque análogo en src/main.js): el
+  // proceso principal decide CUÁNDO retraer/expandir (tiene el debounce y
+  // sabe si está pegado a algún borde); acá solo se avisa de mouseenter/
+  // mouseleave sobre toda la vista y se refleja el estado que confirme main
+  // vía 'widget-retract-change' (nunca se asume localmente, para no
+  // desincronizarse si el mouse sale muy rápido).
+  view.addEventListener('mouseenter', () => { if (active) window.megahub.widgetHoverEnter(); });
+  view.addEventListener('mouseleave', () => { if (active) window.megahub.widgetHoverLeave(); });
+  window.megahub.onWidgetRetractChange((isRetracted) => {
+    document.body.classList.toggle('widget-retracted', !!isRetracted);
+  });
+
+  toggleBtn.addEventListener('click', () => { active ? exit() : enter(); });
+  exitBtn.addEventListener('click', exit);
+  detailBack.addEventListener('click', backToList);
+  detailPlay.addEventListener('click', playSelected);
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      tab = btn.dataset.tab;
+      selectedGame = null;
+      renderList();
+    });
+  });
+  shapeBtns.forEach(btn => {
+    btn.addEventListener('click', async () => {
+      shapeBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      shape = btn.dataset.shape;
+      view.dataset.shape = shape;
+      selectedGame = null; // el dock vertical no tiene vista de detalle — volver siempre a la lista
+      renderList();
+      await window.megahub.widgetSetShape(shape);
+    });
+  });
+  document.addEventListener('megahub:games-updated', () => { if (active && !selectedGame) renderList(); });
+})();
+
+// Helpers de actividad (activityLog.js) — a nivel de módulo porque los usa
+// tanto el panel del pill de Companion como el nuevo dashboard de Inicio
+// (ver initHomeView() más abajo), no solo el pill.
+function formatHours(minutes) {
+  const h = minutes / 60;
+  if (h >= 10 || Number.isInteger(h)) return `${Math.round(h)}h`;
+  return `${h.toFixed(1)}h`;
+}
+// El log de actividad (activityLog.js) no guarda carátula — se busca por
+// título en allGames, que ya está cargado por el rescan() normal (sin IPC
+// extra por fila). Match solo por título (no por plataforma): el log de
+// retro usa platform:'retro' pero el catálogo esos juegos los trae con
+// platform:'retroarch', así que cruzar por plataforma los dejaría siempre
+// sin carátula.
+function findCoverForActivity(a) {
+  const t = a.title.toLowerCase();
+  const g = allGames.find(x => x.coverUrl && x.title && x.title.toLowerCase() === t);
+  return g ? g.coverUrl : null;
+}
+
+/* ---- Pill "DERIVA Companion" (estado) + historial semanal propio ----
    Opcional y no intrusivo: si Companion no está instalado o no está
    corriendo, companion-get-status siempre devuelve { connected: false } y
-   la pill se queda oculta — cero elementos rotos ni mensajes de error. */
+   la pill se queda oculta — cero elementos rotos ni mensajes de error.
+   La radio se sacó de acá (dependía de que Companion, "el gato", esté
+   corriendo aparte solo para reproducir música) — lo que se expande al pasar
+   el mouse ahora es un historial de horas jugadas esta semana, con datos
+   propios de MegaHUB (ver activityLog.js), nada de Companion. */
 (function initCompanionPill() {
   // Se repite una vez por sidebar (PC + Retro, mismo criterio que #logo
   // duplicado) — todas se mantienen en el mismo estado a la vez.
   const pills = [...document.querySelectorAll('.companion-pill')];
   if (!pills.length) return;
 
-  function paint(pill, state, text, radio) {
+  function paint(pill, state, text) {
     pill.hidden = false;
     pill.dataset.state = state;
     const textEl = pill.querySelector('.companion-pill-text');
     if (textEl) textEl.textContent = text;
-
-    // Panel ampliado (calco de companion-desktop/radio.html): carátula,
-    // género, título/artista, ícono de play, like, guardar y volumen.
-    const coverImg = pill.querySelector('.cpx-cover-img');
-    const coverFallback = pill.querySelector('.cpx-cover-fallback');
-    if (coverImg && coverFallback) {
-      if (radio?.cover) { coverImg.src = radio.cover; coverImg.hidden = false; coverFallback.hidden = true; }
-      else { coverImg.hidden = true; coverFallback.hidden = false; }
-    }
-    const genreEl = pill.querySelector('.cpx-genre');
-    if (genreEl) genreEl.textContent = radio?.genreLabel ? `Radio ${radio.genreLabel}` : 'Radio';
-    const titleEl = pill.querySelector('.cpx-title');
-    if (titleEl) titleEl.textContent = radio?.title || 'Pulsa play para sintonizar';
-    const artistEl = pill.querySelector('.cpx-artist');
-    if (artistEl) artistEl.textContent = radio?.artist || '';
-    const playIco = pill.querySelector('.cpx-play-ico');
-    if (playIco) playIco.innerHTML = radio?.playing ? '<path d="M6 5h4v14H6zm8 0h4v14h-4z"/>' : '<path d="M8 5v14l11-7z"/>';
-    const likeBtn = pill.querySelector('.cpx-like');
-    if (likeBtn) { likeBtn.classList.toggle('cpx-active', !!radio?.liked); likeBtn.textContent = radio?.liked ? '♥' : '♡'; }
-    const saveBtn = pill.querySelector('.cpx-save');
-    if (saveBtn) saveBtn.disabled = !radio?.canSave;
-    const volumeEl = pill.querySelector('.cpx-volume');
-    // No pisar el valor mientras el usuario lo está arrastrando (ver el
-    // listener 'input' de abajo) — si no, el próximo poll (cada 5s) le
-    // devuelve el valor viejo a mitad de un drag.
-    if (volumeEl && volumeEl.dataset.dragging !== '1') {
-      const v = radio?.muted ? 0 : (radio?.volume ?? 70);
-      volumeEl.value = v;
-      volumeEl.style.setProperty('--p', v + '%');
-    }
   }
 
   async function poll() {
     let status;
     try { status = await window.megahub.companionGetStatus(); }
-    catch { status = { connected: false, radio: null }; }
+    catch { status = { connected: false }; }
 
     if (!status.connected) {
       // Antes de tener NUNCA una conexión confirmada, se queda oculta del
@@ -765,43 +1086,44 @@ document.getElementById('sidebar-toggle').addEventListener('click', () => {
       // que se vio conectado una vez en esta sesión, se muestra "desconectado"
       // en vez de desaparecer, para que no parezca un parpadeo raro de la UI.
       for (const pill of pills) {
-        if (pill.dataset.everConnected === '1') paint(pill, 'off', 'DERIVA Companion · desconectado', null);
+        if (pill.dataset.everConnected === '1') paint(pill, 'off', 'DERIVA Companion · desconectado');
       }
       return;
     }
     for (const pill of pills) {
       pill.dataset.everConnected = '1';
-      if (status.radio?.playing && status.radio.title) {
-        const text = status.radio.artist ? `🎧 ${status.radio.title} — ${status.radio.artist}` : `🎧 ${status.radio.title}`;
-        paint(pill, 'playing', text, status.radio);
-      } else {
-        paint(pill, 'connected', 'DERIVA Companion · conectado', status.radio);
-      }
+      paint(pill, 'connected', 'DERIVA Companion · conectado');
     }
   }
 
-  for (const pill of pills) {
-    pill.querySelectorAll('[data-cmd]').forEach((btn) => {
-      btn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        window.megahub.companionSendCommand(btn.dataset.cmd);
-      });
-    });
-    const volumeEl = pill.querySelector('.cpx-volume');
-    if (volumeEl) {
-      // 'input' dispara en cada tick del arrastre — se actualiza el relleno
-      // visual (--p) al instante, pero el comando real se manda solo en
-      // 'change' (al soltar) para no saturar el archivo puente.
-      volumeEl.addEventListener('input', () => {
-        volumeEl.dataset.dragging = '1';
-        volumeEl.style.setProperty('--p', volumeEl.value + '%');
-      });
-      volumeEl.addEventListener('change', () => {
-        window.megahub.companionSendCommand('volume', Number(volumeEl.value));
-        volumeEl.dataset.dragging = '0';
-      });
+  let activityCache = null;
+  async function loadActivity(list) {
+    list.innerHTML = `<div class="cpx-activity-empty">${skeletonLinesHtml(['medium', 'short'])}</div>`;
+    try { activityCache = await window.megahub.companionGetWeeklyActivity(); }
+    catch { activityCache = []; }
+    renderActivity(list);
+  }
+  function renderActivity(list) {
+    if (!activityCache || !activityCache.length) {
+      list.innerHTML = '<div class="cpx-activity-empty">Todavía sin actividad esta semana.</div>';
+      return;
     }
+    list.innerHTML = activityCache.slice(0, 6).map(a => {
+      const cover = findCoverForActivity(a);
+      const isRetro = a.platform === 'retro';
+      return `
+      <div class="cpx-activity-row${isRetro ? ' cpx-retro' : ''}">
+        <span class="cpx-activity-cover">${cover ? `<img src="${escapeHtml(cover)}" alt="" loading="lazy">` : ''}</span>
+        <span class="cpx-activity-info">
+          <span class="cpx-activity-name">${escapeHtml(a.title)}</span>
+          <span class="cpx-activity-plat">${escapeHtml(PLAT_LABEL[a.platform] || a.platform)}</span>
+        </span>
+        <span class="cpx-activity-hours">${formatHours(a.minutes)}</span>
+      </div>`;
+    }).join('');
+  }
 
+  for (const pill of pills) {
     // El panel es position:fixed (ver app.css) para no quedar recortado por
     // el overflow-y:auto del sidebar — hay que calcularle top/left/width a
     // mano, y voltearlo arriba de la pill si no entra abajo (ventana baja).
@@ -816,9 +1138,8 @@ document.getElementById('sidebar-toggle').addEventListener('click', () => {
         // puede recapturarlo aunque el cursor termine encima. El espacio
         // visual lo da el propio borde/sombra del panel, no un gap real.
         // Ancho mínimo 220px: si la pill de origen es angosta (sidebar
-        // colapsado/estrecho), el contenido del panel (sobre todo el botón
-        // "Guardar en Mi lista") necesita más espacio del que la propia pill
-        // tiene — copiar su ancho tal cual lo hacía overflow visualmente.
+        // colapsado/estrecho), el contenido del panel necesita más espacio
+        // del que la propia pill tiene.
         const width = Math.max(Math.round(rect.width), 220);
         let left = Math.round(rect.left);
         if (left + width > window.innerWidth - 8) left = Math.max(8, window.innerWidth - width - 8);
@@ -834,9 +1155,21 @@ document.getElementById('sidebar-toggle').addEventListener('click', () => {
           expand.classList.add('cpx-flip-up');
         }
       };
-      pill.addEventListener('mouseenter', positionExpand);
-      pill.addEventListener('focusin', positionExpand);
-      window.addEventListener('resize', () => { if (pill.matches(':hover, :focus-within')) positionExpand(); });
+      // rAF (no llamada directa): si el hover llega justo cuando el layout
+      // todavía se está asentando (recién arrancó la app, cambio de vista,
+      // fuente cargando), medir de una podía devolver un rect viejo/a medio
+      // reflow — el panel quedaba plantado en cualquier lado ("una esquina")
+      // y ya no se recalculaba solo. Con rAF se mide recién en el próximo
+      // frame de pintado, con el layout ya resuelto.
+      const scheduleReposition = () => requestAnimationFrame(positionExpand);
+      const activityList = pill.querySelector('.cpx-activity-list');
+      const onOpen = () => {
+        scheduleReposition();
+        loadActivity(activityList); // se pide fresco cada vez que se abre — cambia lento (semanal), no hace falta cachear entre aperturas
+      };
+      pill.addEventListener('mouseenter', onOpen);
+      pill.addEventListener('focusin', onOpen);
+      window.addEventListener('resize', () => { if (pill.matches(':hover, :focus-within')) scheduleReposition(); });
     }
   }
 
@@ -1409,6 +1742,11 @@ async function updateResolutionPresetControls(consoleInfo) {
     return;
   }
   section.hidden = false;
+  // "Original" (4:3/CRT o LCD según la consola) solo existe para cores de
+  // RetroArch (ver resolutionPresets.js) — los emuladores standalone
+  // (PS2/PS3/Xbox/GameCube/etc.) no tienen shaders de RetroArch disponibles.
+  const originalChip = document.querySelector('#retro-resolution-presets .chip[data-tier="original"]');
+  if (originalChip) originalChip.hidden = !usesRetroArch;
   statusEl.textContent = 'Elige el nivel de calidad/rendimiento para ' + consoleInfo.emulator + '.';
 }
 
@@ -2025,95 +2363,139 @@ function buildDerivaSearchButton(title) {
   return btn;
 }
 
-// Único hub con API pública real y genérica para packs de texturas HD (ver
-// textureDownload.js) — funciona para cualquier juego de estas 3 consolas,
-// no una lista fija.
+// Único hub con API pública real y genérica para mods (ver textureDownload.js)
+// — funciona para cualquier juego de estas 3 consolas, no una lista fija. La
+// mayoría de mods de GameBanana para estas consolas NO son "texturas HD" en
+// sentido estricto (hay skins, retextures, modelos, idiomas, herramientas...)
+// así que el panel los muestra todos, no solo los que calzan con ese nombre.
 const TEXTURE_PACK_CONSOLES = ['gamecube', 'wii', 'psp'];
+const MOD_SORTS = [
+  { key: 'new', label: 'Nuevos', apiSort: 'new' },
+  { key: 'popular', label: 'Más populares', apiSort: 'default' },
+];
 
 function buildTexturePackButton(entry, consoleId) {
   const btn = document.createElement('button');
   btn.className = 'action-btn';
-  btn.innerHTML = `${icon('image')} Buscar texturas HD`;
-  btn.title = 'Busca paquetes de texturas HD para este juego en GameBanana';
-  btn.onclick = () => toggleTexturePackPanel(btn, entry, consoleId);
+  btn.innerHTML = `${icon('image')} Buscar mods (GameBanana)`;
+  btn.title = 'Busca mods para este juego en GameBanana: texturas, skins, idiomas, etc.';
+  btn.onclick = () => toggleModPanel(btn, entry, consoleId);
   return btn;
 }
 
-async function toggleTexturePackPanel(btn, entry, consoleId) {
+async function toggleModPanel(btn, entry, consoleId) {
   const actions = document.getElementById('d-actions');
   const existing = document.getElementById('d-texture-panel');
   if (existing) { existing.remove(); return; }
 
   const panel = document.createElement('div');
   panel.id = 'd-texture-panel';
-  panel.style.marginTop = '10px';
-  panel.textContent = 'Buscando en GameBanana…';
+  panel.className = 'mod-panel';
+  const status = document.createElement('div');
+  status.className = 'mod-panel-status';
+  status.textContent = 'Buscando en GameBanana…';
+  panel.appendChild(status);
   actions.appendChild(panel);
 
   const games = await window.megahub.textureSearchGame(entry.title);
   if (!document.getElementById('d-actions').contains(panel)) return; // el usuario cambió de juego mientras cargaba
   if (!games || !games.length) {
-    panel.textContent = `GameBanana no tiene ninguna página de juego que coincida con "${entry.title}".`;
+    status.textContent = `GameBanana no tiene ninguna página de juego que coincida con "${entry.title}".`;
     return;
   }
   // NameMatch ya viene ordenado por relevancia — se usa el primero sin pedir
   // que el usuario elija, para no meter un paso extra la mayoría de las veces.
   const game = games[0];
-  panel.textContent = `Buscando mods de "${game.name}"…`;
+  let sortKey = 'popular';
 
-  const { mods } = await window.megahub.textureListMods({ gameId: game.id });
-  if (!document.getElementById('d-actions').contains(panel)) return;
-  const relevant = mods.filter(m => /textur|effect|hd|remaster|repaint/i.test(m.name + ' ' + (m.category || '')));
-  const list = relevant.length ? relevant : mods;
-  if (!list.length) {
-    panel.textContent = `"${game.name}" está en GameBanana pero no tiene mods todavía.`;
-    return;
+  async function loadMods() {
+    status.textContent = `Buscando mods de "${game.name}"…`;
+    const sort = MOD_SORTS.find(s => s.key === sortKey);
+    const { mods } = await window.megahub.textureListMods({ gameId: game.id, sort: sort.apiSort, perPage: 40 });
+    if (!document.getElementById('d-actions').contains(panel)) return;
+    if (!mods.length) {
+      status.textContent = `"${game.name}" está en GameBanana pero no tiene mods todavía.`;
+      return;
+    }
+    const list = sortKey === 'popular'
+      ? [...mods].sort((a, b) => (b.likes + b.views / 100) - (a.likes + a.views / 100))
+      : mods;
+    renderModList(game, list);
   }
 
-  panel.innerHTML = `<div style="font-size:11px;opacity:0.75;margin-bottom:6px">Mods de "${escapeHtml(game.name)}" en GameBanana${relevant.length ? '' : ' (sin filtrar por texturas — revisa la categoría de cada uno)'}:</div>`;
-  const listEl = document.createElement('div');
-  listEl.style.cssText = 'display:flex;flex-direction:column;gap:6px;max-height:260px;overflow-y:auto';
-  panel.appendChild(listEl);
+  function renderModList(game, list) {
+    panel.innerHTML = '';
+    const header = document.createElement('div');
+    header.className = 'mod-panel-header';
+    const title = document.createElement('div');
+    title.className = 'mod-panel-title';
+    title.innerHTML = `Mods de <b>${escapeHtml(game.name)}</b> en GameBanana`;
+    const sortBox = document.createElement('div');
+    sortBox.className = 'mod-panel-sort';
+    for (const s of MOD_SORTS) {
+      const sBtn = document.createElement('button');
+      sBtn.textContent = s.label;
+      sBtn.className = s.key === sortKey ? 'active' : '';
+      sBtn.onclick = () => { sortKey = s.key; loadMods(); };
+      sortBox.appendChild(sBtn);
+    }
+    header.append(title, sortBox);
+    panel.appendChild(header);
 
-  for (const mod of list) {
-    const row = document.createElement('div');
-    row.style.cssText = 'display:flex;align-items:center;gap:8px;font-size:12px;padding:6px;background:rgba(127,127,127,0.08);border-radius:6px';
-    row.innerHTML = `
-      ${mod.thumbUrl ? `<img src="${mod.thumbUrl}" style="width:44px;height:44px;object-fit:cover;border-radius:4px;flex-shrink:0">` : ''}
-      <div style="flex:1;min-width:0">
-        <div style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${escapeHtml(mod.name)}</div>
-        <div style="opacity:0.65">${escapeHtml(mod.category || '')} · ${mod.likes} 👍</div>
-      </div>`;
-    const installBtn = document.createElement('button');
-    installBtn.className = 'action-btn';
-    installBtn.style.flexShrink = '0';
-    installBtn.textContent = 'Instalar';
-    installBtn.onclick = async () => {
-      installBtn.disabled = true;
-      installBtn.textContent = 'Consultando…';
-      const info = await window.megahub.textureGetDownloadInfo(mod.id);
-      if (!info) {
-        showToast('No se pudo obtener el archivo de descarga de este mod.', 'error');
+    const listEl = document.createElement('div');
+    listEl.className = 'mod-panel-list';
+    panel.appendChild(listEl);
+
+    for (const mod of list) {
+      const row = document.createElement('div');
+      row.className = 'mod-row';
+      const categoryLabel = mod.category || 'Sin categoría';
+      row.innerHTML = `
+        ${mod.thumbUrl ? `<img class="mod-row-thumb" src="${mod.thumbUrl}" alt="">` : ''}
+        <div class="mod-row-info">
+          <div class="mod-row-name">${escapeHtml(mod.name)}</div>
+          <div class="mod-row-meta">
+            <span class="mod-row-category${mod.autoInstallable ? '' : ' manual'}">${escapeHtml(categoryLabel)}</span>
+            <span>${mod.likes} 👍</span>
+          </div>
+        </div>`;
+      const installBtn = document.createElement('button');
+      installBtn.className = 'action-btn mod-row-install';
+      installBtn.textContent = mod.autoInstallable ? 'Instalar' : 'Descargar';
+      installBtn.title = mod.autoInstallable
+        ? 'Se instala solo: el emulador lo carga sin configuración extra.'
+        : `Este mod es "${categoryLabel}", no una textura — el emulador no lo carga solo. Se descarga a una carpeta aparte para que lo instales a mano siguiendo las instrucciones del propio mod.`;
+      installBtn.onclick = async () => {
+        installBtn.disabled = true;
+        installBtn.textContent = 'Consultando…';
+        const info = await window.megahub.textureGetDownloadInfo(mod.id);
+        if (!info) {
+          showToast(`No se pudo obtener el archivo de descarga de "${mod.name}".`, 'error');
+          installBtn.disabled = false;
+          installBtn.textContent = mod.autoInstallable ? 'Instalar' : 'Descargar';
+          return;
+        }
+        const confirmed = window.confirm(
+          `¿Descargar el mod "${mod.name}" (${categoryLabel}, ${info.sizeMb} MB) desde GameBanana para ${entry.title}?\n\n` +
+          (mod.autoInstallable
+            ? 'Se instala directo donde el emulador lo carga solo. Si el archivo trae el contenido dentro de una subcarpeta, puede que después tengas que moverlo un nivel hacia afuera a mano.'
+            : 'Este mod NO se instala solo: se descarga y descomprime en una carpeta aparte (MegaHUB-Mods) — revisa el LEEME que traiga el propio mod para saber dónde colocarlo.')
+        );
+        if (!confirmed) { installBtn.disabled = false; installBtn.textContent = mod.autoInstallable ? 'Instalar' : 'Descargar'; return; }
+
+        installBtn.textContent = 'Descargando…';
+        const result = await window.megahub.textureDownloadInstall({ consoleId, romPath: entry.romPath, mod: { id: mod.id, name: mod.name, autoInstallable: mod.autoInstallable } });
         installBtn.disabled = false;
-        installBtn.textContent = 'Instalar';
-        return;
-      }
-      const confirmed = window.confirm(
-        `¿Descargar "${info.fileName}" (${info.sizeMb} MB) desde GameBanana e instalarlo para ${entry.title}?\n\n` +
-        `Si el .zip trae los archivos dentro de una subcarpeta, puede que después tengas que moverlos un nivel hacia afuera a mano.`
-      );
-      if (!confirmed) { installBtn.disabled = false; installBtn.textContent = 'Instalar'; return; }
-
-      installBtn.textContent = 'Descargando…';
-      const result = await window.megahub.textureDownloadInstall({ consoleId, romPath: entry.romPath, modId: mod.id });
-      installBtn.disabled = false;
-      installBtn.textContent = 'Instalar';
-      if (result && result.error) { showToast(result.error, 'error', 7000); return; }
-      showToast(`"${info.fileName}" instalado en ${result.destDir}`, 'success', 6000);
-    };
-    row.appendChild(installBtn);
-    listEl.appendChild(row);
+        installBtn.textContent = mod.autoInstallable ? 'Instalar' : 'Descargar';
+        if (result && result.error) { showToast(result.error, 'error', 7000); return; }
+        showToast(`"${mod.name}" ${result.manual ? 'descargado' : 'instalado'} en ${result.destDir}`, 'success', 6000);
+      };
+      row.appendChild(installBtn);
+      listEl.appendChild(row);
+    }
   }
+
+  await loadMods();
 }
 
 // Botón "MULTIJUGADOR" del sidebar izquierdo (junto al resto de controles del
@@ -2130,6 +2512,50 @@ function updateMultiplayerControls(consoleInfo) {
     const res = await window.megahub.openMultiplayerReadme(key);
     if (res && res.error) showToast(res.error, 'error');
   };
+}
+
+// Logros del motor propio de MegaHUB para ESTE juego puntual (Fase 3 del
+// plan Inicio/Perfil) — filtra mhAchCache, ya calculado para el dashboard de
+// Logros (ver fetchMhAchievements()), por appid (Steam) o por título (Retro,
+// mismo criterio de match que ya usan Inicio/Perfil). Si el motor todavía no
+// calculó nada para este juego (sin horas jugadas) devuelve vacío — no hay
+// "placeholder" fingiendo logros que no existen.
+function achievementsForGame(game) {
+  if (!mhAchCache || !Array.isArray(mhAchCache) || !mhAchCache.length) return [];
+  if (game.platform === 'steam') {
+    const appid = game.id.replace('steam-', '');
+    return mhAchCache.filter(a => a.scope === 'steamgame' && a.appid === appid);
+  }
+  if (game.platform === 'retroarch') {
+    const t = game.title.toLowerCase();
+    return mhAchCache.filter(a => a.scope === 'retrogame' && a.gameTitle && a.gameTitle.toLowerCase() === t);
+  }
+  return [];
+}
+
+async function renderDetailsAchievements(game, token) {
+  const box = document.getElementById('d-achievements');
+  if (game.platform !== 'steam' && game.platform !== 'retroarch') { box.hidden = true; box.innerHTML = ''; return; }
+  if (!mhAchCache || !mhAchCache.length) await fetchMhAchievements();
+  if (token !== detailsToken) return;
+  const list = achievementsForGame(game);
+  if (!list.length) { box.hidden = true; box.innerHTML = ''; return; }
+
+  // Los tiers ya ganados como chips compactos, y el PRÓXIMO objetivo (el
+  // primer tier todavía no alcanzado) con su progreso — mismo criterio de
+  // "qué sigue" que ya usa el motor para ROMs sin jugar en el dashboard.
+  const sorted = [...list].sort((a, b) => (a.progressTarget || 0) - (b.progressTarget || 0));
+  const earned = sorted.filter(a => a.earned);
+  const next = sorted.find(a => !a.earned);
+
+  box.hidden = false;
+  box.innerHTML = `
+    <h3>${icon('trophy')} Logros</h3>
+    <div class="d-ach-list">
+      ${earned.map(a => `<span class="d-ach-chip earned" title="${escapeHtml(a.description || '')}">${icon('trophy')} ${escapeHtml(a.title)}</span>`).join('')}
+      ${next ? `<span class="d-ach-chip next" title="${escapeHtml(next.description || '')}">${icon('lock')} ${escapeHtml(next.title)} — ${next.progressCurrent}/${next.progressTarget}h</span>` : ''}
+    </div>
+  `;
 }
 
 async function renderDetails(game) {
@@ -2153,6 +2579,7 @@ async function renderDetails(game) {
 
   document.getElementById('d-desc').textContent = '';
   document.getElementById('d-meta').innerHTML = '';
+  document.getElementById('d-achievements').hidden = true; // se repinta más abajo — nunca se queda mostrando los logros del juego anterior
   document.getElementById('d-reqs').hidden = false;
   document.getElementById('d-reqs-body').innerHTML = skeletonLinesHtml(['medium', 'short']);
 
@@ -2204,6 +2631,8 @@ async function renderDetails(game) {
   }
   document.getElementById('d-meta').innerHTML = rows.join('<br>');
 
+  renderDetailsAchievements(game, token); // sin await: no bloquea el resto de la ficha, se pinta sola cuando llegue
+
   if (game.installed && game.installSizeBytes == null && (game.installDir || game.workDir)) {
     window.megahub.getInstallSize(game.installDir || game.workDir).then((bytes) => {
       if (token !== detailsToken) return;
@@ -2249,23 +2678,23 @@ function renderRequirements(a) {
 
   const verdictText = {
     'recommended-met': {
-      excelente: '✔ Tu PC lo mueve sobrado, muy por encima de lo recomendado',
-      sobrado: '✔ Tu PC va sobrado, por encima de lo recomendado',
-      cumple: '✔ Cumple los requisitos recomendados',
+      excelente: 'Muy por encima de lo recomendado',
+      sobrado: 'Por encima de lo recomendado',
+      cumple: 'Normal — cumple los requisitos recomendados',
     },
     'below-recommended': {
-      cumple: '~ Cumple los mínimos con margen, pero no llega a lo recomendado',
+      cumple: 'Normal — cumple los mínimos con margen, no llega a lo recomendado',
     },
     'minimum-only': {
-      excelente: '✔ Muy por encima de los mínimos (el juego no publica recomendados)',
-      sobrado: '✔ Sobra margen sobre los mínimos (sin datos de recomendados)',
-      cumple: '~ Cumple los mínimos (el juego no publica recomendados)',
-      justo: '⚠ Justo en el límite de los mínimos',
-      insuficiente: '✘ Por debajo de los requisitos mínimos',
+      excelente: 'Muy por encima de los mínimos (el juego no publica recomendados)',
+      sobrado: 'Por encima de los mínimos (el juego no publica recomendados)',
+      cumple: 'Normal — cumple los mínimos (el juego no publica recomendados)',
+      justo: 'Deficiente — al límite de los requisitos mínimos',
+      insuficiente: 'Deficiente — por debajo de los requisitos mínimos',
     },
     minimum: {
-      justo: '⚠ Por debajo de lo recomendado y justo en el límite de los mínimos',
-      insuficiente: '✘ Por debajo incluso de los requisitos mínimos',
+      justo: 'Deficiente — por debajo de lo recomendado y al límite de los mínimos',
+      insuficiente: 'Deficiente — por debajo incluso de los requisitos mínimos',
     },
   };
   const verdictMsg = (verdictText[a.verdictBasis] || {})[a.verdict];
@@ -2302,6 +2731,10 @@ async function launchLocalRom(entry) {
     consoleName: currentConsole.name,
     emulatorName: currentConsole.emulator,
     romPath: entry.romPath,
+    // Título ya cotejado contra el catálogo libretro-thumbnails en el escaneo
+    // (retro-scan-roms) — sin esto, el logro/sesión usaba el nombre crudo del
+    // archivo (ej. "hotd2") en vez del real ("The House of the Dead 2").
+    title: entry.recognized ? entry.title : null,
   });
   if (result && result.error) {
     showToast(result.error, 'error', 7000);
@@ -2396,11 +2829,142 @@ function filterConsoleGridByName(term) {
   });
 }
 
+/* ================= Búsqueda global (Fase 6) =================
+   Aparte del filtrado normal de #search (contextual a la vista actual, ver
+   más abajo) — cruza biblioteca completa + logros + ofertas YA CARGADOS en
+   un desplegable, para saltar de una vista a otra sin tener que cambiarla a
+   mano primero. No escanea nada nuevo: allGames y dealsIndex ya están en
+   memoria, y mhAchCache se pide la primera vez que hace falta (mismo
+   fetchMhAchievements() que ya usan el dashboard de Logros y la ficha de
+   cada juego). */
+
+function resetLibraryFilters() {
+  filters.platform = 'all'; filters.state = 'all'; filters.genre = 'all';
+  buildPlatformChips();
+  rebuildGenreChips();
+  const stateBox = document.getElementById('state-filters');
+  syncChips(stateBox, stateBox.querySelector('[data-state="all"]'));
+  render();
+}
+
+function gotoGame(id) {
+  const jump = () => {
+    if (!visible.some(g => g.id === id)) resetLibraryFilters();
+    selectById(id);
+  };
+  if (viewMode === 'dock' || viewMode === 'list') jump();
+  else { switchViewMode('dock'); setTimeout(jump, 550); }
+}
+
+function gotoDeal(key) {
+  const jump = () => {
+    selectDeal(key);
+    const el = document.querySelector(`.deal-card[data-deal-key="${CSS.escape(key)}"]`);
+    if (el) el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  };
+  if (viewMode === 'deals') jump();
+  else { switchViewMode('deals'); setTimeout(jump, 550); }
+}
+
+function buildSearchResultGroups(term) {
+  const q = term.toLowerCase();
+  const library = allGames
+    .filter(g => g.title.toLowerCase().includes(q))
+    .sort((a, b) => a.title.localeCompare(b.title, 'es'))
+    .slice(0, 6);
+  const achievements = (Array.isArray(mhAchCache) ? mhAchCache : [])
+    .filter(a => a.title.toLowerCase().includes(q))
+    .slice(0, 6);
+  const deals = [...dealsIndex.values()]
+    .filter(d => d.title.toLowerCase().includes(q))
+    .slice(0, 6);
+  return { library, achievements, deals };
+}
+
+function searchLibraryRowHtml(g) {
+  const initial = escapeHtml((g.title || '?').trim().charAt(0).toUpperCase() || '?');
+  return `<button type="button" class="search-result" data-kind="game" data-id="${escapeHtml(g.id)}">
+    <span class="search-result-icon">${g.coverUrl ? `<img src="${escapeHtml(g.coverUrl)}" alt="" loading="lazy">` : initial}</span>
+    <span class="search-result-info">
+      <span class="search-result-title">${escapeHtml(g.title)}</span>
+      <span class="search-result-meta">${escapeHtml(PLAT_LABEL[g.platform] || g.platform)}</span>
+    </span>
+  </button>`;
+}
+function searchDealRowHtml(d) {
+  const key = dealKeyOf(d);
+  return `<button type="button" class="search-result" data-kind="deal" data-key="${escapeHtml(key)}">
+    <span class="search-result-icon">${d.thumb ? `<img src="${escapeHtml(d.thumb)}" alt="" loading="lazy">` : icon('tag')}</span>
+    <span class="search-result-info">
+      <span class="search-result-title">${escapeHtml(d.title)}</span>
+      <span class="search-result-meta">${escapeHtml(d.storeName || 'Oferta')}</span>
+    </span>
+  </button>`;
+}
+function searchAchievementRowHtml(a) {
+  return `<button type="button" class="search-result" data-kind="achievement">
+    <span class="search-result-icon">${icon('trophy')}</span>
+    <span class="search-result-info">
+      <span class="search-result-title">${escapeHtml(a.title)}</span>
+      <span class="search-result-meta">${a.earned ? 'Desbloqueado' : 'Pendiente'}</span>
+    </span>
+  </button>`;
+}
+
+function hideSearchResults() {
+  document.getElementById('search-results').hidden = true;
+}
+function renderSearchResults(term) {
+  const box = document.getElementById('search-results');
+  if (!term || term.length < 2) { box.hidden = true; box.innerHTML = ''; return; }
+  const { library, achievements, deals } = buildSearchResultGroups(term);
+  const groups = [];
+  if (library.length) groups.push({ title: 'Biblioteca', rows: library.map(searchLibraryRowHtml) });
+  if (deals.length) groups.push({ title: 'Ofertas', rows: deals.map(searchDealRowHtml) });
+  if (achievements.length) groups.push({ title: 'Logros', rows: achievements.map(searchAchievementRowHtml) });
+  if (!groups.length) {
+    box.innerHTML = '<div class="search-results-empty">Sin resultados</div>';
+    box.hidden = false;
+    return;
+  }
+  box.innerHTML = groups.map(g => `
+    <div class="search-group">
+      <div class="search-group-title">${escapeHtml(g.title)}</div>
+      ${g.rows.join('')}
+    </div>`).join('');
+  box.hidden = false;
+}
+document.getElementById('search-results').addEventListener('click', (e) => {
+  const btn = e.target.closest('.search-result');
+  if (!btn) return;
+  const kind = btn.dataset.kind;
+  if (kind === 'game') gotoGame(btn.dataset.id);
+  else if (kind === 'deal') gotoDeal(btn.dataset.key);
+  else if (kind === 'achievement') switchViewMode('achievements');
+  hideSearchResults();
+  searchInput.blur();
+});
+searchInput.addEventListener('focus', () => {
+  const term = searchInput.value.trim();
+  if (term.length >= 2) renderSearchResults(term);
+});
+// Delay corto: sin esto, el blur (al clickear un resultado) esconde el
+// desplegable ANTES de que el click delegado de arriba llegue a dispararse.
+searchInput.addEventListener('blur', () => setTimeout(hideSearchResults, 150));
+
 // El buscador de la barra superior es contextual: filtra la biblioteca normal,
 // o — si estás en modo retro — busca consolas (sin elegir ninguna aún) o juegos
-// dentro del catálogo de la consola abierta. Nunca ambos a la vez.
+// dentro del catálogo de la consola abierta. Nunca ambos a la vez. El
+// desplegable de búsqueda global (arriba) es aparte y funciona en cualquier
+// vista, así que se actualiza siempre, sin importar la rama de abajo.
 searchInput.addEventListener('input', () => {
   const term = searchInput.value.trim();
+  renderSearchResults(term);
+  // mhAchCache se pide recién la primera vez que hace falta para buscar —
+  // igual que ya hacía la ficha de un juego (renderDetailsAchievements).
+  if (term.length >= 2 && !mhAchCache.length && !mhAchLoading) {
+    fetchMhAchievements().then(() => { if (searchInput.value.trim() === term) renderSearchResults(term); });
+  }
   if (viewMode === 'retro') {
     if (currentConsole) {
       retroSearchTerm = term.toLowerCase();
@@ -2523,6 +3087,7 @@ function applyCoverToElements(game) {
   if (icon) updateDockIcon(icon, game);
   const row = listEls.get(game.id);
   if (row) updateListRow(row, game);
+  if (widgetRefreshTile) widgetRefreshTile(game);
   // Entradas del catálogo retro (sin `.id`, solo `.title`) no viven en
   // dockEls/listEls — sin esto, una portada de respaldo (Wikipedia/SGDB) que
   // llegaba tarde por un 404 inicial del thumbnail nunca se reflejaba en la
@@ -2757,6 +3322,40 @@ function setupRetroTab() {
   } else {
     status.innerHTML = 'No se detectó RetroArch instalado (o no tiene playlists con ROMs indexadas todavía).';
   }
+  setupDefaultRootSettings();
+}
+
+// Carpeta raíz por defecto (emulators/ + roms/) para las consolas sin
+// ubicador propio — ver retroFolders.js. Se re-consulta cada vez que se abre
+// esta pestaña por si se cambió desde otra ventana/instancia.
+let defaultRootWired = false;
+async function setupDefaultRootSettings() {
+  const pathEl = document.getElementById('default-root-path');
+  const changeBtn = document.getElementById('default-root-change-btn');
+  const resetBtn = document.getElementById('default-root-reset-btn');
+
+  async function refresh() {
+    const info = await window.megahub.retroGetDefaultRoot();
+    pathEl.textContent = info.isDefault ? `${info.root} (Documentos, predeterminado)` : info.root;
+    resetBtn.hidden = info.isDefault;
+  }
+
+  if (!defaultRootWired) {
+    defaultRootWired = true;
+    changeBtn.addEventListener('click', async () => {
+      const res = await window.megahub.retroPickDefaultRoot();
+      if (!res) return; // cancelado
+      if (res.error) { showToast(res.error, 'error'); return; }
+      showToast('Carpeta raíz actualizada. Las consolas ya creadas mantienen sus carpetas anteriores; solo aplica a partir de ahora.', 'success', 7000);
+      refresh();
+    });
+    resetBtn.addEventListener('click', async () => {
+      await window.megahub.retroResetDefaultRoot();
+      showToast('Restaurado a Documentos\\MegaHUB.', 'success');
+      refresh();
+    });
+  }
+  await refresh();
 }
 
 /* ---- Apariencia (temas de color) ----
@@ -2775,6 +3374,7 @@ const THEME_REGISTRY = [
   { id: 'sega',          name: 'Azul',      colors: ['#06182c', '#1e9be9', '#ff6a1a'] },
   { id: 'arcadepremium', name: 'Dorado',    colors: ['#050506', '#d4af37', '#ff2fa0'] },
   { id: 'rgb',           name: 'Arcoíris',  colors: ['#07080d', '#5cd8ff', '#b07dff'] },
+  { id: 'plaza',         name: 'Plaza',     colors: ['#eaf6ff', '#0bb4e0', '#ff6b6b'] },
 ];
 const THEME_STORAGE_KEY = 'megahub-theme';
 
@@ -2822,11 +3422,30 @@ function moveSettingsIndicator(tab) {
   settingsTabIndicator.style.width = tab.offsetWidth + 'px';
 }
 
+let widgetAutoHideTabWired = false;
+function setupWidgetAutoHideToggle() {
+  const toggle = document.getElementById('widget-autohide-toggle');
+  if (!toggle) return;
+  toggle.classList.toggle('on', widgetAutoHide);
+  if (widgetAutoHideTabWired) return;
+  widgetAutoHideTabWired = true;
+  toggle.addEventListener('click', () => {
+    widgetAutoHide = !widgetAutoHide;
+    toggle.classList.toggle('on', widgetAutoHide);
+    localStorage.setItem('megahub-widget-autohide', widgetAutoHide ? 'on' : 'off');
+    // Se avisa al proceso principal ya mismo (no solo al volver a entrar al
+    // widget) para que, si el widget está pegado a un borde ahora mismo, se
+    // despliegue de una si el usuario acaba de apagar el auto-ocultado.
+    window.megahub.widgetSetAutoHide(widgetAutoHide);
+  });
+}
+
 function openSettings() {
   document.getElementById('settings-overlay').hidden = false;
   buildLauncherSettings();
   setupRetroTab();
   renderThemeGrid();
+  setupWidgetAutoHideToggle();
   // El modal recién se hace visible: el layout de las pestañas todavía no
   // existía en el frame anterior, así que offsetLeft/offsetWidth se leen
   // recién en el próximo frame para que el indicador arranque bien posicionado.
@@ -2873,6 +3492,62 @@ function cyclePlatform(dir) {
   const idx = chips.findIndex(c => c.classList.contains('active'));
   const next = chips[(idx + dir + chips.length) % chips.length];
   next.click();
+}
+
+/* ---- Navegación por mando fuera del dock/lista/retro (Fase 5) ----
+   El dock y el modo retro ya tenían su propio manejo (selectedIndex/
+   moveRetro, ver pollGamepad más abajo) — esto extiende el mismo mando a
+   Inicio, Perfil y Ofertas (grillas de .dock-icon/.deal-card), a las
+   pestañas de Logros/Ajustes, y a LT/RT para cambiar de vista sin soltar el
+   mando. No usa el foco nativo del navegador para elegir el ítem (mismo
+   criterio que el dock: un cursor propio) — sí llama a .focus() sobre el
+   elemento actual solo para heredar gratis el anillo de :focus-visible que
+   ya existe para teclado, en vez de inventar una clase de resaltado nueva. */
+const GP_VIEW_ORDER = ['home', 'dock', 'retro', 'achievements', 'deals', 'profile'];
+function gpNavItems() {
+  let selector = null;
+  if (viewMode === 'home') selector = '#home-wrap .dock-icon';
+  else if (viewMode === 'profile') selector = '#profile-wrap .dock-icon';
+  else if (viewMode === 'deals') selector = '#deals-wrap .deal-card';
+  if (!selector) return [];
+  // offsetParent === null descarta tarjetas dentro de una sección todavía
+  // oculta (ej. secciones de Ofertas sin ítems, ver [hidden] en deals-wrap)
+  // — existen en el DOM pero no hay nada que resaltar ni hacer clic ahí.
+  return [...document.querySelectorAll(selector)].filter(el => el.offsetParent !== null);
+}
+let gpCursor = 0;
+function gpMove(dx, dy) {
+  const items = gpNavItems();
+  if (!items.length) return;
+  const delta = dx || dy;
+  if (!delta) return;
+  gpCursor = Math.max(0, Math.min(items.length - 1, gpCursor + delta));
+  const el = items[gpCursor];
+  el.focus({ preventScroll: true });
+  el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+}
+function gpActivate() {
+  const items = gpNavItems();
+  const el = items[gpCursor];
+  if (el) el.click();
+}
+function gpCycleView(dir) {
+  const idx = GP_VIEW_ORDER.indexOf(viewMode);
+  const next = GP_VIEW_ORDER[((idx === -1 ? 0 : idx) + dir + GP_VIEW_ORDER.length) % GP_VIEW_ORDER.length];
+  gpCursor = 0;
+  switchViewMode(next);
+}
+function gpCycleAchSourceTab(dir) {
+  const chips = [...document.querySelectorAll('#ach-source-tabs .chip')];
+  const idx = chips.findIndex(c => c.classList.contains('active'));
+  const next = chips[(idx + dir + chips.length) % chips.length];
+  if (next) next.click();
+}
+function gpCycleSettingsTab(dir) {
+  const tabs = [...document.querySelectorAll('.settings-tab')];
+  const idx = tabs.findIndex(t => t.classList.contains('active'));
+  const next = tabs[(idx + dir + tabs.length) % tabs.length];
+  if (next) next.click();
 }
 
 document.addEventListener('keydown', (e) => {
@@ -2922,23 +3597,46 @@ function pollGamepad() {
     const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
     const dx = (ax < -0.5 || pad.buttons[14]?.pressed) ? -1 : (ax > 0.5 || pad.buttons[15]?.pressed) ? 1 : 0;
     const dy = (ay < -0.5 || pad.buttons[12]?.pressed) ? -1 : (ay > 0.5 || pad.buttons[13]?.pressed) ? 1 : 0;
-    // Aislado igual que el teclado: en modo retro el mando mueve el grid de
-    // retro, nunca la biblioteca de PC oculta detrás.
-    const inRetro = viewMode === 'retro';
-    if ((dx || dy) && now - padState.lastMove > 180) {
-      if (inRetro) moveRetro(dx, dy); else move(dx, dy);
-      padState.lastMove = now;
-    }
     const edge = (idx) => {
       const pressed = pad.buttons[idx]?.pressed;
       const was = padState.buttons[idx];
       padState.buttons[idx] = pressed;
       return pressed && !was;
     };
-    if (edge(0)) { if (inRetro) retroPrimaryAction(); else primaryAction(); }
-    if (!inRetro) {
+    const settingsEl = document.getElementById('settings-overlay');
+    const settingsOpen = !settingsEl.hidden;
+
+    // Ajustes abierto: el mando SOLO mueve el modal (mismo aislamiento que ya
+    // usa el teclado con Escape) — nunca se cuela hacia la vista de atrás.
+    if (settingsOpen) {
+      if ((dx) && now - padState.lastMove > 220) { gpCycleSettingsTab(dx); padState.lastMove = now; }
+      if (edge(1) || edge(9)) settingsEl.hidden = true; // B o Start cierra
+      requestAnimationFrame(pollGamepad);
+      return;
+    }
+    if (edge(9)) openSettings(); // Start abre Ajustes desde cualquier vista
+
+    // LT/RT: cambiar de vista sin soltar el mando — no compite con nada más
+    // (LB/RB ya son "ciclar plataforma" en PC, mismo criterio de no
+    // duplicar un botón para dos cosas dentro de la misma vista).
+    if (edge(6)) gpCycleView(-1);
+    if (edge(7)) gpCycleView(1);
+
+    // Aislado igual que el teclado: cada vista mueve SOLO lo suyo, nunca lo
+    // que quedó "detrás" en otra vista.
+    if (viewMode === 'retro') {
+      if ((dx || dy) && now - padState.lastMove > 180) { moveRetro(dx, dy); padState.lastMove = now; }
+      if (edge(0)) retroPrimaryAction();
+    } else if (viewMode === 'dock' || viewMode === 'list') {
+      if ((dx || dy) && now - padState.lastMove > 180) { move(dx, dy); padState.lastMove = now; }
+      if (edge(0)) primaryAction();
       if (edge(4)) cyclePlatform(-1);
       if (edge(5)) cyclePlatform(1);
+    } else if (viewMode === 'home' || viewMode === 'profile' || viewMode === 'deals') {
+      if ((dx || dy) && now - padState.lastMove > 180) { gpMove(dx, dy); padState.lastMove = now; }
+      if (edge(0)) gpActivate();
+    } else if (viewMode === 'achievements') {
+      if (dx && now - padState.lastMove > 220) { gpCycleAchSourceTab(dx); padState.lastMove = now; }
     }
   }
   requestAnimationFrame(pollGamepad);
@@ -3010,16 +3708,36 @@ document.getElementById('ach-source-tabs').addEventListener('click', (e) => {
 let mhAchCache = [];
 let mhTab = 'global';
 
+// Llamada liviana (sin tocar el DOM del dashboard de Logros) para que otras
+// vistas —el panel de detalle de un juego, ver renderDetailsAchievements()—
+// puedan pedir mhAchCache sin depender de que el usuario haya abierto la
+// pestaña Logros primero. mhAchLoading deduplica: si 2 fichas de juego se
+// abren rápido antes de que la primera termine, la segunda espera la MISMA
+// promesa en vez de disparar un segundo cálculo completo (recorre todos los
+// appids de Steam + todas las consolas retro, no es gratis).
+let mhAchLoading = null;
+async function fetchMhAchievements() {
+  if (mhAchLoading) return mhAchLoading;
+  const consoles = CONSOLE_REGISTRY.map(c => ({ id: c.id, name: c.name }));
+  const consoleNames = Object.fromEntries(consoles.map(c => [c.id, c.name]));
+  mhAchLoading = window.megahub.mhAchGetProgress({ libraryGamesCount: allGames.length, consoleNames, consoles })
+    .then(res => {
+      mhAchCache = res;
+      if (Array.isArray(res)) toastNewlyUnlockedAchievements(res);
+      return res;
+    })
+    .finally(() => { mhAchLoading = null; });
+  return mhAchLoading;
+}
+
 async function loadMhDashboard() {
   const panel = document.getElementById('mh-panel');
   panel.innerHTML = Array.from({ length: 6 }, () =>
     `<div class="ach-card">${skeletonLinesHtml(['medium'])}${skeletonLinesHtml(['long', 'short'])}</div>`
   ).join('');
-  const consoles = CONSOLE_REGISTRY.map(c => ({ id: c.id, name: c.name }));
-  const consoleNames = Object.fromEntries(consoles.map(c => [c.id, c.name]));
-  mhAchCache = await window.megahub.mhAchGetProgress({ libraryGamesCount: allGames.length, consoleNames, consoles });
-  if (mhAchCache && mhAchCache.error) {
-    panel.innerHTML = `<div class="empty">Error: ${escapeHtml(mhAchCache.error)}</div>`;
+  const res = await fetchMhAchievements();
+  if (res && res.error) {
+    panel.innerHTML = `<div class="empty">Error: ${escapeHtml(res.error)}</div>`;
     return;
   }
   renderMhPanel();
@@ -3511,16 +4229,507 @@ document.getElementById('consolas-game-back').addEventListener('click', () => {
   document.getElementById('consolas-dashboard').hidden = false;
 });
 
+/* ================= Ofertas (Steam/GOG/Epic/otras + recomendado) ================= */
+// Vista a pantalla completa (mismo patrón que Logros): una sección por tienda
+// (Steam/GOG/Epic/"Otras tiendas" — Eneba no está cubierto por CheapShark, la
+// fuente que usamos, así que no inventamos precios para ella) más "Recomendado
+// para ti" según el microgénero más jugado. Todo se cachea 6h en disco en el
+// backend (ver services/dealsEngine.js), así que reabrir la vista no vuelve a
+// pedir nada salvo que se use "Actualizar".
+const DEALS_SECTION_INITIAL = 6;
+const DEALS_NOTABLE_SAVINGS = 40; // a partir de acá una oferta cuenta como "grande" para la alerta
+let dealsLoaded = false;
+let dealsData = { steam: [], gog: [], epic: [], other: [], errors: [] };
+let dealsReco = null;
+const dealsExpanded = { steam: false, gog: false, epic: false, other: false };
+
+// "Nuevas desde la última vez que abriste Ofertas" — se guarda el dealID de
+// todo lo que ya se le mostró al usuario; lo que aparece en el próximo refresh
+// y no está en ese set es lo que dispara la alerta (campanita) del botón.
+function getSeenDealIds() {
+  try { return new Set(JSON.parse(localStorage.getItem('megahub-deals-seen') || '[]')); }
+  catch { return new Set(); }
+}
+function markDealsSeen() {
+  const ids = [...dealsData.steam, ...dealsData.gog, ...dealsData.epic, ...dealsData.other]
+    .map(d => d.dealID).filter(Boolean);
+  const merged = [...new Set([...getSeenDealIds(), ...ids])].slice(-500);
+  localStorage.setItem('megahub-deals-seen', JSON.stringify(merged));
+  updateDealsBadge();
+}
+
+function money(n) {
+  return n == null ? '—' : `$${n.toFixed(2)}`;
+}
+
+// Clickear una tarjeta selecciona el juego (como en la biblioteca) en vez de
+// salir directo al navegador — el link real vive en el botón "Ir a la tienda"
+// del panel de detalles (#details, a la derecha). dealsIndex guarda el objeto
+// completo por clave para que el click delegado lo pueda recuperar.
+const dealsIndex = new Map();
+let selectedDealKey = null;
+function dealKeyOf(d) { return String(d.dealID || d.steamAppID || d.title); }
+
+function dealCardHtml(d, { showStore = false, isNew = false } = {}) {
+  const key = dealKeyOf(d);
+  dealsIndex.set(key, d);
+  const priceHtml = d.salePrice != null
+    ? `<div class="deal-card-price"><span class="old">${money(d.normalPrice)}</span><span class="new">${money(d.salePrice)}</span></div>${d.savings > 0 ? `<div class="deal-card-savings">-${d.savings}%</div>` : ''}`
+    : `<div class="deal-card-price"><span class="new">Ver precio</span></div>`;
+  return `
+    <div class="deal-card${key === selectedDealKey ? ' selected' : ''}" data-deal-key="${key}" tabindex="0" role="button" title="${escapeHtml(d.title)}">
+      ${isNew ? '<span class="deal-card-new">Nuevo</span>' : ''}
+      ${d.thumb ? `<img class="deal-card-thumb" src="${escapeHtml(d.thumb)}" alt="" loading="lazy" />` : '<div class="deal-card-thumb"></div>'}
+      <div class="deal-card-title">${escapeHtml(d.title)}</div>
+      ${showStore ? `<div class="deal-store-badge">${escapeHtml(d.storeName)}</div>` : ''}
+      ${priceHtml}
+    </div>`;
+}
+
+// Metacritic clasifica por color con estos mismos cortes (75+ verde, 50-74
+// amarillo, <50 rojo) — se replica esa convención visual, ya reconocible,
+// para que la puntuación se lea de un vistazo sin tener que leer el número.
+function metacriticTier(score) {
+  if (score >= 75) return 'great';
+  if (score >= 50) return 'mixed';
+  return 'bad';
+}
+function steamTier(pct) {
+  if (pct >= 80) return 'great';
+  if (pct >= 50) return 'mixed';
+  return 'bad';
+}
+
+function scoreBlockHtml(d) {
+  if (d.metacriticScore != null) {
+    const tier = metacriticTier(d.metacriticScore);
+    const verdict = tier === 'great' ? 'Aclamación general' : tier === 'mixed' ? 'Reseñas mixtas' : 'Reseñas negativas';
+    return `
+      <div class="deal-score">
+        <div class="score-badge score-${tier}">${d.metacriticScore}</div>
+        <div class="score-meta">
+          <div class="score-source">Metacritic</div>
+          <div class="score-verdict">${verdict}</div>
+        </div>
+      </div>`;
+  }
+  if (d.steamRatingPercent != null) {
+    const tier = steamTier(d.steamRatingPercent);
+    const verdict = tier === 'great' ? 'Mayormente positivas' : tier === 'mixed' ? 'Variadas' : 'Mayormente negativas';
+    return `
+      <div class="deal-score">
+        <div class="score-badge score-${tier} score-steam">${d.steamRatingPercent}%</div>
+        <div class="score-meta">
+          <div class="score-source">Steam</div>
+          <div class="score-verdict">${verdict}</div>
+        </div>
+      </div>`;
+  }
+  return `
+    <div class="deal-score">
+      <div class="score-badge score-none">—</div>
+      <div class="score-meta">
+        <div class="score-source">Puntuación</div>
+        <div class="score-verdict">Sin datos disponibles</div>
+      </div>
+    </div>`;
+}
+
+function priceBlockHtml(d) {
+  if (d.salePrice == null) {
+    return `<div class="deal-price-block"><span class="deal-price-new">${money(d.normalPrice)}</span></div>`;
+  }
+  return `
+    <div class="deal-price-block">
+      <span class="deal-price-old">${money(d.normalPrice)}</span>
+      <span class="deal-price-new">${money(d.salePrice)}</span>
+      ${d.savings > 0 ? `<span class="deal-price-discount">-${d.savings}%</span>` : ''}
+    </div>`;
+}
+
+function selectDeal(key) {
+  const deal = dealsIndex.get(key);
+  if (!deal) return;
+  selectedDealKey = key;
+  document.querySelectorAll('.deal-card').forEach(el => el.classList.toggle('selected', el.dataset.dealKey === key));
+  renderDealDetails(deal);
+}
+
+function renderDealDetails(d) {
+  const empty = document.getElementById('details-empty');
+  const content = document.getElementById('details-content');
+  const videoBox = document.getElementById('d-video');
+  empty.hidden = true; content.hidden = false;
+  videoBox.hidden = true; videoBox.innerHTML = '';
+
+  document.getElementById('d-title').textContent = d.title;
+  document.getElementById('d-cover').style.backgroundImage = d.thumb ? `url("${d.thumb}")` : '';
+  document.getElementById('d-badges').innerHTML =
+    `<span class="d-badge plat">${escapeHtml(d.storeName)}</span>` +
+    (d.releaseYear ? `<span class="d-badge">${d.releaseYear}</span>` : '');
+  document.getElementById('d-desc').textContent = '';
+  document.getElementById('d-meta').innerHTML = scoreBlockHtml(d) + priceBlockHtml(d);
+  document.getElementById('d-reqs').hidden = true;
+
+  const actions = document.getElementById('d-actions');
+  actions.innerHTML = '';
+  const goBtn = document.createElement('button');
+  goBtn.className = 'action-btn install';
+  goBtn.innerHTML = `${icon('link')} Ir a la tienda`;
+  goBtn.onclick = () => window.open(d.dealLink, '_blank');
+  actions.appendChild(goBtn);
+  actions.appendChild(buildDerivaSearchButton(d.title));
+}
+
+document.getElementById('deals-wrap').addEventListener('click', (e) => {
+  const card = e.target.closest('.deal-card');
+  if (card) selectDeal(card.dataset.dealKey);
+});
+document.getElementById('deals-wrap').addEventListener('keydown', (e) => {
+  if (e.key !== 'Enter' && e.key !== ' ') return;
+  const card = e.target.closest('.deal-card');
+  if (card) { e.preventDefault(); selectDeal(card.dataset.dealKey); }
+});
+
+function renderDealsReco() {
+  const section = document.getElementById('deals-reco-section');
+  if (!dealsReco || !dealsReco.games || !dealsReco.games.length) { section.hidden = true; return; }
+  section.querySelector('.deals-section-title').innerHTML =
+    `<i data-icon="zap"></i> Recomendado para ti — juegas mucho <b>${escapeHtml(dealsReco.tagLabel)}</b>`;
+  document.getElementById('deals-reco-grid').innerHTML = dealsReco.games.map(g => dealCardHtml(g, { showStore: true })).join('');
+  applyStaticIcons(section);
+  section.hidden = false;
+}
+
+function renderDealsSection(key) {
+  const section = document.querySelector(`.deals-store-section[data-store="${key}"]`);
+  const grid = section.querySelector('.deals-grid');
+  const moreBtn = section.querySelector('.deals-more-btn');
+  const countEl = section.querySelector('.deals-count');
+  const all = dealsData[key] || [];
+  const failed = dealsData.errors.includes(key === 'other' ? 'Otras tiendas' : { steam: 'Steam', gog: 'GOG', epic: 'Epic Games' }[key]);
+  countEl.textContent = all.length ? `(${all.length})` : '';
+  if (failed && !all.length) {
+    grid.innerHTML = '<div class="empty">No se pudo consultar esta tienda ahora mismo — probá "Actualizar" en un rato.</div>';
+    moreBtn.hidden = true;
+    return;
+  }
+  if (!all.length) {
+    grid.innerHTML = '<div class="empty">Sin ofertas grandes en este momento.</div>';
+    moreBtn.hidden = true;
+    return;
+  }
+  const seen = getSeenDealIds();
+  const visible = dealsExpanded[key] ? all : all.slice(0, DEALS_SECTION_INITIAL);
+  grid.innerHTML = visible.map(d => dealCardHtml(d, { isNew: d.savings >= DEALS_NOTABLE_SAVINGS && !seen.has(d.dealID) })).join('');
+  moreBtn.hidden = all.length <= DEALS_SECTION_INITIAL;
+  moreBtn.textContent = dealsExpanded[key] ? 'Ver menos' : `Ver más (${all.length - DEALS_SECTION_INITIAL})`;
+}
+
+function renderDealsAll() {
+  renderDealsReco();
+  ['steam', 'gog', 'epic', 'other'].forEach(renderDealsSection);
+}
+
+document.querySelectorAll('.deals-more-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const key = btn.closest('.deals-store-section').dataset.store;
+    dealsExpanded[key] = !dealsExpanded[key];
+    renderDealsSection(key);
+  });
+});
+
+function dealsSkeletonHtml() {
+  return Array.from({ length: 6 }, () => `<div class="deal-card deal-card-skeleton">${skeletonLinesHtml(['medium', 'short'])}</div>`).join('');
+}
+
+async function loadDeals({ silent = false, force = false } = {}) {
+  if (!silent) {
+    document.getElementById('deals-reco-grid').innerHTML = dealsSkeletonHtml();
+    document.querySelectorAll('.deals-store-section .deals-grid').forEach(g => { g.innerHTML = dealsSkeletonHtml(); });
+  }
+  const [topRes, recoRes] = await Promise.all([
+    window.megahub.dealsGetTop(force),
+    window.megahub.dealsGetRecommendation(force),
+  ]);
+  dealsData = {
+    steam: (topRes && topRes.steam) || [],
+    gog: (topRes && topRes.gog) || [],
+    epic: (topRes && topRes.epic) || [],
+    other: (topRes && topRes.other) || [],
+    errors: (topRes && topRes.errors) || [],
+  };
+  dealsReco = (recoRes && recoRes.recommendation) || null;
+  dealsLoaded = true;
+  updateDealsBadge();
+  if (!silent) renderDealsAll();
+}
+
+// Botón "OFERTAS" del topbar: punto + brillo verde en TODO el botón si hay
+// ofertas grandes NUEVAS (que el usuario todavía no vio) — nada si no hay
+// nada nuevo, para que el brillo signifique algo en vez de quedar prendido
+// siempre. Al abrir la vista se marcan como vistas (ver markDealsSeen) y se apaga solo.
+function updateDealsBadge() {
+  const badge = document.getElementById('deals-badge');
+  const btn = document.querySelector('.view-deals-btn');
+  const all = [...dealsData.steam, ...dealsData.gog, ...dealsData.epic, ...dealsData.other];
+  const seen = getSeenDealIds();
+  const hasNew = all.some(d => d.savings >= DEALS_NOTABLE_SAVINGS && !seen.has(d.dealID));
+  badge.hidden = !hasNew;
+  btn.classList.toggle('deals-has-new', hasNew);
+}
+
+async function initDealsView() {
+  if (!dealsLoaded) await loadDeals();
+  else renderDealsAll();
+  markDealsSeen();
+}
+document.getElementById('deals-refresh-btn').addEventListener('click', async () => {
+  dealsLoaded = false;
+  await loadDeals({ force: true });
+  markDealsSeen();
+});
+
+/* ================= Inicio (dashboard de aterrizaje) =================
+   Reusa allGames (ya cargado por rescan()) y activityLog.js — sin escaneo ni
+   IPC nuevo salvo 2 lecturas ya expuestas (companionGetRecentlyPlayed y
+   companionGetWeeklyActivity). Cada sección se apaga sola si no hay datos
+   para mostrarla — nunca una franja vacía o un placeholder falso. */
+
+// Mismo click que ya usa primaryAction() en el dock: jugar si está instalado,
+// instalar si no — nada nuevo, solo reutilizado acá para no duplicar el
+// criterio de qué hace un clic sobre un juego.
+function homeCardAction(game) {
+  if (game.installed) launchGame(game);
+  else window.megahub.installGame(game);
+}
+
+// Tarjeta = el mismo .dock-icon del modo Dock (icon-face + icon-label),
+// reconstruido a mano en vez de reusar buildDockIcon() porque ese wrapper
+// ata el clic a selectById()/primaryAction(), que dependen de la lista
+// filtrada de la biblioteca (visible/activeChildren) — acá el juego puede no
+// estar en esa lista para nada (viene de activityLog, no de los filtros
+// activos). Comparte clase y estructura con el dock real así que hereda
+// forma/hover/skin sin CSS nuevo.
+function buildHomeTile(game) {
+  const wrap = document.createElement('div');
+  wrap.className = 'dock-icon' + (game.installed ? ' installed' : ' not-installed');
+  wrap.dataset.platform = game.platform;
+  wrap.dataset.id = game.id;
+  wrap.tabIndex = -1; // enfocable por script (navegación por mando, ver pollGamepad) sin sumarse al Tab normal
+  const face = document.createElement('div');
+  face.className = 'icon-face';
+  wrap.appendChild(face);
+  const label = document.createElement('div');
+  label.className = 'icon-label';
+  label.textContent = game.title;
+  wrap.appendChild(label);
+  syncCoverSlot(face, game);
+  wrap.addEventListener('click', () => homeCardAction(game));
+  return wrap;
+}
+
+// El log de actividad guarda título/plataforma, no el id del juego — se
+// resuelve por título contra allGames (mismo criterio que
+// findCoverForActivity). Si no resuelve (ej. una ROM suelta que no pasa por
+// RetroArch) esa fila simplemente no se muestra: mejor omitirla que mostrar
+// una tarjeta sin forma de lanzarse.
+function findGameForActivity(a) {
+  const t = a.title.toLowerCase();
+  return allGames.find(g => g.title && g.title.toLowerCase() === t) || null;
+}
+
+// "Agregado recién" necesita saber CUÁNDO se vio cada juego por primera vez
+// — allGames no trae esa fecha (se reconstruye entero en cada rescan() desde
+// cero, cruzando los launchers). Se guarda un mapa propio en localStorage,
+// una vez por id, la primera vez que aparece. Si el mapa estaba vacío antes
+// de este escaneo (primera vez que corre esta instalación), TODO el catálogo
+// se marcaría "recién agregado" a la vez, que no dice nada — homeFirstScanEver
+// deja que renderHomeRecent() se quede callado hasta el próximo escaneo real.
+const HOME_FIRST_SEEN_KEY = 'megahub-first-seen';
+let homeFirstScanEver = false;
+function loadFirstSeenMap() {
+  try { return JSON.parse(localStorage.getItem(HOME_FIRST_SEEN_KEY) || '{}'); }
+  catch { return {}; }
+}
+function updateFirstSeenMap(games) {
+  const map = loadFirstSeenMap();
+  homeFirstScanEver = Object.keys(map).length === 0;
+  let dirty = false;
+  const now = Date.now();
+  for (const g of games) {
+    if (!(g.id in map)) { map[g.id] = now; dirty = true; }
+  }
+  if (dirty) localStorage.setItem(HOME_FIRST_SEEN_KEY, JSON.stringify(map));
+}
+
+const HOME_RECENT_WINDOW_MS = 14 * 24 * 60 * 60 * 1000;
+
+function renderHomeContinue(recentlyPlayed) {
+  const section = document.getElementById('home-continue');
+  const grid = document.getElementById('home-continue-grid');
+  const games = (recentlyPlayed || []).map(findGameForActivity).filter(Boolean);
+  grid.innerHTML = '';
+  if (!games.length) { section.hidden = true; return false; }
+  section.hidden = false;
+  games.forEach(g => grid.appendChild(buildHomeTile(g)));
+  return true;
+}
+
+function renderHomeRecent() {
+  const section = document.getElementById('home-recent');
+  const grid = document.getElementById('home-recent-grid');
+  grid.innerHTML = '';
+  if (homeFirstScanEver) { section.hidden = true; return false; }
+  const map = loadFirstSeenMap();
+  const cutoff = Date.now() - HOME_RECENT_WINDOW_MS;
+  const games = allGames
+    .filter(g => g.installed && map[g.id] && map[g.id] >= cutoff)
+    .sort((a, b) => map[b.id] - map[a.id])
+    .slice(0, 8);
+  if (!games.length) { section.hidden = true; return false; }
+  section.hidden = false;
+  games.forEach(g => grid.appendChild(buildHomeTile(g)));
+  return true;
+}
+
+function renderHomeWeek(weeklyActivity) {
+  const section = document.getElementById('home-week');
+  const list = document.getElementById('home-week-list');
+  const items = (weeklyActivity || []).slice(0, 6);
+  if (!items.length) { section.hidden = true; list.innerHTML = ''; return false; }
+  section.hidden = false;
+  list.innerHTML = items.map(a => {
+    const cover = findCoverForActivity(a);
+    const isRetro = a.platform === 'retro' || a.platform === 'retroarch';
+    return `
+    <div class="home-week-row${isRetro ? ' home-week-retro' : ''}">
+      <span class="home-week-cover">${cover ? `<img src="${escapeHtml(cover)}" alt="" loading="lazy">` : ''}</span>
+      <span class="home-week-info">
+        <span class="home-week-name">${escapeHtml(a.title)}</span>
+        <span class="home-week-plat">${escapeHtml(PLAT_LABEL[a.platform] || a.platform)}</span>
+      </span>
+      <span class="home-week-hours">${formatHours(a.minutes)}</span>
+    </div>`;
+  }).join('');
+  return true;
+}
+
+let homeLoaded = false;
+async function initHomeView() {
+  const [recentlyPlayed, weeklyActivity] = await Promise.all([
+    window.megahub.companionGetRecentlyPlayed(8).catch(() => []),
+    window.megahub.companionGetWeeklyActivity().catch(() => []),
+  ]);
+  homeLoaded = true;
+  const hasContinue = renderHomeContinue(recentlyPlayed);
+  const hasRecent = renderHomeRecent();
+  const hasWeek = renderHomeWeek(weeklyActivity);
+  document.getElementById('home-empty').hidden = hasContinue || hasRecent || hasWeek;
+}
+// El rescan inicial (o uno manual) puede terminar mientras el usuario ya
+// está parado en Inicio — sin esto, "Agregado recién" se quedaba con la
+// biblioteca de la primera carga hasta que el usuario cambiaba de vista y
+// volvía.
+document.addEventListener('megahub:games-updated', () => { if (viewMode === 'home' && homeLoaded) renderHomeRecent(); });
+
+/* ================= Perfil (estadísticas unificadas) =================
+   Cruza SOLO las 2 fuentes con horas reales de por vida (Steam + Retro, ver
+   el handler get-profile-stats en main.js) — el resto de launchers se listan
+   aparte como "sin datos de horas" en vez de inventar un número. */
+
+// El agregado que manda main.js trae appid/título (Steam) o título/consoleId
+// (Retro), no el juego completo — se resuelve contra allGames (ya cargado)
+// para tener coverUrl/installed/id y poder armar una tarjeta real. Si no
+// resuelve (se desinstaló, o es una ROM fuera del catálogo) se omite: mejor
+// no mostrarla que mostrar una tarjeta que no lanza nada.
+function findGameForProfileEntry(entry, platformHint) {
+  if (platformHint === 'steam') return allGames.find(g => g.id === `steam-${entry.appid}`) || null;
+  const t = entry.title.toLowerCase();
+  return allGames.find(g => g.platform === 'retroarch' && g.title && g.title.toLowerCase() === t) || null;
+}
+
+function renderProfile(stats) {
+  const summarySection = document.getElementById('profile-summary');
+  const breakdownSection = document.getElementById('profile-breakdown');
+  const topSection = document.getElementById('profile-top');
+  const untrackedEl = document.getElementById('profile-untracked');
+  const emptyEl = document.getElementById('profile-empty');
+
+  const totalMinutes = stats ? stats.totalSteamMinutes + stats.totalRetroMinutes : 0;
+  if (!stats || totalMinutes <= 0) {
+    summarySection.hidden = true;
+    breakdownSection.hidden = true;
+    topSection.hidden = true;
+    untrackedEl.hidden = true;
+    emptyEl.hidden = false;
+    return;
+  }
+  emptyEl.hidden = true;
+
+  summarySection.hidden = false;
+  document.getElementById('profile-total-hours').textContent = formatHours(totalMinutes);
+  document.getElementById('profile-days-played').textContent = String(stats.daysPlayed || 0);
+
+  const bars = [];
+  if (stats.totalSteamMinutes > 0) bars.push({ label: 'Steam', minutes: stats.totalSteamMinutes, color: 'var(--accent)' });
+  for (const c of stats.byConsole) bars.push({ label: c.name, minutes: c.minutes, color: 'var(--retro-accent)' });
+  breakdownSection.hidden = !bars.length;
+  if (bars.length) {
+    const maxMinutes = Math.max(...bars.map(b => b.minutes));
+    document.getElementById('profile-breakdown-bars').innerHTML = bars.map(b => `
+      <div class="profile-bar-row">
+        <span class="profile-bar-label">${escapeHtml(b.label)}</span>
+        <div class="profile-bar-track"><div class="profile-bar-fill" style="width:${Math.max(4, Math.round(b.minutes / maxMinutes * 100))}%; background:${b.color}"></div></div>
+        <span class="profile-bar-hours">${formatHours(b.minutes)}</span>
+      </div>`).join('');
+  }
+
+  const combined = [
+    ...stats.topSteamGames.map(g => ({ ...g, platformHint: 'steam' })),
+    ...stats.topRetroGames.map(g => ({ ...g, platformHint: 'retro' })),
+  ].sort((a, b) => b.minutes - a.minutes).slice(0, 8);
+  const topGames = combined.map(entry => findGameForProfileEntry(entry, entry.platformHint)).filter(Boolean);
+  const topGrid = document.getElementById('profile-top-grid');
+  topGrid.innerHTML = '';
+  topSection.hidden = !topGames.length;
+  topGames.forEach(g => topGrid.appendChild(buildHomeTile(g)));
+
+  if (stats.untrackedPlatforms && stats.untrackedPlatforms.length) {
+    untrackedEl.hidden = false;
+    const names = stats.untrackedPlatforms.map(p => PLAT_LABEL[p] || p).join(', ');
+    untrackedEl.textContent = `También jugaste en: ${names} — sin datos de horas disponibles para estos launchers.`;
+  } else {
+    untrackedEl.hidden = true;
+  }
+}
+
+async function initProfileView() {
+  const consoleNames = Object.fromEntries(CONSOLE_REGISTRY.map(c => [c.id, c.name]));
+  let stats = null;
+  try {
+    const res = await window.megahub.getProfileStats({ consoleNames });
+    if (!res || !res.error) stats = res;
+  } catch { stats = null; }
+  renderProfile(stats);
+}
+
 /* ================= Init ================= */
 
 async function rescan() {
   const { games, accounts } = await window.megahub.scanGames();
   allGames = games;
+  updateFirstSeenMap(allGames);
   if (accounts.gog) markConnected('gog');
   if (accounts.epic) markConnected('epic');
   buildPlatformChips();
   rebuildGenreChips();
   render();
+  // El modo widget (ver initWidgetMode) mantiene su propia lista aparte —
+  // si el usuario lo activó ANTES de que este scan inicial terminara, se
+  // quedaba mostrando "sin juegos" para siempre porque nada lo avisaba
+  // cuando allGames por fin se llenaba.
+  document.dispatchEvent(new Event('megahub:games-updated'));
 }
 
 // Aviso asíncrono desde main.js cuando un emulador lanzado se cierra casi
@@ -3537,4 +4746,11 @@ window.megahub.onRetroLaunchIssue(({ message }) => showToast(message, 'error', 9
   if (viewMode === 'retro') refreshConsoleOwnedCounts();
   enrichMetadata();
   enrichCovers();
+  loadDeals({ silent: true }).catch(() => {});
+  // En segundo plano, sin bloquear nada: si algo se desbloqueó fuera de esta
+  // sesión (ej. Steam sumó horas mientras MegaHUB estaba cerrado) y todavía
+  // cae dentro de la ventana de "recién" (5 min, ver isRecentlyEarned), se
+  // avisa igual apenas arranca — sin esto, el toast solo disparaba si el
+  // usuario ya había abierto Logros o la ficha de ese juego en esta sesión.
+  fetchMhAchievements().catch(() => {});
 })();

@@ -10,8 +10,24 @@ const store = require('../util/store');
 
 const UA = 'MegaHUB-Prototype/0.2 (aplicación de escritorio local, sin despliegue público)';
 
+// Sube esto cada vez que cambie la lógica de MATCHING de arriba (por ejemplo
+// el fix de fetchInfoboxImage() que prioriza el nombre de archivo sobre "la
+// primera imagen de la página"). Solo se cachean resultados positivos, así
+// que un match MALO de antes del fix (visto en vivo: "Dante's Inferno" tenía
+// cacheada la foto del actor de doblaje en vez de la carátula) se queda
+// pegado para siempre — nunca se vuelve a intentar porque ya "tiene" un
+// resultado. Bumpear la versión invalida ese caché viejo una sola vez y deja
+// que todo se resuelva de nuevo con la lógica actual.
+const CACHE_VERSION = 2;
+
 function getCache() {
-  return store.load('wikipedia-cover-cache', {});
+  const raw = store.load('wikipedia-cover-cache', { v: CACHE_VERSION, entries: {} });
+  // Compat: el caché viejo (pre-versión) era un objeto plano {titulo: url}.
+  if (!raw || typeof raw !== 'object' || Array.isArray(raw) || !raw.entries) {
+    return { v: CACHE_VERSION, entries: {} };
+  }
+  if (raw.v !== CACHE_VERSION) return { v: CACHE_VERSION, entries: {} };
+  return raw;
 }
 
 // Nombres de archivo que casi nunca son la carátula (candados de protección,
@@ -76,7 +92,7 @@ async function getGameCover(title) {
   if (!title) return null;
   const norm = title.toLowerCase().trim();
   const cache = getCache();
-  if (Object.prototype.hasOwnProperty.call(cache, norm)) return cache[norm];
+  if (Object.prototype.hasOwnProperty.call(cache.entries, norm)) return cache.entries[norm];
 
   let url = null;
   try {
@@ -104,7 +120,7 @@ async function getGameCover(title) {
   // Solo se cachean resultados positivos — un fallo transitorio (sin red, rate
   // limit) no debe congelar "sin portada" para siempre.
   if (url) {
-    cache[norm] = url;
+    cache.entries[norm] = url;
     store.save('wikipedia-cover-cache', cache);
   }
   return url;

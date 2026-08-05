@@ -31,6 +31,11 @@
   --radius-md: 12px;
   --radius-lg: 16px;
   --ease: cubic-bezier(.2,.8,.3,1);
+  /* Filtro único de portadas (Fase 4, pulido): antes solo lo tenía
+     .dock-icon .icon-face img — el resto de las miniaturas (lista, ofertas,
+     RetroAchievements) se veían "planas" al lado del dock. Una sola fuente
+     de verdad para las 4, no una copia del valor en cada selector. */
+  --cover-filter: brightness(1.12) contrast(1.08);
   /* Marca DERIVA — mismo par violeta→cian del logo oficial (ver
      youtrulette/public/brand/deriva-logo-*.png), reusado en el mando de
      MegaHUB para que se sienta parte del mismo ecosistema en vez de un
@@ -94,6 +99,282 @@ body[data-theme="rgb"] {
   --accent: #5cd8ff; --accent2: #b07dff; --accent-soft: rgba(92,216,255,0.18); --accent-text: #07080d;
   --border: rgba(255,255,255,0.08);
 }
+/* "Plaza": calidez de menú de consola de sobremesa — blanco + azul, formas
+   redondas. Es una referencia de VIBRA (paleta + curvas), no una copia: cero
+   logos, íconos o tipografías reales de Nintendo, mismo criterio que ya
+   sigue el resto de MegaHUB (ver sección "Créditos" de Ajustes). Semánticos
+   (warn/ok/bad/great) oscurecidos igual que en "retrolight": el segundo tema
+   claro del set necesita el mismo contraste, no los tonos claros de los
+   temas oscuros. */
+body[data-theme="plaza"] {
+  --bg: #eaf6ff; --panel: #ffffff; --panel2: #f1f9ff; --text: #1b3350; --dim: #6b85a3;
+  --accent: #0bb4e0; --accent2: #ff6b6b; --accent-soft: rgba(11,180,224,0.14); --accent-text: #ffffff;
+  --border: #d3ecf9;
+  --warn: #b45309; --ok: #0f8a5f; --bad: #c23636; --great: #0e8e9c;
+}
+
+/* ================================================================
+   FORMAS DISTINTIVAS POR SKIN — hasta acá cada skin solo redefinía color
+   (--accent/--accent2/etc). Estas reglas le suman a las 3 familias de
+   controles más repetidas de toda la app (.action-btn, .chip,
+   .toggle-switch) una forma/gesto propio por skin, sin tocar el marcado —
+   selectores con más especificidad que la regla base, así que no hace
+   falta mover nada de orden en la hoja. Deliberadamente NO se usa
+   transform:skew en texto sin envolver en un span propio (rompería la
+   legibilidad, ver nota en Sega más abajo) ni clip-path en nada que no
+   sea un botón/chip de ancho variable (los % de un polygon() escalan
+   solos con el tamaño real del elemento).
+   ================================================================ */
+
+/* ---- Arcade (Rosa): línea de neón vacía que se rellena al hover ---- */
+body[data-theme="arcade"] .action-btn {
+  border-radius: 0;
+  clip-path: polygon(6px 0, 100% 0, 100% calc(100% - 6px), calc(100% - 6px) 100%, 0 100%, 0 6px);
+  letter-spacing: 0.02em;
+}
+body[data-theme="arcade"] .action-btn.play {
+  background: transparent; border: 2px solid var(--accent2); color: var(--accent2);
+  box-shadow: none; text-shadow: 0 0 8px color-mix(in srgb, var(--accent2) 70%, transparent);
+}
+body[data-theme="arcade"] .action-btn.play:hover {
+  background: var(--accent2); color: #0a0510; text-shadow: none;
+  box-shadow: 0 0 20px color-mix(in srgb, var(--accent2) 65%, transparent); filter: none;
+}
+body[data-theme="arcade"] .chip {
+  border-radius: 0; clip-path: polygon(4px 0, 100% 0, 100% calc(100% - 4px), calc(100% - 4px) 100%, 0 100%, 0 4px);
+}
+body[data-theme="arcade"] .toggle-switch { border-radius: 4px; }
+body[data-theme="arcade"] .toggle-switch::after { border-radius: 2px; }
+
+/* ---- Retrolight (Lavanda): sin glow — el contraste hace el trabajo, no la luz ---- */
+body[data-theme="retrolight"] .action-btn.play {
+  box-shadow: 0 2px 6px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+body[data-theme="retrolight"] .action-btn.play:hover {
+  filter: none; background: color-mix(in srgb, var(--accent) 85%, #000 15%);
+}
+body[data-theme="retrolight"] .chip:hover { box-shadow: 0 2px 8px rgba(90,80,140,0.18); }
+
+/* ---- Xbox (Verde): cortes en paralelogramo, mayúsculas de dashboard ---- */
+body[data-theme="xbox"] .action-btn {
+  border-radius: 0; clip-path: polygon(10px 0, 100% 0, calc(100% - 10px) 100%, 0 100%);
+  text-transform: uppercase; letter-spacing: 0.05em;
+}
+body[data-theme="xbox"] .chip {
+  border-radius: 0; clip-path: polygon(6px 0, 100% 0, calc(100% - 6px) 100%, 0 100%);
+}
+body[data-theme="xbox"] .toggle-switch { border-radius: 4px; }
+body[data-theme="xbox"] .toggle-switch::after { border-radius: 2px; }
+
+/* ---- Steam (Celeste): deliberadamente el más plano — sin glow, casi sin motion ---- */
+body[data-theme="steam"] .action-btn { border-radius: 3px; }
+body[data-theme="steam"] .action-btn.play {
+  box-shadow: none; background: linear-gradient(90deg, var(--accent), var(--accent2)); color: #0d1b2a;
+}
+body[data-theme="steam"] .chip { border-radius: 2px; }
+body[data-theme="steam"] .chip:hover { transform: none; box-shadow: none; }
+body[data-theme="steam"] .toggle-switch { border-radius: 3px; }
+body[data-theme="steam"] .toggle-switch::after { border-radius: 2px; }
+
+/* ---- Atari (Rojo): bisel físico — el botón se hunde de verdad al presionar ---- */
+body[data-theme="atari"] .action-btn {
+  border-radius: 12px; text-transform: uppercase; letter-spacing: 0.04em;
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.16), 0 4px 0 rgba(0,0,0,0.4);
+  transition: transform 0.08s ease, filter 0.12s, box-shadow 0.08s ease;
+}
+body[data-theme="atari"] .action-btn:active {
+  transform: translateY(4px);
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.16), 0 0 0 rgba(0,0,0,0.4);
+}
+body[data-theme="atari"] .action-btn.play {
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.22), 0 4px 0 color-mix(in srgb, var(--accent) 55%, #000 45%);
+}
+body[data-theme="atari"] .action-btn.play:active {
+  box-shadow: inset 0 2px 0 rgba(255,255,255,0.22), 0 0 0 transparent;
+}
+body[data-theme="atari"] .chip { border-radius: 999px; }
+body[data-theme="atari"] .toggle-switch { box-shadow: inset 0 2px 4px rgba(0,0,0,0.35); }
+
+/* ---- Sega (Azul): identidad de velocidad SIN inclinar texto suelto (el
+   markup de .action-btn mezcla ícono + texto como nodos sueltos, sin span
+   propio — un transform:skew ahí adentro distorsiona el texto sin forma de
+   contra-inclinarlo). En cambio: itálica real (sí es una propiedad de texto,
+   no un transform) + una veta de luz diagonal que cruza el botón al hover. */
+body[data-theme="sega"] .action-btn {
+  border-radius: 6px; font-style: italic; position: relative; overflow: hidden;
+}
+body[data-theme="sega"] .action-btn.play {
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
+}
+body[data-theme="sega"] .action-btn::after {
+  content: ''; position: absolute; top: 0; bottom: 0; left: -30%; width: 26px;
+  background: rgba(255,255,255,0.28); transform: skewX(-20deg);
+  transition: left 0.35s ease;
+}
+body[data-theme="sega"] .action-btn:hover::after { left: 120%; }
+body[data-theme="sega"] .chip { border-radius: 999px; font-style: italic; }
+
+/* ---- Arcade Premium (Dorado): hairline + contención — el glow solo aparece al hover ---- */
+body[data-theme="arcadepremium"] .action-btn {
+  background: transparent; border: 1px solid var(--accent); color: var(--accent);
+  letter-spacing: 0.07em; text-transform: uppercase; font-size: 12.5px;
+}
+body[data-theme="arcadepremium"] .action-btn.play {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 70%, #fff 30%), var(--accent));
+  color: #241a04; border-color: transparent; box-shadow: none;
+}
+body[data-theme="arcadepremium"] .action-btn.play:hover {
+  box-shadow: 0 0 18px -4px var(--accent); filter: none;
+}
+body[data-theme="arcadepremium"] .action-btn.install { background: transparent; }
+body[data-theme="arcadepremium"] .chip { border-radius: 3px; }
+body[data-theme="arcadepremium"] .chip.active { background: var(--accent); color: #241a04; }
+
+/* ---- RGB: el único gesto con motion continuo (justificado — simula un
+   borde RGB de hardware gamer real, no es decoración porque sí). Un halo en
+   conic-gradient gira detrás del botón "Jugar" y solo se enciende al hover
+   (en reposo cuesta lo mismo que cualquier otro botón, sin gastar batería
+   animando algo que nadie está mirando). */
+@property --rgb-spin { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+@keyframes rgb-btn-spin { to { --rgb-spin: 360deg; } }
+body[data-theme="rgb"] .action-btn.play { position: relative; background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+body[data-theme="rgb"] .action-btn.play::before {
+  content: ''; position: absolute; inset: -2px; border-radius: 12px; z-index: -1;
+  background: conic-gradient(from var(--rgb-spin), #5cd8ff, #b07dff, #ff5ca0, #ffd25c, #5cd8ff);
+  animation: rgb-btn-spin 4s linear infinite; opacity: 0; transition: opacity 0.2s;
+}
+body[data-theme="rgb"] .action-btn.play:hover::before { opacity: 0.9; }
+body[data-theme="rgb"] .chip.active { background: linear-gradient(90deg, var(--accent), var(--accent2)); }
+@media (prefers-reduced-motion: reduce) {
+  body[data-theme="rgb"] .action-btn.play::before { animation: none !important; }
+}
+
+/* ---- Plaza (Wii/3DS): botones píldora con highlight glossy que se hunden
+   3px al presionar — el mismo toque físico de una tecla real, sin depender
+   de ningún ícono nuevo (ver fix de .d-card .ic en el prototipo: acá no
+   aplica, .action-btn no tiene ícono contenedor propio). ---- */
+body[data-theme="plaza"] .action-btn {
+  border-radius: 999px; font-weight: 800;
+  transition: transform 0.12s var(--ease), filter 0.12s, box-shadow 0.12s;
+}
+body[data-theme="plaza"] .action-btn.play {
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 70%, #fff 30%), var(--accent));
+  box-shadow: 0 4px 0 color-mix(in srgb, var(--accent) 55%, #000 30%);
+}
+body[data-theme="plaza"] .action-btn.play:hover {
+  transform: translateY(-1px); filter: none;
+  box-shadow: 0 5px 0 color-mix(in srgb, var(--accent) 55%, #000 30%);
+}
+body[data-theme="plaza"] .action-btn.play:active {
+  transform: translateY(3px); box-shadow: 0 1px 0 color-mix(in srgb, var(--accent) 55%, #000 30%);
+}
+body[data-theme="plaza"] .action-btn.install { border-radius: 999px; box-shadow: 0 4px 0 var(--border); }
+body[data-theme="plaza"] .action-btn.install:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--border); }
+body[data-theme="plaza"] .chip { border-radius: 999px; }
+body[data-theme="plaza"] .chip.active { box-shadow: 0 3px 0 color-mix(in srgb, var(--accent2) 55%, #000 25%); }
+body[data-theme="plaza"] .toggle-switch { border-radius: 999px; }
+body[data-theme="plaza"] .toggle-switch::after { box-shadow: 0 1px 2px rgba(0,0,0,0.25); }
+
+/* ---- Forma del ícono de biblioteca (.dock-icon .icon-face) por skin ----
+   SOLO border-radius, nada de outline/box-shadow/clip-path acá: el brillo
+   verde de "instalado" (.dock-icon.installed .icon-face) ya define su
+   propio outline/box-shadow, y por un detalle de especificidad CSS (esta
+   regla trae "body[data-theme=…]" como selector extra, lo que la vuelve
+   MÁS específica que ".dock-icon.installed .icon-face" aunque parezca al
+   revés) cualquier outline/box-shadow puesto acá pisaría ese brillo incluso
+   en juegos instalados. border-radius no tiene ese problema porque el
+   brillo no lo redefine. No todas las skins necesitan cambiarlo — donde no
+   suma nada real se deja el redondeado por defecto. */
+body[data-theme="arcade"] .dock-icon .icon-face { border-radius: 4px; }
+body[data-theme="xbox"] .dock-icon .icon-face { border-radius: 10px; }
+body[data-theme="steam"] .dock-icon .icon-face { border-radius: 8px; }
+body[data-theme="arcadepremium"] .dock-icon .icon-face { border-radius: 6px; }
+body[data-theme="plaza"] .dock-icon .icon-face { border-radius: 30px; }
+
+/* Misma idea para la vista en lista (.list-row .thumb) — la fila y la
+   miniatura comparten el mismo lenguaje de esquina que el ícono de dock,
+   para que cambiar entre vista cuadrícula/lista no se sienta como dos apps
+   distintas dentro de una misma skin. */
+body[data-theme="arcade"] .list-row { border-radius: 0; }
+body[data-theme="arcade"] .list-row .thumb { border-radius: 2px; }
+body[data-theme="xbox"] .list-row { border-radius: 4px; }
+body[data-theme="xbox"] .list-row .thumb { border-radius: 4px; }
+body[data-theme="steam"] .list-row { border-radius: 4px; }
+body[data-theme="steam"] .list-row .thumb { border-radius: 4px; }
+body[data-theme="arcadepremium"] .list-row { border-radius: 4px; }
+body[data-theme="arcadepremium"] .list-row .thumb { border-radius: 4px; }
+body[data-theme="plaza"] .list-row { border-radius: 16px; }
+body[data-theme="plaza"] .list-row .thumb { border-radius: 12px; }
+
+/* Pestañas PC/RETRO y selector de forma del modo widget (.wg-tab/.wg-shape)
+   — ya eran 100% tokenizadas (sin bug de color), acá solo se ajusta el
+   radio para que no se sientan un control aparte del resto de la skin.
+   Controles chicos (21px) — nada de clip-path acá, se vería recortado.
+   El CONTENEDOR (#widget-tabs/#widget-shapes) tiene que ir con el mismo
+   radio que el botón de adentro — si no, el botón (achicado por la skin)
+   queda con esquinas más cuadradas que el marco pastilla del contenedor
+   (999px, fijo) y se ve "salido" del marco en vez de encajar. */
+body[data-theme="arcade"] .wg-tab, body[data-theme="arcade"] .wg-shape,
+body[data-theme="arcade"] #widget-tabs, body[data-theme="arcade"] #widget-shapes { border-radius: 0; }
+body[data-theme="xbox"] .wg-tab, body[data-theme="xbox"] .wg-shape,
+body[data-theme="xbox"] #widget-tabs, body[data-theme="xbox"] #widget-shapes { border-radius: 3px; }
+body[data-theme="steam"] .wg-tab, body[data-theme="steam"] .wg-shape,
+body[data-theme="steam"] #widget-tabs, body[data-theme="steam"] #widget-shapes { border-radius: 2px; }
+body[data-theme="arcadepremium"] .wg-tab, body[data-theme="arcadepremium"] .wg-shape,
+body[data-theme="arcadepremium"] #widget-tabs, body[data-theme="arcadepremium"] #widget-shapes { border-radius: 2px; }
+body[data-theme="plaza"] .wg-shape, body[data-theme="plaza"] #widget-shapes { border-radius: 10px; }
+
+/* Ofertas (.deal-card) y logros de RetroAchievements (.ra-game-card) — misma
+   idea de esquina distintiva. .deal-card mantiene su border-top de 3px con
+   el color de la tienda (Steam/GOG/Epic) tal cual, es una dimensión aparte
+   (de dónde viene la oferta, no de la skin) y no se toca. */
+body[data-theme="arcade"] .deal-card, body[data-theme="arcade"] .ra-game-card { border-radius: 0; }
+body[data-theme="arcade"] .ra-game-card .ra-icon { border-radius: 2px; }
+body[data-theme="xbox"] .deal-card, body[data-theme="xbox"] .ra-game-card { border-radius: 4px; }
+body[data-theme="xbox"] .ra-game-card .ra-icon { border-radius: 4px; }
+body[data-theme="steam"] .deal-card, body[data-theme="steam"] .ra-game-card { border-radius: 4px; }
+body[data-theme="steam"] .ra-game-card .ra-icon { border-radius: 4px; }
+body[data-theme="arcadepremium"] .deal-card, body[data-theme="arcadepremium"] .ra-game-card { border-radius: 4px; }
+body[data-theme="arcadepremium"] .ra-game-card .ra-icon { border-radius: 4px; }
+body[data-theme="plaza"] .deal-card { border-radius: 18px; }
+body[data-theme="plaza"] .ra-game-card { border-radius: 16px; }
+body[data-theme="plaza"] .ra-game-card .ra-icon { border-radius: 12px; }
+
+/* Navegación principal (#view-switch, arriba de la biblioteca) — el botón
+   RETRO (.view-retro-btn) queda intacto en las 10 skins: es identidad fija
+   a propósito ("se lee de inmediato como un modo aparte", ya documentado
+   más arriba en su propio bloque), no un descuido de cohesión. Solo se
+   toca la forma del grupo Dock/Lista. */
+/* Los 4 badges cuadrados (LOGROS/OFERTAS/INICIO/PERFIL) quedan afuera en las
+   5 skins, no solo en Plaza — cada uno ya tiene su propio radio+color de
+   identidad (dorado/verde/acento/cian) definido más abajo; sin el :not acá,
+   el radio genérico del grupo Dock/Lista se lo pisaba igual (auditoría Fase
+   4 — mismo patrón de bug que ya se había corregido puntualmente en Plaza,
+   pero se aplicaba parcial: solo ahí se habían agregado las exclusiones). */
+body[data-theme="arcade"] .view-group, body[data-theme="arcade"] .view-btn:not(.view-retro-btn):not(.view-achievements-btn):not(.view-deals-btn):not(.view-home-btn):not(.view-profile-btn) { border-radius: 0; }
+body[data-theme="xbox"] .view-group, body[data-theme="xbox"] .view-btn:not(.view-retro-btn):not(.view-achievements-btn):not(.view-deals-btn):not(.view-home-btn):not(.view-profile-btn) { border-radius: 4px; }
+body[data-theme="steam"] .view-group, body[data-theme="steam"] .view-btn:not(.view-retro-btn):not(.view-achievements-btn):not(.view-deals-btn):not(.view-home-btn):not(.view-profile-btn) { border-radius: 3px; }
+body[data-theme="arcadepremium"] .view-group, body[data-theme="arcadepremium"] .view-btn:not(.view-retro-btn):not(.view-achievements-btn):not(.view-deals-btn):not(.view-home-btn):not(.view-profile-btn) { border-radius: 3px; }
+body[data-theme="plaza"] .view-group, body[data-theme="plaza"] .view-btn:not(.view-retro-btn):not(.view-achievements-btn):not(.view-deals-btn):not(.view-home-btn):not(.view-profile-btn) { border-radius: 999px; }
+
+/* Toasts — mismo lenguaje de esquina que el resto. El acento por tipo
+   (éxito/error/info) ya era semántico y correcto, no se toca. */
+body[data-theme="arcade"] .toast { border-radius: 0; }
+body[data-theme="xbox"] .toast { border-radius: 4px; }
+body[data-theme="steam"] .toast { border-radius: 3px; }
+body[data-theme="arcadepremium"] .toast { border-radius: 3px; }
+body[data-theme="plaza"] .toast { border-radius: 16px; }
+
+/* Grid de consolas retro (.console-card) — el marco pixel negro+gris de 8-bit
+   (box-shadow en anillo) y el brillo de hover/selección en var(--accent) YA
+   estaban bien: el brillo sigue la skin, el marco es "material del
+   cartucho", fijo a propósito. Acá solo se ajusta la esquina del marco,
+   mismo criterio que el resto — el material no cambia, la silueta sí. */
+body[data-theme="arcade"] .console-card { border-radius: 0; }
+body[data-theme="xbox"] .console-card { border-radius: 2px; }
+body[data-theme="steam"] .console-card { border-radius: 2px; }
+body[data-theme="arcadepremium"] .console-card { border-radius: 2px; }
+body[data-theme="plaza"] .console-card { border-radius: 20px; }
 
 html, body { height: 100%; }
 
@@ -209,7 +490,353 @@ body {
   background: linear-gradient(90deg, var(--deriva-violet), var(--deriva-cyan));
   -webkit-background-clip: text; background-clip: text; color: transparent;
 }
+#titlebar-controls-left { display: flex; -webkit-app-region: no-drag; }
 #titlebar-controls { display: flex; -webkit-app-region: no-drag; }
+
+/* ---------- Modo widget (MegaHUB compacto, misma ventana) ----------
+   Ver initWidgetMode() en app.js + win-enter-widget-mode en main.js. La
+   ventana real se encoge/agranda desde el proceso principal; acá solo se
+   oculta el resto de la UI y se muestra esta vista chica en su lugar. */
+#widget-view {
+  display: none; height: 100vh; flex-direction: column; background: var(--bg);
+  position: relative; overflow: hidden;
+  box-shadow: inset 0 0 0 1px var(--border);
+}
+body.widget-mode #titlebar,
+body.widget-mode #app-grid { display: none; }
+body.widget-mode #widget-view { display: flex; }
+
+/* Pegado a un borde + retraído: la ventana real ya se achicó a una tira fina
+   (ver doRetract() en main.js) — acá solo hace falta ocultar la barra/lista/
+   detalle (quedarían aplastados e ilegibles en 10px) y mostrar en su lugar
+   una franja de color que deje claro que ahí hay algo para desplegar. */
+#widget-peek { display: none; }
+body.widget-retracted #widget-bar,
+body.widget-retracted #widget-body { display: none; }
+body.widget-retracted #widget-peek {
+  display: flex; align-items: center; justify-content: center;
+  position: absolute; inset: 0;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+}
+body.widget-retracted #widget-peek::before {
+  content: ''; width: 16px; height: 3px; border-radius: 3px;
+  background: rgba(255,255,255,0.75);
+}
+
+/* `flex-wrap: wrap` de respaldo para las formas anchas (cuadro/rect), donde
+   todo entra en una sola fila igual que antes. La forma angosta ("dock
+   vertical", 140px) tiene su propio override más abajo que pasa la barra
+   entera a columna — a ese ancho ni el wrap alcanzaba: tabs/formas/salir se
+   recortaban contra el borde derecho de la ventana en vez de simplemente
+   bajar de línea. */
+#widget-bar {
+  flex: 0 0 auto; display: flex; flex-wrap: wrap; align-items: center; gap: 6px;
+  min-height: 34px; padding: 6px 8px;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 12%, var(--panel)), var(--panel) 100%);
+  border-bottom: 1px solid var(--border);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 6%, transparent) inset, 0 2px 10px rgba(0,0,0,0.14);
+  -webkit-app-region: drag;
+}
+#widget-bar #widget-drag { flex: 1 1 auto; min-width: 6px; align-self: stretch; }
+
+/* PC / RETRO y las 4 formas dejaron de ser botones sueltos flotando en la
+   barra — ahora cada grupo vive en su propia "pastilla de herramienta"
+   (fondo hundido + borde), el mismo lenguaje que un segmented control de
+   apps pro (Figma, Arc): dentro del grupo no hace falta borde individual por
+   botón, alcanza con el fondo de acento del activo para distinguirlo. */
+#widget-tabs {
+  display: flex; flex-shrink: 0; gap: 2px; padding: 2px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border: 1px solid var(--border); border-radius: 999px;
+  -webkit-app-region: no-drag;
+}
+.wg-tab {
+  border: none; background: transparent; color: var(--dim);
+  font-size: 9.5px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;
+  border-radius: 999px; padding: 4px 9px; cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.wg-tab:hover { color: var(--text); background: color-mix(in srgb, var(--text) 8%, transparent); }
+.wg-tab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: var(--accent-text, #fff);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Las 3 formas: cuadro (grid de iconos) / rectángulo (lista con títulos,
+   default) / vertical (dock angosto de una columna, lanza directo). */
+#widget-shapes {
+  display: flex; flex-shrink: 0; gap: 2px; padding: 2px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border: 1px solid var(--border); border-radius: 8px;
+  -webkit-app-region: no-drag;
+}
+.wg-shape {
+  width: 20px; height: 20px; display: flex; align-items: center; justify-content: center;
+  border: none; border-radius: 6px;
+  background: transparent; color: var(--dim);
+  font-size: 11px; line-height: 1; cursor: pointer; -webkit-app-region: no-drag;
+  transition: background 0.15s, color 0.15s, transform 0.15s, box-shadow 0.15s;
+}
+.wg-shape:hover { color: var(--text); background: color-mix(in srgb, var(--text) 8%, transparent); }
+.wg-shape.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2)); color: var(--accent-text, #fff);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Ya no cierra la app — vuelve a MegaHUB expandido (ver exit() en
+   initWidgetMode, app.js), así que dejó de tener el rojo de "acción
+   destructiva"; ahora resalta con el acento del tema como cualquier otro
+   control del widget. */
+#widget-exit {
+  width: 22px; height: 22px; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--border); border-radius: 7px;
+  background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--dim);
+  cursor: pointer; -webkit-app-region: no-drag;
+  transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
+}
+#widget-exit .icon { width: 11px; height: 11px; }
+#widget-exit:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); border-color: var(--accent); color: var(--text); transform: scale(1.06); }
+
+#widget-body { flex: 1; min-height: 0; display: flex; flex-direction: column; }
+/* #widget-empty/#widget-list/#widget-detail fijan su propio `display` por ID
+   (necesario para flex/scroll) — eso pisa la regla del user-agent para
+   `[hidden]` (display:none), que tiene menos especificidad que un selector de
+   ID. Sin esto, alternar `.hidden = true/false` en JS no ocultaba nada y las
+   tres vistas quedaban superpuestas a la vez (tabs + "sin ROMs" + lista + detalle). */
+#widget-empty[hidden],
+#widget-list[hidden],
+#widget-detail[hidden] { display: none; }
+
+#widget-empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 9px; color: var(--dim); font-size: 11px; font-weight: 600; text-align: center; padding: 18px;
+}
+#widget-empty::before {
+  content: ''; width: 32px; height: 32px; border-radius: 10px;
+  border: 2px dashed var(--border);
+}
+
+#widget-list { flex: 1; min-height: 0; overflow-y: auto; padding: 8px; display: flex; flex-direction: column; gap: 5px; }
+#widget-list::-webkit-scrollbar { width: 6px; }
+#widget-list::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+.wg-console-name {
+  font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--accent2); padding: 8px 3px 3px; position: sticky; top: 0;
+  background: var(--bg);
+}
+.wg-console-games { display: flex; flex-direction: column; gap: 5px; }
+
+.wg-tile {
+  position: relative;
+  display: flex; align-items: center; gap: 8px;
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  border: 1px solid var(--border); border-radius: 10px;
+  padding: 6px; cursor: pointer; color: var(--text); text-align: left; overflow: hidden;
+  width: 100%;
+  transition: background 0.15s, border-color 0.15s, box-shadow 0.15s, transform 0.12s ease;
+}
+.wg-tile:hover {
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 55%, var(--border));
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+/* Feedback inmediato al soltar el clic — el pulso de abajo (.wg-pressed,
+   agregado desde JS al elegir un juego) se ve incluso en un clic
+   instantáneo, donde `:active` casi no alcanza a notarse. */
+.wg-tile:active { transform: scale(0.96); }
+@keyframes wg-tile-press {
+  0% { transform: scale(1); box-shadow: none; }
+  35% { transform: scale(0.88); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 70%, transparent); }
+  100% { transform: scale(1); box-shadow: none; }
+}
+.wg-tile.wg-pressed { animation: wg-tile-press 0.3s cubic-bezier(.3, 1.4, .4, 1); }
+
+.wg-tile img {
+  width: 32px; height: 32px; border-radius: 8px; object-fit: cover; flex: 0 0 auto; background: #000;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08); filter: var(--cover-filter);
+}
+.wg-fallback {
+  width: 32px; height: 32px; border-radius: 8px; flex: 0 0 auto;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  font-weight: 800; font-size: 13px; color: var(--accent-text, #fff);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.15);
+}
+.wg-title { font-size: 11.5px; font-weight: 600; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Forma "rectángulo" (default, lista con títulos): barra de acento a la
+   izquierda + flecha que aparece al hover, en vez de teñir toda la fila de
+   color — se lee como una lista premium (Spotify/Discord), no como un botón
+   grande morado. Solo acá: en cuadro/vertical no hay sitio para una flecha
+   sin taparle la carátula al ícono. */
+#widget-view[data-shape="rect"] .wg-tile { padding-right: 22px; }
+#widget-view[data-shape="rect"] .wg-tile::before {
+  content: ''; position: absolute; left: 0; top: 7px; bottom: 7px; width: 3px; border-radius: 3px;
+  background: var(--accent); opacity: 0; transform: scaleY(0.4);
+  transition: opacity 0.15s, transform 0.15s;
+}
+#widget-view[data-shape="rect"] .wg-tile:hover::before { opacity: 1; transform: scaleY(1); }
+#widget-view[data-shape="rect"] .wg-tile::after {
+  content: '\203A'; position: absolute; right: 8px; top: 50%; transform: translate(6px, -50%);
+  font-size: 15px; font-weight: 700; color: var(--accent); opacity: 0;
+  transition: opacity 0.15s, transform 0.15s; pointer-events: none;
+}
+#widget-view[data-shape="rect"] .wg-tile:hover::after { opacity: 0.85; transform: translate(0, -50%); }
+
+/* ---------- Dock vertical: la barra pasa a columna ----------
+   A 124px de ancho, tabs (PC/RETRO) + selector de forma + salir no entran en
+   una sola fila sin recortarse contra el borde derecho — el bug reportado.
+   En columna cada grupo usa su tamaño natural centrado en el ancho
+   disponible, y PC/RETRO se apilan a ancho completo dentro de su propia
+   pastilla en vez de intentar entrar los dos lado a lado. */
+#widget-view[data-shape="vertical"] #widget-bar {
+  flex-direction: column; align-items: center; gap: 6px; padding: 8px 6px;
+}
+#widget-view[data-shape="vertical"] #widget-drag { display: none; }
+#widget-view[data-shape="vertical"] #widget-tabs { flex-direction: column; width: 100%; }
+#widget-view[data-shape="vertical"] .wg-tab { width: 100%; text-align: center; }
+#widget-view[data-shape="vertical"] #widget-shapes { flex-wrap: wrap; justify-content: center; }
+/* radius chico en vez del 999px heredado: apiladas en columna, el radio
+   "pastilla" (pensado para 2 botones lado a lado) corta con un arco enorme
+   arriba/abajo del contenedor mientras el botón "PC" activo de adentro,
+   mucho más bajo, redondea con un arco chico — el arco grande del afuera
+   quedaba MÁS adentro que el arco chico del botón, y el botón se veía
+   "salido" del marco. Con radios chicos y parejos en los dos, encajan.
+   Especificidad A PROPÓSITO más baja que las reglas de skin de arriba
+   (atributo, sin el #widget-view por delante): si una skin ya define su
+   propio radio para #widget-tabs/.wg-tab (arcade/xbox/steam/arcadepremium),
+   ESE gana — este es solo el valor por defecto para las skins que no lo
+   tocan, no un radio fijo que pisa a todas por igual. */
+[data-shape="vertical"] #widget-tabs { border-radius: 9px; }
+[data-shape="vertical"] .wg-tab { border-radius: 7px; }
+
+/* ---------- Formas de solo ícono: cuadro / dock vertical ----------
+   Comparten un único lenguaje visual — el propio ícono ES la tarjeta (radio,
+   sombra y foco al hover viven en la imagen/respaldo, no en un envoltorio
+   .wg-tile con su propio fondo/borde apretado alrededor) — solo cambia
+   cuántas columnas entran y si van agrupadas por consola (Retro) o en una
+   grilla plana (PC). Iconos con ancho FIJO (flex-basis, no `1fr`/stretch):
+   si crecieran para llenar el hueco al estirar la ventana quedarían
+   gigantes con solo la letra de respaldo, en vez de simplemente dejar sitio
+   para más íconos. El .wg-tile de base trae su propio border-radius/
+   overflow:hidden (para la forma "rectángulo") — acá se anulan los dos: si
+   quedaban activos, el marco cuadrado del .wg-tile recortaba por fuera del
+   radio más grande del ícono y sobresalía un borde recto en cada esquina.
+   El ícono es ahora la ÚNICA fuente de verdad del redondeado. */
+#widget-view[data-shape="square"] .wg-tile,
+#widget-view[data-shape="vertical"] .wg-tile {
+  background: transparent; border-color: transparent; padding: 0; gap: 0;
+  border-radius: 0; overflow: visible;
+  flex-direction: column;
+}
+#widget-view[data-shape="square"] .wg-tile:hover,
+#widget-view[data-shape="vertical"] .wg-tile:hover { box-shadow: none; }
+
+#widget-view[data-shape="square"] #widget-list:not(.wg-grouped),
+#widget-view[data-shape="square"] .wg-console-games {
+  display: flex; flex-wrap: wrap; gap: 9px;
+}
+#widget-view[data-shape="square"] #widget-list.wg-grouped { display: flex; flex-direction: column; gap: 12px; }
+/* width:50px explícito, no solo flex-basis: la base .wg-tile (pensada para
+   la forma "rectángulo") trae `width: 100%` — normalmente flex-basis manda
+   sobre width en un flex row, pero acá NO alcanzaba y el ícono terminaba del
+   ancho de toda la ventana (gigante, tapando el nombre y generando scroll
+   vertical en #widget-list). Con width fijo no hay ambigüedad posible. */
+#widget-view[data-shape="square"] .wg-tile { flex: 0 0 50px; width: 50px; }
+
+/* Dock vertical: SIEMPRE una sola columna centrada — a 124px de ancho no
+   entra más de un ícono por fila, así que forzar 1 columna evita que 2
+   íconos angostos queden descuadrados a los costados en vez de uno solo
+   bien centrado (el otro bug reportado). */
+#widget-view[data-shape="vertical"] #widget-list:not(.wg-grouped),
+#widget-view[data-shape="vertical"] .wg-console-games {
+  display: flex; flex-direction: column; align-items: center; gap: 9px;
+}
+#widget-view[data-shape="vertical"] #widget-list.wg-grouped { display: flex; flex-direction: column; gap: 14px; }
+#widget-view[data-shape="vertical"] .wg-tile { flex: 0 0 76px; width: 76px; }
+
+/* Encabezado de consola en cuadro/vertical — hereda tamaño/color/sticky de
+   `.wg-console-name` (ver más arriba, ya usado por "rectángulo"); acá solo
+   hacía falta dejar de ocultarlo y centrarlo, angosto como el resto del dock. */
+#widget-view[data-shape="square"] .wg-console-name,
+#widget-view[data-shape="vertical"] .wg-console-name {
+  text-align: center;
+}
+
+#widget-view[data-shape="square"] .wg-tile img,
+#widget-view[data-shape="square"] .wg-fallback,
+#widget-view[data-shape="vertical"] .wg-tile img,
+#widget-view[data-shape="vertical"] .wg-fallback {
+  width: 100%; height: auto; aspect-ratio: 1; border-radius: 12px;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 3px 10px rgba(0,0,0,0.28);
+  transition: box-shadow 0.15s, transform 0.15s ease;
+}
+
+#widget-view[data-shape="square"] .wg-tile:hover img,
+#widget-view[data-shape="square"] .wg-tile:hover .wg-fallback,
+#widget-view[data-shape="vertical"] .wg-tile:hover img,
+#widget-view[data-shape="vertical"] .wg-tile:hover .wg-fallback {
+  box-shadow: 0 0 0 2px var(--accent), 0 6px 16px color-mix(in srgb, var(--accent) 35%, transparent);
+  transform: translateY(-2px);
+}
+
+/* Título SIEMPRE visible en cuadro/vertical (formas de solo ícono) — antes
+   se ocultaba del todo, y si una carátula tardaba en cargar, se veía mal, o
+   directo no cargaba, no había forma de saber qué juego era ese ícono. En
+   vez de agregar una fila aparte (que rompería el tamaño ya fijo de la
+   ventana en cada forma), se superpone como un rótulo con degradé oscuro
+   sobre la base del ícono — legible incluso sobre carátulas claras o
+   complejas, sin agrandar nada. */
+#widget-view[data-shape="square"] .wg-title,
+#widget-view[data-shape="vertical"] .wg-title {
+  display: block; position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 13px 5px 4px; border-radius: 0 0 12px 12px;
+  background: linear-gradient(to top, rgba(0,0,0,0.9) 8%, rgba(0,0,0,0.55) 50%, transparent);
+  font-size: 8.5px; line-height: 1.2; font-weight: 700; letter-spacing: 0.01em; color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.95);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+/* ---------- Detalle de un juego elegido: carátula y un único botón "Jugar" ---------- */
+#widget-detail {
+  flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center;
+  justify-content: center; gap: 12px; padding: 18px; position: relative;
+  background: radial-gradient(120% 90% at 50% 0%, color-mix(in srgb, var(--accent) 14%, transparent), transparent 65%);
+}
+#widget-detail-back {
+  position: absolute; top: 8px; left: 8px;
+  width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+  border: 1px solid var(--border); border-radius: 999px;
+  background: color-mix(in srgb, var(--text) 5%, transparent); color: var(--dim); cursor: pointer;
+  transition: background 0.15s, border-color 0.15s, color 0.15s;
+}
+#widget-detail-back .icon { width: 13px; height: 13px; transform: rotate(90deg); }
+#widget-detail-back:hover { background: color-mix(in srgb, var(--accent) 20%, transparent); border-color: var(--accent); color: var(--text); }
+
+#widget-detail-cover {
+  width: 116px; height: 116px; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 12px 26px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.08);
+}
+#widget-detail-cover img { width: 100%; height: 100%; object-fit: cover; display: block; filter: var(--cover-filter); }
+#widget-detail-cover .wg-fallback { width: 100%; height: 100%; border-radius: 0; font-size: 38px; }
+#widget-detail-title { font-size: 13px; font-weight: 800; letter-spacing: 0.01em; text-align: center; color: var(--text); }
+#widget-detail-play {
+  border: none; border-radius: 999px; background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: var(--accent-text, #fff);
+  font-size: 11.5px; font-weight: 800; letter-spacing: 0.03em; text-transform: uppercase;
+  padding: 9px 26px; cursor: pointer;
+  box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 45%, transparent);
+  transition: transform 0.12s ease, box-shadow 0.12s, filter 0.12s;
+}
+#widget-detail-play:hover {
+  filter: brightness(1.08); transform: translateY(-1px);
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+#widget-detail-play:active { transform: translateY(0) scale(0.97); }
 .tb-btn {
   width: 44px; height: var(--titlebar-h);
   display: flex; align-items: center; justify-content: center;
@@ -249,7 +876,6 @@ body.sidebar-collapsed #app-grid { --sidebar-w: 0px; }
   display: flex;
   flex-direction: column;
   gap: 18px;
-  white-space: nowrap;
   height: 100%;
 }
 /* Franja distintiva de cada tema, arriba del todo del sidebar (PC y Retro
@@ -337,29 +963,41 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   z-index: 5;          /* por encima de las secciones de abajo al expandirse */
   margin: 2px 6px 10px; padding: 6px 9px;
   border-radius: 10px;
-  background: rgba(124,108,242,0.08);
-  border: 1px solid rgba(124,108,242,0.18);
+  /* Antes rgba(124,108,242,…) fijo — el Companion se quedaba violeta aunque
+     el usuario tuviera puesta otra skin (p.ej. Xbox verde), rompiendo la
+     cohesión. Ahora sigue el acento activo como el resto de la app. */
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
   font-size: 10.5px; font-weight: 700;
-  color: rgba(255,255,255,0.55);
-  transition: background 0.2s, border-color 0.2s, transform 0.15s var(--ease), box-shadow 0.15s;
+  /* Antes rgba(255,255,255,.55) fijo — texto blanco sobre fondo claro en
+     Lavanda/Plaza es prácticamente invisible. var(--dim) es oscuro en las
+     skins claras y claro en las oscuras, como el resto del texto secundario
+     de la app — nunca depende de que el fondo sea oscuro para leerse. */
+  color: var(--dim);
+  transition: background 0.2s, border-color 0.2s, transform 0.15s var(--ease), box-shadow 0.15s, color 0.2s;
   /* Sombra propia + reborde superior claro: sin esto la pill se aplanaba
      contra el fondo del sidebar (mismo tono violeta apagado) y no se leía
      como un elemento aparte flotando sobre el hub — el gato/Companion es
      una pieza añadida, no parte nativa de MegaHUB, y tiene que notarse. */
   box-shadow: 0 6px 16px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.06) inset;
 }
-.companion-pill:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.08) inset; }
+/* Sin transform acá — .companion-pill-expand (adentro) es position:fixed
+   para escapar el overflow del sidebar, y CUALQUIER transform en un ancestro
+   (aunque sea de 1px) hace que ese fixed deje de posicionarse respecto a la
+   ventana y pase a posicionarse respecto a ESTE elemento — el panel terminaba
+   renderizado en top_calculado + top_de_la_pill, bien desfasado hacia abajo
+   a la derecha. El levantado de 1px no vale ese bug; queda solo la sombra. */
+.companion-pill:hover { box-shadow: 0 10px 22px rgba(0,0,0,0.4), 0 1px 0 rgba(255,255,255,0.08) inset; }
 .companion-pill-row { display: flex; align-items: center; gap: 7px; }
 .companion-pill-dot {
   width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0;
-  background: rgba(255,255,255,0.25);
+  /* Antes rgba(255,255,255,.25) fijo — casi invisible sobre el panel casi
+     blanco de Plaza. var(--dim) es un gris neutro que se ve en cualquier fondo. */
+  background: color-mix(in srgb, var(--dim) 55%, transparent);
 }
-.companion-pill[data-state="playing"] .companion-pill-dot {
-  background: #7c6cf2; box-shadow: 0 0 6px 1px rgba(124,108,242,0.65);
-  animation: companion-pill-blip 1.6s ease-in-out infinite;
+.companion-pill[data-state="connected"] .companion-pill-dot {
+  background: #34d399; box-shadow: 0 0 6px 1px rgba(52,211,153,0.5);
 }
-.companion-pill[data-state="connected"] .companion-pill-dot { background: #34d399; }
-@keyframes companion-pill-blip { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
 .companion-pill-text {
   flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
@@ -383,11 +1021,18 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   overflow: hidden; /* nada (botones, glow de hover) puede asomarse fuera del borde redondeado */
   z-index: 200; padding: 12px;
   border-radius: 14px;
+  /* Base neutra fija a propósito (no var(--panel)): el panel tiene que
+     seguir leyéndose como "algo flotando encima del hub", no fundirse con
+     el fondo — ver nota de arriba. Antes era #120e26 (negro con tinte
+     VIOLETA) — con eso de base, el panel se veía morado en CUALQUIER skin
+     por más que los degradados de encima sí siguieran el acento activo; un
+     negro de verdad neutro dejaba que esos degradados manden. Los
+     degradados de acento SÍ siguen la skin activa. */
   background:
-    radial-gradient(110% 60% at 100% -10%, rgba(124,58,237,0.24), transparent 55%),
-    radial-gradient(100% 55% at -10% 110%, rgba(34,211,238,0.13), transparent 55%),
-    #120e26;
-  border: 1px solid rgba(124,108,242,0.4);
+    radial-gradient(110% 60% at 100% -10%, color-mix(in srgb, var(--accent) 32%, transparent), transparent 55%),
+    radial-gradient(100% 55% at -10% 110%, color-mix(in srgb, var(--accent2) 18%, transparent), transparent 55%),
+    #0b0c10;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
   box-shadow: 0 14px 34px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06), 0 0 0 1px rgba(0,0,0,0.4);
   /* Oculto vía opacidad/visibilidad (no display) para poder animar la
      entrada — display:none no transiciona. pointer-events:none evita que,
@@ -401,9 +1046,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   transition: opacity 0.15s ease, transform 0.2s cubic-bezier(.34,1.35,.64,1), visibility 0s linear 0.15s;
 }
 .companion-pill[data-state="connected"]:hover .companion-pill-expand,
-.companion-pill[data-state="connected"]:focus-within .companion-pill-expand,
-.companion-pill[data-state="playing"]:hover .companion-pill-expand,
-.companion-pill[data-state="playing"]:focus-within .companion-pill-expand {
+.companion-pill[data-state="connected"]:focus-within .companion-pill-expand {
   opacity: 1; visibility: visible; pointer-events: auto;
   transform: scaleY(1);
   transition: opacity 0.15s ease, transform 0.2s cubic-bezier(.34,1.35,.64,1), visibility 0s linear 0s;
@@ -411,129 +1054,142 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 /* Cuando se decide mostrar el panel ARRIBA de la pill en vez de abajo (ver
    flipIfNeeded en app.js — no hay espacio debajo, p.ej. ventana muy baja). */
 .companion-pill-expand.cpx-flip-up { transform-origin: bottom center; }
-/* ── Now playing: carátula + etiqueta de género + título/artista ── */
-.cpx-np { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-.cpx-cover {
-  width: 42px; height: 42px; border-radius: 10px; flex: 0 0 auto;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 18px; background: rgba(124,108,242,0.18); overflow: hidden;
-  border: 1px solid rgba(124,108,242,0.3);
-  box-shadow: inset 0 1px 2px rgba(0,0,0,0.35);
+/* ── Historial semanal (reemplaza la radio) ── */
+.cpx-activity-title {
+  font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--accent2); margin-bottom: 8px;
+  display: flex; align-items: center; gap: 7px;
 }
-.cpx-cover-img { width: 100%; height: 100%; object-fit: cover; border-radius: 10px; }
-.cpx-meta { flex: 1; min-width: 0; }
-.cpx-lbl { display: flex; align-items: center; gap: 6px; }
-.cpx-live-dot { width: 6px; height: 6px; border-radius: 50%; background: #7c6cf2; flex-shrink: 0; }
-.companion-pill[data-state="playing"] .cpx-live-dot {
-  box-shadow: 0 0 6px 1px rgba(124,108,242,0.65); animation: companion-pill-blip 1.6s ease-in-out infinite;
+/* Rayita con degradado antes del título — mismo gesto que ya usan los
+   eyebrows del resto del rediseño, para que este panel se sienta parte del
+   mismo sistema en vez de un componente aparte. */
+.cpx-activity-title::before {
+  content: ''; width: 14px; height: 2px; border-radius: 2px; flex-shrink: 0;
+  background: linear-gradient(90deg, var(--accent), var(--accent2));
 }
-.cpx-genre { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #a996ff; }
-.cpx-title {
-  font-size: 12.5px; font-weight: 700; color: rgba(255,255,255,0.92);
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 2px;
+.cpx-activity-list { display: flex; flex-direction: column; gap: 2px; max-height: 220px; overflow-y: auto; }
+.cpx-activity-row {
+  display: flex; align-items: center; gap: 9px; padding: 6px 4px; border-radius: 8px;
+  border-bottom: 1px solid rgba(255,255,255,0.06);
+  transition: background 0.15s var(--ease);
 }
-.cpx-artist {
-  font-size: 10.5px; color: rgba(255,255,255,0.4);
+.cpx-activity-row:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.cpx-activity-row:last-child { border-bottom: none; }
+/* Carátula chica — si no hay match en allGames (título sin cruce, o
+   RetroAchievements todavía sin portada cacheada) se queda vacía y el
+   degradado de fondo hace de respaldo, mismo criterio que .wg-fallback. */
+.cpx-activity-cover {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 7px; overflow: hidden;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset;
+}
+.cpx-activity-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Marco propio para lo jugado en Modo Retro — mismo --retro-accent que ya
+   usa el botón RETRO de la topbar, así se reconoce de un vistazo sin tener
+   que leer la etiqueta de plataforma. */
+.cpx-activity-row.cpx-retro .cpx-activity-cover {
+  box-shadow: 0 0 0 2px var(--retro-accent);
+}
+.cpx-activity-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.cpx-activity-plat {
+  font-size: 8.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em;
+  color: rgba(255,255,255,0.4);
+}
+.cpx-activity-row.cpx-retro .cpx-activity-plat { color: var(--retro-accent); }
+.cpx-activity-name {
+  font-size: 11.5px; font-weight: 600; color: rgba(255,255,255,0.9);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-/* ── Transporte circular (mismos íconos SVG que radio.html) — la curva
-   cubic-bezier(.34,1.56,.64,1) es la misma "rebotadita" que ya usan los
-   botones de consola 3D del catálogo (console-btn), para que se sienta
-   como el mismo lenguaje de animación en toda la app, no uno aparte. */
-.cpx-transport {
-  display: flex; align-items: center; justify-content: center; gap: 8px;
-  margin-bottom: 11px; padding-bottom: 11px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-.cpx-tb {
-  width: 30px; height: 30px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.08); cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(255,255,255,0.06); color: #a996ff;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05);
-  transition: transform 0.16s cubic-bezier(.34,1.56,.64,1), background 0.15s, box-shadow 0.15s;
-}
-.cpx-tb:hover { transform: translateY(-1px) scale(1.06); background: rgba(255,255,255,0.12); }
-.cpx-tb:active { transform: scale(0.92); transition-duration: 0.08s; }
-.cpx-tb svg { width: 14px; height: 14px; transition: transform 0.12s; }
-.cpx-tb.cpx-play {
-  width: 38px; height: 38px; color: #14101f; background: #7c6cf2; border-color: transparent;
-  box-shadow: 0 0 14px rgba(124,108,242,0.5), inset 0 1px 0 rgba(255,255,255,0.25);
-}
-.cpx-tb.cpx-play:hover { box-shadow: 0 0 20px rgba(124,108,242,0.7), inset 0 1px 0 rgba(255,255,255,0.3); }
-.cpx-tb.cpx-play svg { width: 16px; height: 16px; }
-/* ── Volumen (mismo truco de gradiente que radio.html: --p = % lleno) ── */
-.cpx-volume-row {
-  display: flex; align-items: center; gap: 8px;
-  margin-bottom: 11px; padding-bottom: 11px;
-  border-bottom: 1px solid rgba(255,255,255,0.06);
-}
-.cpx-mute {
-  background: none; border: none; color: rgba(255,255,255,0.45); cursor: pointer;
-  padding: 0; display: flex; flex-shrink: 0; transition: color 0.15s, transform 0.16s cubic-bezier(.34,1.56,.64,1);
-}
-.cpx-mute:hover { color: #fff; transform: scale(1.12); }
-.cpx-volume {
-  -webkit-appearance: none; flex: 1; height: 4px; border-radius: 999px; cursor: pointer;
-  background: linear-gradient(90deg, #7c6cf2 var(--p, 70%), rgba(255,255,255,0.14) var(--p, 70%));
-  transition: filter 0.15s;
-}
-.cpx-volume:hover { filter: brightness(1.15); }
-.cpx-volume::-webkit-slider-thumb {
-  -webkit-appearance: none; width: 12px; height: 12px; border-radius: 50%;
-  background: #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
-  transition: transform 0.12s cubic-bezier(.34,1.56,.64,1);
-}
-.cpx-volume:hover::-webkit-slider-thumb { transform: scale(1.2); }
-/* ── Me gusta + Guardar ── */
-.cpx-actions { display: flex; align-items: center; gap: 8px; }
-.cpx-like {
-  flex: 0 0 auto; width: 30px; height: 30px; border-radius: 50%;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08);
-  color: rgba(255,255,255,0.5); font-size: 13px; cursor: pointer;
-  transition: transform 0.16s cubic-bezier(.34,1.56,.64,1), color 0.15s, border-color 0.15s;
-}
-.cpx-like:hover { transform: translateY(-1px) scale(1.08); }
-.cpx-like:active { transform: scale(0.9); }
-.cpx-like.cpx-active { color: #ff6b9d; border-color: rgba(255,107,157,0.4); }
-.cpx-save {
-  /* min-width:0 (no el "auto" por defecto de un flex item): sin esto el
-     botón nunca se encoge por debajo del ancho de su texto/emoji y se sale
-     del panel si la pill de origen (y por tanto el panel, que copia su
-     ancho) es angosta — visto real con "💟 Guardar en Mi lista". */
-  flex: 1; min-width: 0; padding: 8px; border-radius: 10px; border: 1px solid rgba(52,211,153,0.4);
-  background: rgba(52,211,153,0.12); color: #6ee7b7; font-weight: 700; font-size: 10.5px;
-  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-  cursor: pointer; font-family: inherit;
-  transition: background 0.15s, transform 0.16s cubic-bezier(.34,1.56,.64,1), box-shadow 0.15s;
-}
-.cpx-save:hover:not(:disabled) { background: rgba(52,211,153,0.2); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(52,211,153,0.25); }
-.cpx-save:active:not(:disabled) { transform: scale(0.97); }
-.cpx-save:disabled { opacity: 0.4; cursor: default; transform: none; }
+.cpx-activity-hours { flex-shrink: 0; font-size: 11.5px; font-weight: 800; color: var(--accent2); }
+.cpx-activity-empty { font-size: 11px; color: rgba(255,255,255,0.45); padding: 4px 2px; }
 
 .side-section h3 {
-  font-size: 11px;
+  font-size: 11.5px;
+  font-weight: 800;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: var(--dim);
-  margin-bottom: 8px;
+  color: var(--text);
+  opacity: 0.75;
+  margin-bottom: 10px;
   padding-left: 6px;
+  white-space: normal;
 }
-.chip-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.chip-list { display: flex; flex-wrap: wrap; gap: 7px; }
 .chip {
   background: var(--panel2);
   color: var(--dim);
-  border: 1px solid transparent;
-  border-radius: 8px;
-  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  padding: 7px 14px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.12s;
+  white-space: normal;
+  transition: border-color 0.15s var(--ease), background 0.15s var(--ease), color 0.15s var(--ease), transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
 }
-.chip:hover { color: var(--text); border-color: var(--border); }
-.chip.active { background: var(--accent-soft); color: #b6acff; border-color: var(--accent); }
-.side-note { font-size: 11px; color: var(--dim); margin-top: 6px; padding-left: 6px; line-height: 1.5; }
-.side-note a { color: #b6acff; text-decoration: none; font-weight: 600; }
+/* Antes background:#1a1f2c fijo — en las skins claras (Lavanda/Plaza) el
+   chip se ponía oscuro justo al pasar el mouse, el efecto contrario al que
+   se busca. Ahora un realce sutil con el acento de la skin, sirve en claro
+   y oscuro por igual. */
+.chip:hover { color: var(--text); border-color: var(--accent); background: color-mix(in srgb, var(--accent) 10%, var(--panel2)); transform: translateY(-1px); box-shadow: 0 3px 10px rgba(0,0,0,0.18); }
+.chip:active { transform: translateY(0); }
+.chip.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent) inset; }
+
+/* Chips de Resolución/Rendimiento del sidebar Retro — mismo tratamiento
+   "vistoso" que los botones de la topbar (borde 2px de color, degradado
+   tenue de fondo, brillo en hover/activo) en vez del chip gris plano
+   genérico que comparten los filtros de biblioteca. */
+#retro-resolution-presets.chip-list { gap: 8px; }
+/* Antes rgba(109,93,240,…)/rgba(34,211,238,…)/#8b7cf6 fijos — este chip se
+   quedaba violeta→cian sin importar la skin activa. Tokenizado igual que el
+   resto de la pasada de cohesión. */
+#retro-resolution-presets .chip {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 14%, transparent), color-mix(in srgb, var(--accent2) 8%, transparent));
+  border: 2px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  color: var(--accent);
+  font-weight: 800;
+  padding: 8px 15px;
+}
+#retro-resolution-presets .chip:hover {
+  border-color: var(--accent);
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent2) 12%, transparent));
+  box-shadow: 0 0 0 3px var(--accent-soft);
+  color: var(--text);
+}
+#retro-resolution-presets .chip.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: #fff; border-color: transparent;
+  box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 55%, transparent);
+}
+/* Chip "Original" (4:3 + shader CRT/LCD, ver resolutionPresets.js): paleta
+   sepia/ámbar de TV vieja, deliberadamente distinta del violeta de los
+   demás niveles de resolución — no es "más calidad", es "otra época". */
+#retro-resolution-presets .chip.chip-original {
+  background: linear-gradient(135deg, rgba(217,119,6,0.16), rgba(180,83,9,0.1));
+  border-color: rgba(217,119,6,0.45);
+  color: #fbbf74;
+}
+#retro-resolution-presets .chip.chip-original:hover {
+  border-color: #d97706;
+  background: linear-gradient(135deg, rgba(217,119,6,0.26), rgba(180,83,9,0.16));
+  box-shadow: 0 0 0 3px rgba(217,119,6,0.2);
+  color: #fde4bc;
+}
+#retro-resolution-presets .chip.chip-original.active {
+  background: linear-gradient(135deg, #d97706, #92400e);
+  color: #fff3e0; border-color: transparent;
+  box-shadow: 0 0 16px rgba(217,119,6,0.55);
+}
+.side-note {
+  font-size: 12px;
+  color: var(--dim);
+  margin-top: 6px;
+  padding-left: 6px;
+  line-height: 1.55;
+  white-space: normal;
+  word-wrap: break-word;
+}
+.side-note a { color: var(--accent); text-decoration: none; font-weight: 700; }
 .side-note a:hover { text-decoration: underline; }
 
 #retro-sidebar-console-info {
@@ -548,26 +1204,77 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 
 .account-btn {
   display: flex;
-  align-items: center;
-  gap: 8px;
+  align-items: flex-start;
+  gap: 10px;
   width: 100%;
-  background: var(--panel2);
+  background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent), var(--panel2);
   border: 1px solid var(--border);
   color: var(--text);
-  border-radius: var(--radius-sm);
-  padding: 8px 12px;
+  border-radius: 10px;
+  padding: 10px 13px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 650;
+  line-height: 1.4;
+  text-align: left;
+  white-space: normal;
+  word-wrap: break-word;
   cursor: pointer;
-  margin-bottom: 6px;
+  margin-bottom: 7px;
   transition: border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease), box-shadow 0.15s var(--ease);
 }
-.account-btn:hover:not(.disabled):not(:disabled) {
-  border-color: var(--accent); background: #1a1f2c;
-  box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+.account-btn > svg, .account-btn > i, .account-btn > [data-icon] {
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: var(--dim);
+  transition: color 0.15s var(--ease);
 }
-.account-btn:active:not(.disabled):not(:disabled) { transform: translateY(1px); }
+.account-btn:hover:not(.disabled):not(:disabled) {
+  /* Antes #1a1f2c fijo de fondo — en las skins claras (Lavanda/Plaza) el
+     botón se ponía oscuro de golpe justo al pasar el mouse, dentro de un
+     panel claro. var(--panel2) da la misma "superficie elevada" en oscuro
+     y se queda dentro del mundo claro en las skins que lo son. */
+  border-color: var(--accent); background: linear-gradient(180deg, rgba(255,255,255,0.05), transparent), var(--panel2);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4), 0 0 0 1px var(--accent-soft) inset;
+  transform: translateY(-1px);
+}
+.account-btn:hover:not(.disabled):not(:disabled) > svg,
+.account-btn:hover:not(.disabled):not(:disabled) > i,
+.account-btn:hover:not(.disabled):not(:disabled) > [data-icon] { color: var(--accent); }
+.account-btn:active:not(.disabled):not(:disabled) { transform: translateY(1px); box-shadow: none; }
 .account-btn.disabled, .account-btn:disabled { opacity: 0.45; cursor: default; }
+
+/* Botones del sidebar Retro con color propio por sección — el gris plano
+   genérico de .account-btn queda bien para "conectar cuenta" en otras
+   vistas, pero acá compite con 3-4 acciones seguidas sin ninguna jerarquía
+   visual. Mismo lenguaje que los botones de la topbar: borde 2px de color,
+   degradado tenue, brillo/elevación en hover. */
+.side-section-emulator .account-btn {
+  background: linear-gradient(180deg, rgba(251,191,36,0.1), transparent), var(--panel2);
+  border: 2px solid rgba(251,191,36,0.32);
+}
+.side-section-emulator .account-btn > svg, .side-section-emulator .account-btn > i, .side-section-emulator .account-btn > [data-icon] { color: var(--warn); }
+.side-section-emulator .account-btn:hover:not(.disabled):not(:disabled) {
+  border-color: var(--warn);
+  background: linear-gradient(180deg, rgba(251,191,36,0.16), transparent), var(--panel2);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4), 0 0 0 3px rgba(251,191,36,0.18);
+}
+.side-section-emulator .account-btn:hover:not(.disabled):not(:disabled) > svg,
+.side-section-emulator .account-btn:hover:not(.disabled):not(:disabled) > i,
+.side-section-emulator .account-btn:hover:not(.disabled):not(:disabled) > [data-icon] { color: var(--warn); }
+
+.side-section-folders .account-btn {
+  background: linear-gradient(180deg, rgba(74,222,128,0.1), transparent), var(--panel2);
+  border: 2px solid rgba(74,222,128,0.32);
+}
+.side-section-folders .account-btn > svg, .side-section-folders .account-btn > i, .side-section-folders .account-btn > [data-icon] { color: var(--ok); }
+.side-section-folders .account-btn:hover:not(.disabled):not(:disabled) {
+  border-color: var(--ok);
+  background: linear-gradient(180deg, rgba(74,222,128,0.16), transparent), var(--panel2);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4), 0 0 0 3px rgba(74,222,128,0.18);
+}
+.side-section-folders .account-btn:hover:not(.disabled):not(:disabled) > svg,
+.side-section-folders .account-btn:hover:not(.disabled):not(:disabled) > i,
+.side-section-folders .account-btn:hover:not(.disabled):not(:disabled) > [data-icon] { color: var(--ok); }
 .account-btn[hidden] { display: none; }
 
 .bios-warning {
@@ -634,11 +1341,18 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 }
 #sgdb-key:focus { border-color: var(--accent); }
 #sgdb-save {
-  background: var(--accent-soft); color: #b6acff; border: 1px solid var(--accent);
+  background: var(--accent-soft); color: var(--accent); border: 1px solid var(--accent);
   border-radius: 7px; padding: 6px 10px; font-size: 12px; font-weight: 700; cursor: pointer;
 }
 #sgdb-save:hover { filter: brightness(1.15); }
 #sgdb-save.saved { background: rgba(74,222,128,0.15); color: var(--ok); border-color: var(--ok); }
+
+/* Logros/Ofertas: solo el logo (+ el pill de Companion) del sidebar, sin las
+   secciones de filtros de biblioteca — ver updateSidebarMode() en app.js. */
+#sidebar.sidebar-minimal .side-section,
+#sidebar.sidebar-minimal #specs-box {
+  display: none;
+}
 
 #specs-box {
   margin-top: auto;
@@ -660,7 +1374,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 #topbar {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
   padding: 16px 24px;
   border-bottom: 1px solid var(--border);
   /* Con el sidebar izquierdo abierto, todo esto (buscador + vistas + RETRO +
@@ -672,10 +1386,12 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   overflow-x: auto;
   overflow-y: hidden;
 }
+/* #search se movió adentro de #search-wrap (position:relative, para anclar
+   el desplegable de resultados) — el wrap hereda el flex-basis/min/max que
+   antes tenía el input directamente, así el layout de la topbar no cambia. */
+#search-wrap { position: relative; flex: 1 1 160px; min-width: 110px; max-width: 300px; }
 #search {
-  flex: 1 1 160px;
-  min-width: 110px;
-  max-width: 300px;
+  width: 100%; box-sizing: border-box;
   background: var(--panel);
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -685,11 +1401,48 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   outline: none;
 }
 #search:focus { border-color: var(--accent); }
+
+/* ---------- Desplegable de búsqueda global (Fase 6) ----------
+   Cruza biblioteca + logros + ofertas ya cargados — ver
+   buildSearchResultGroups()/renderSearchResults() en app.js. */
+#search-results {
+  position: absolute; top: calc(100% + 6px); left: 0; right: 0; z-index: 500;
+  max-height: 60vh; overflow-y: auto;
+  background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: 0 14px 32px rgba(0,0,0,0.4);
+  padding: 6px;
+}
+#search-results[hidden] { display: none; }
+.search-group + .search-group { margin-top: 4px; }
+.search-group-title {
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--dim); padding: 6px 8px 4px;
+}
+.search-result {
+  display: flex; align-items: center; gap: 10px; width: 100%;
+  background: transparent; border: none; border-radius: 8px; padding: 6px 8px; cursor: pointer;
+  text-align: left; color: var(--text); font-size: 13px;
+  transition: background 0.12s var(--ease);
+}
+.search-result:hover, .search-result.gp-hot { background: color-mix(in srgb, var(--accent) 12%, transparent); }
+.search-result-icon {
+  flex-shrink: 0; width: 28px; height: 28px; border-radius: 7px; overflow: hidden;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  display: flex; align-items: center; justify-content: center;
+  color: var(--accent-text, #fff); font-weight: 800; font-size: 12px;
+}
+.search-result-icon img { width: 100%; height: 100%; object-fit: cover; display: block; filter: var(--cover-filter); }
+.search-result-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.search-result-title {
+  font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.search-result-meta { font-size: 10.5px; color: var(--dim); }
+.search-results-empty { padding: 14px 8px; font-size: 12.5px; color: var(--dim); text-align: center; }
 #count { color: var(--dim); font-size: 13px; flex-shrink: 0; }
 
 .icon-btn {
   background: var(--panel); border: 1px solid var(--border); color: var(--dim);
-  border-radius: var(--radius-sm); width: 42px; height: 42px; font-size: 18px; cursor: pointer;
+  border-radius: var(--radius-sm); width: 44px; height: 44px; box-sizing: border-box; font-size: 18px; cursor: pointer;
   display: flex; align-items: center; justify-content: center;
   transition: color 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease);
   flex-shrink: 0;
@@ -702,12 +1455,123 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 /* Grupo "PC" (dock/lista) claramente separado del botón "RETRO" — antes eran
    tres iconos idénticos sin etiqueta y era imposible distinguir a qué modo
    pertenecía cada uno. */
-#view-switch { display: flex; align-items: center; gap: 14px; margin-left: auto; flex-shrink: 0; }
+#view-switch { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-shrink: 0; }
+
+/* ---------- Ofertas (vista a pantalla completa) ---------- */
+.deals-icon-wrap { position: relative; display: inline-flex; }
+.deals-badge {
+  position: absolute; top: -3px; right: -3px; width: 9px; height: 9px; border-radius: 50%;
+  background: var(--ok); box-shadow: 0 0 0 2px var(--panel);
+}
+/* Ofertas grandes que el usuario todavía NO vio (ver getSeenDealIds/markDealsSeen
+   en app.js): puntito + brillo verde alrededor de TODO el botón, no solo un
+   número — así se nota aunque el sidebar/topbar esté con poco contraste. Al
+   abrir la vista de Ofertas se marcan como vistas y el brillo se apaga solo. */
+.view-deals-btn.deals-has-new {
+  border-color: rgba(74,222,128,0.6);
+  animation: deals-btn-glow 1.8s ease-in-out infinite;
+}
+.view-deals-btn.deals-has-new .deals-badge {
+  animation: deals-dot-pulse 1.8s ease-in-out infinite;
+}
+@keyframes deals-btn-glow {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(74,222,128,0.45); }
+  50% { box-shadow: 0 0 14px 2px rgba(74,222,128,0.55); }
+}
+@keyframes deals-dot-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px var(--panel), 0 0 0 0 rgba(74,222,128,0.6); }
+  50% { box-shadow: 0 0 0 2px var(--panel), 0 0 0 5px rgba(74,222,128,0); }
+}
+/* flex:1 es imprescindible acá — sin esto, el contenido natural (todas las
+   tarjetas apiladas) compite con #topbar por espacio en el layout flex de
+   #main-col, y como #topbar tiene overflow-y:hidden (lo que la vuelve
+   "encogible" para flexbox), es la topbar la que termina comprimiéndose para
+   hacerle lugar, aplastando sus botones contra los bordes. #dock-wrap y
+   #retro-wrap ya tenían flex:1 por esto mismo — a este panel se le había
+   olvidado. */
+#deals-wrap { flex: 1; overflow-y: auto; padding: 28px 32px; }
+#deals-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+#deals-header h2 { display: flex; align-items: center; gap: 8px; font-size: 20px; margin-bottom: 6px; }
+#deals-header .side-note { max-width: 640px; }
+#deals-header .account-btn { width: auto; flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; }
+
+.deals-section-title {
+  display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 700; margin-bottom: 10px;
+}
+.deals-section-title .icon { width: 15px; height: 15px; color: var(--accent); }
+.deals-count { color: var(--dim); font-weight: 400; font-size: 12px; }
+
+/* Cada tienda con su propio color de marca (definido como variables acá y
+   consumido por .deal-card/.deals-section-title más abajo) para que las 4
+   secciones se distingan de un vistazo en vez de verse todas iguales. */
+.deals-store-section {
+  margin-bottom: 22px; padding: 16px; border-radius: 16px;
+  background: linear-gradient(160deg, var(--store-tint), transparent 65%);
+  border: 1px solid color-mix(in srgb, var(--store-accent) 30%, var(--border));
+}
+.deals-store-section[data-store="steam"] { --store-accent: #66c0f4; --store-tint: rgba(102,192,244,0.12); }
+.deals-store-section[data-store="gog"]   { --store-accent: #b07cff; --store-tint: rgba(176,124,255,0.12); }
+.deals-store-section[data-store="epic"]  { --store-accent: #e7e9ee; --store-tint: rgba(231,233,238,0.09); }
+.deals-store-section[data-store="other"] { --store-accent: var(--accent); --store-tint: var(--accent-soft); }
+.deals-store-section .deals-section-title .icon { color: var(--store-accent); }
+.deals-store-section .deal-card { border-top: 3px solid var(--store-accent); }
+.deals-store-section .deal-card:hover { border-color: var(--store-accent); }
+.deals-store-section .deals-more-btn:hover { border-color: var(--store-accent); color: var(--text); }
+
+#deals-reco-section {
+  margin-bottom: 26px; padding: 14px; border-radius: 14px;
+  background: linear-gradient(135deg, var(--accent-soft), transparent 70%);
+  border: 1px solid var(--accent);
+}
+#deals-reco-section[hidden] { display: none; }
+
+.deals-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 12px;
+}
+.deals-grid .empty { grid-column: 1/-1; color: var(--dim); padding: 16px 0; font-size: 13px; }
+
+.deal-card {
+  position: relative;
+  display: flex; flex-direction: column; gap: 6px; padding: 10px; border-radius: 12px;
+  background: var(--panel); border: 1px solid var(--border); text-decoration: none; color: inherit;
+  transition: border-color 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.deal-card:hover { border-color: var(--accent); transform: translateY(-2px); }
+.deal-card.selected { border-color: var(--accent); box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 35%, transparent); }
+.deal-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.deal-card-new {
+  position: absolute; top: 6px; right: 6px; z-index: 1;
+  background: #ef4444; color: #fff; font-size: 9px; font-weight: 800; text-transform: uppercase;
+  letter-spacing: 0.4px; padding: 2px 6px; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.35);
+}
+.deal-card-thumb { width: 100%; aspect-ratio: 231 / 87; border-radius: 8px; object-fit: cover; background: var(--panel2); filter: var(--cover-filter); }
+.deal-card-title {
+  font-size: 12.5px; font-weight: 600; line-height: 1.3;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+.deal-card .deal-store-badge {
+  align-self: flex-start; font-size: 9.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px;
+  padding: 1px 6px; border-radius: 6px; border: 1px solid var(--border); color: var(--dim);
+}
+.deal-card-price { display: flex; align-items: baseline; gap: 6px; margin-top: auto; }
+.deal-card-price .old { font-size: 10.5px; color: var(--dim); text-decoration: line-through; }
+.deal-card-price .new {
+  font-size: 14px; font-weight: 800; color: var(--ok);
+  text-shadow: -1px -1px 0 rgba(0,0,0,0.6), 1px -1px 0 rgba(0,0,0,0.6), -1px 1px 0 rgba(0,0,0,0.6), 1px 1px 0 rgba(0,0,0,0.6);
+}
+.deal-card-savings {
+  align-self: flex-start; font-size: 11px; font-weight: 800; color: var(--ok);
+  text-shadow: -1px -1px 0 rgba(0,0,0,0.6), 1px -1px 0 rgba(0,0,0,0.6), -1px 1px 0 rgba(0,0,0,0.6), 1px 1px 0 rgba(0,0,0,0.6);
+  background: rgba(74,222,128,0.15); border-radius: 6px; padding: 2px 6px;
+}
+.deal-card-skeleton { min-height: 130px; justify-content: center; }
+
+.deals-more-btn { width: auto; margin: 12px auto 0; display: block; }
 
 .view-group {
-  display: flex; align-items: center; gap: 6px;
+  display: flex; align-items: center; gap: 6px; height: 44px; box-sizing: border-box;
   background: var(--panel); border: 1px solid var(--border);
-  border-radius: 11px; padding: 6px 10px 6px 14px;
+  border-radius: 11px; padding: 0 10px 0 14px;
 }
 .view-group-label {
   font-size: 11px; font-weight: 800; letter-spacing: 0.09em; color: var(--dim);
@@ -720,7 +1584,10 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 }
 .view-btn .icon { width: 19px; height: 19px; }
 .view-btn:hover { color: var(--text); }
-.view-btn.active { background: var(--accent-soft); color: #b6acff; border-color: var(--accent); }
+.view-btn.active {
+  background: var(--accent-soft); color: var(--accent); border-color: var(--accent);
+  box-shadow: 0 0 0 1px var(--accent) inset, 0 4px 12px -6px color-mix(in srgb, var(--accent) 55%, transparent);
+}
 
 /* Botón RETRO: deliberadamente vistoso, en paleta cálida arcade (naranja/rosa)
    y con tipografía pixel de 8/16-bit (Press Start 2P, con fallback a
@@ -728,12 +1595,12 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
    aparte, no una tercera vista más de la biblioteca. Sombra escalonada tipo
    sprite en vez de un blur normal, para reforzar el aspecto "retro gaming". */
 .view-retro-btn {
-  width: auto; height: auto; gap: 10px;
+  width: auto; height: 44px; box-sizing: border-box; gap: 10px;
   background: linear-gradient(135deg, rgba(251,146,60,0.18), rgba(244,114,182,0.18));
   border: 2px solid rgba(251,146,60,0.55);
   color: #fdba74;
   border-radius: 10px;
-  padding: 11px 20px;
+  padding: 0 20px;
   font-size: 14px; font-weight: 800; letter-spacing: 0.03em;
 }
 .view-retro-btn .icon { width: 21px; height: 21px; }
@@ -759,13 +1626,13 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
    RETRO (naranja/rosa) y del grupo PC (violeta) para que los tres modos se
    distingan de un vistazo en la topbar. */
 .view-achievements-btn {
-  width: 44px; height: 44px; flex-shrink: 0;
+  width: 44px; height: 44px; box-sizing: border-box; flex-shrink: 0;
   background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(255,215,0,0.14));
   border: 2px solid rgba(251,191,36,0.55);
   color: var(--warn);
   border-radius: 10px;
 }
-.view-achievements-btn .icon { width: 22px; height: 22px; }
+.view-achievements-btn .icon { width: 19px; height: 19px; }
 .view-achievements-btn:hover {
   border-color: var(--warn);
   box-shadow: 0 0 0 3px rgba(251,191,36,0.2);
@@ -777,6 +1644,79 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   box-shadow: 0 0 18px rgba(251,191,36,0.5);
 }
 
+/* Botón OFERTAS: mismo tamaño/forma cuadrada que LOGROS (44x44, borde 2px,
+   flex-shrink:0) — tiene que ir DESPUÉS de .view-btn en el archivo: con la
+   misma especificidad (una sola clase), gana la regla que aparece último, y
+   antes este bloque estaba antes de .view-btn, así que .view-btn (38x38) lo
+   pisaba entero y quedaba angosto/aplastado al lado de RETRO y LOGROS. */
+.view-deals-btn {
+  width: 44px; height: 44px; box-sizing: border-box; flex-shrink: 0;
+  background: linear-gradient(135deg, rgba(74,222,128,0.18), rgba(45,212,191,0.14));
+  border: 2px solid rgba(74,222,128,0.5);
+  color: var(--ok);
+  border-radius: 10px;
+  transition: border-color 0.15s var(--ease), box-shadow 0.2s var(--ease), transform 0.15s var(--ease);
+}
+.view-deals-btn .icon { width: 19px; height: 19px; }
+.view-deals-btn:hover {
+  border-color: var(--ok);
+  box-shadow: 0 0 0 3px rgba(74,222,128,0.2);
+  transform: translateY(-1px);
+}
+.view-deals-btn.active {
+  background: linear-gradient(135deg, var(--ok), #6ee7b7);
+  color: #04170c; border-color: transparent;
+  box-shadow: 0 0 18px rgba(74,222,128,0.5);
+}
+
+/* Botón INICIO: mismo tamaño/forma que LOGROS/OFERTAS, pero con el acento
+   propio del skin activo (no un color fijo) — es la puerta de entrada, tiene
+   que sentirse "de la casa" en las 10 skins, no una cuarta identidad más
+   sumada a dorado/verde/naranja. */
+.view-home-btn {
+  width: 44px; height: 44px; box-sizing: border-box; flex-shrink: 0;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent2) 16%, transparent));
+  border: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+  color: var(--accent);
+  border-radius: 10px;
+  transition: border-color 0.15s var(--ease), box-shadow 0.2s var(--ease), transform 0.15s var(--ease);
+}
+.view-home-btn .icon { width: 19px; height: 19px; }
+.view-home-btn:hover {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
+  transform: translateY(-1px);
+}
+.view-home-btn.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: var(--accent-text, #fff); border-color: transparent;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+/* Botón PERFIL: mismo tamaño/forma que LOGROS/OFERTAS/INICIO, con --great
+   (el mismo cian semántico que ya usa el verdict "excelente" de requisitos)
+   — cuarto color distinto para que las 4 vistas a ancho completo se
+   distingan de un vistazo entre sí. */
+.view-profile-btn {
+  width: 44px; height: 44px; box-sizing: border-box; flex-shrink: 0;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--great) 20%, transparent), color-mix(in srgb, var(--great) 12%, transparent));
+  border: 2px solid color-mix(in srgb, var(--great) 55%, transparent);
+  color: var(--great);
+  border-radius: 10px;
+  transition: border-color 0.15s var(--ease), box-shadow 0.2s var(--ease), transform 0.15s var(--ease);
+}
+.view-profile-btn .icon { width: 19px; height: 19px; }
+.view-profile-btn:hover {
+  border-color: var(--great);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--great) 20%, transparent);
+  transform: translateY(-1px);
+}
+.view-profile-btn.active {
+  background: linear-gradient(135deg, var(--great), color-mix(in srgb, var(--great) 60%, #fff 40%));
+  color: #04191c; border-color: transparent;
+  box-shadow: 0 0 18px color-mix(in srgb, var(--great) 50%, transparent);
+}
+
 #gamepad-status {
   display: flex; align-items: center; gap: 6px; flex-shrink: 0;
   color: var(--dim); font-size: 13px; font-weight: 600;
@@ -784,6 +1724,26 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   border-radius: 999px; padding: 8px 14px;
 }
 #gamepad-status.on { color: var(--ok); border-color: rgba(74,222,128,0.4); }
+
+/* La topbar sumó Inicio y Perfil a las 6 vistas de #view-switch — a ventanas
+   angostas (el mínimo de la app son 980px, ver setMinimumSize en main.js) ya
+   no entraba todo en una fila y aparecía scroll horizontal (ver overflow-x:
+   auto de respaldo en #topbar más arriba). Acá se apaga primero lo menos
+   esencial —el conteo de juegos y la etiqueta de texto del estado de
+   mando— antes de llegar a necesitar ese scroll. */
+@media (max-width: 1280px) {
+  #count { display: none; }
+  #gamepad-status-label { display: none; }
+  #gamepad-status { padding: 8px 10px; }
+}
+/* Todavía más angosto (cerca del mínimo de la ventana, 980px): la etiqueta
+   "PC" del grupo dock/lista es la última pieza puramente decorativa que
+   queda — los íconos de cuadrícula/lista ya distinguen la vista sin ella. */
+@media (max-width: 1080px) {
+  .view-group-label { display: none; }
+  .view-group { padding: 0 8px; }
+  #search { min-width: 90px; }
+}
 
 /* [hidden] tiene menos especificidad que un selector por #id: sin esto, los
    modos (dock/lista) quedarían visibles a la vez apilados verticalmente. */
@@ -833,12 +1793,14 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
    ilustración se veía chica; "cover" llena el cuadrado entero (recortando
    arriba/abajo), que es lo que ya hacen los launchers reales (Steam Big
    Picture, Playnite) para miniaturas cuadradas. El filtro sube brillo/
-   contraste/saturación un poco — muchas carátulas son oscuras/moody de por
-   sí y a 104px se leían apagadas; esto las hace más legibles sin filtro de
-   por medio (no es sharpening real, "nitidez percibida" vía contraste). */
+   contraste un poco — muchas carátulas son oscuras/moody de por sí y a
+   104px se leían apagadas. Antes también subía saturación (+15%) para
+   compensar; eso terminaba viéndose sobresaturado/artificial en carátulas
+   que ya venían con colores fuertes, así que se sacó del todo — el brillo/
+   contraste solos ya alcanzan para la legibilidad, sin falsear el color. */
 .dock-icon .icon-face img {
   width: 100%; height: 100%; object-fit: cover; display: block; background: #05060a;
-  filter: brightness(1.28) contrast(1.22) saturate(1.15);
+  filter: var(--cover-filter);
 }
 .dock-icon .icon-face .placeholder { width: 100%; height: 100%; }
 .dock-icon .icon-face .placeholder .plat-abbr { font-size: 18px; }
@@ -860,10 +1822,16 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   background: rgba(0,0,0,0.7); color: var(--warn); font-size: 11px;
   width: 18px; height: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
 }
-.dock-icon:hover { transform: scale(1.35) translateY(-14px); z-index: 5; }
-.dock-icon:hover + .dock-icon { transform: scale(1.15) translateY(-6px); }
-.dock-icon:has(+ .dock-icon:hover) { transform: scale(1.15) translateY(-6px); }
-.dock-icon.selected .icon-face { outline: 2px solid var(--accent); box-shadow: 0 6px 22px rgba(109,93,240,0.5); }
+/* Antes el hover también escalaba al vecino DOM inmediato (:hover + .dock-icon
+   y :has(+ .dock-icon:hover)) para imitar el "magnify" del dock de macOS —
+   pero la grilla envuelve en filas (flex-wrap), y "vecino en el DOM" no es lo
+   mismo que "vecino visual": al hover del PRIMER ícono de una fila, el
+   "anterior en el DOM" es el ÚLTIMO ícono de la fila de arriba, que se veía
+   levantarse sin motivo. Se saca el efecto de vecinos y se deja solo el
+   propio ícono destacándose — sin ese acoplamiento no hay forma de que
+   arrastre nada fuera de su propio hover. */
+.dock-icon:hover { transform: scale(1.22) translateY(-8px); z-index: 5; }
+.dock-icon.selected .icon-face { outline: 2px solid var(--accent); box-shadow: 0 6px 22px color-mix(in srgb, var(--accent) 50%, transparent); }
 .dock-icon.selected .icon-label { color: var(--text); }
 
 .dock-icon { position: relative; }
@@ -894,7 +1862,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   width: 54px; height: 76px; border-radius: 6px; overflow: hidden; flex-shrink: 0;
   background: #05060a; position: relative;
 }
-.list-row .thumb img { width: 100%; height: 100%; object-fit: contain; }
+.list-row .thumb img { width: 100%; height: 100%; object-fit: contain; filter: var(--cover-filter); }
 .list-row .thumb .placeholder { width: 100%; height: 100%; padding: 4px; }
 .list-row .thumb .placeholder .plat-abbr { font-size: 12px; }
 .list-row .thumb .placeholder .plat-title { display: none; }
@@ -956,15 +1924,74 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   display: inline-flex; align-items: center; gap: 4px;
 }
 .d-badge .icon { width: 12px; height: 12px; }
-.d-badge.plat { color: #b6acff; border-color: var(--accent); background: var(--accent-soft); }
+.d-badge.plat { color: var(--accent); border-color: var(--accent); background: var(--accent-soft); }
 .d-badge.installed { color: var(--ok); }
 .d-badge.not-installed { color: var(--warn); }
 #d-desc { font-size: 12.5px; color: var(--dim); line-height: 1.5; margin-bottom: 12px; }
 #d-meta { font-size: 12.5px; color: var(--dim); line-height: 1.7; margin-bottom: 14px; }
 #d-meta b { color: var(--text); font-weight: 600; }
 
+/* ---------- Ficha de oferta (panel de detalles): puntuación + precio ---------- */
+/* Puntuación con el mismo lenguaje visual de Metacritic (cuadrado de color +
+   número grande) — 75+ verde/"aclamación", 50-74 amarillo/"mixtas", <50 rojo,
+   así se lee de un vistazo sin tener que fijarse en el número. Steam usa la
+   misma idea con % en vez de /100, para no inventar un tercer sistema. */
+.deal-score { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+.score-badge {
+  flex-shrink: 0; width: 52px; height: 52px; border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; font-weight: 800; color: #fff;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.35);
+  text-shadow: -1px -1px 0 rgba(0,0,0,0.55), 1px -1px 0 rgba(0,0,0,0.55), -1px 1px 0 rgba(0,0,0,0.55), 1px 1px 0 rgba(0,0,0,0.55);
+}
+.score-badge.score-steam { font-size: 18px; }
+.score-badge.score-great { background: var(--ok); }
+.score-badge.score-mixed {
+  background: var(--warn); color: #241a00;
+  text-shadow: -1px -1px 0 rgba(255,255,255,0.5), 1px -1px 0 rgba(255,255,255,0.5), -1px 1px 0 rgba(255,255,255,0.5), 1px 1px 0 rgba(255,255,255,0.5);
+}
+.score-badge.score-bad { background: var(--bad); }
+.score-badge.score-none { background: var(--panel2); color: var(--dim); border: 1px solid var(--border); box-shadow: none; }
+.score-source { font-size: 13px; font-weight: 800; }
+.score-verdict { font-size: 12px; color: var(--dim); margin-top: 1px; }
+
+/* Precio: descuento bien grande y en verde (el dato que más importa acá),
+   precio anterior tachado y chico, precio final grande y bien contrastado —
+   nada de texto genérico de 12px como el resto de la ficha. */
+.deal-price-block { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; margin-bottom: 4px; }
+.deal-price-old { font-size: 14px; color: var(--dim); text-decoration: line-through; }
+.deal-price-new {
+  font-size: 26px; font-weight: 800; color: var(--ok);
+  text-shadow: -1px -1px 0 rgba(0,0,0,0.6), 1px -1px 0 rgba(0,0,0,0.6), -1px 1px 0 rgba(0,0,0,0.6), 1px 1px 0 rgba(0,0,0,0.6);
+}
+.deal-price-discount {
+  font-size: 14px; font-weight: 800; color: var(--ok);
+  background: rgba(74,222,128,0.15); border-radius: 8px; padding: 3px 9px;
+  text-shadow: -1px -1px 0 rgba(0,0,0,0.6), 1px -1px 0 rgba(0,0,0,0.6), -1px 1px 0 rgba(0,0,0,0.6), 1px 1px 0 rgba(0,0,0,0.6);
+}
+
 #d-reqs h3 { font-size: 13px; margin-bottom: 8px; }
 #d-reqs-body { font-size: 12px; color: var(--dim); }
+
+/* ---------- Logros de este juego en su propia ficha (Fase 3) ----------
+   Ver renderDetailsAchievements() en app.js — mismo trofeo dorado que ya usa
+   el botón LOGROS de la topbar, para que se lea como la misma cosa aunque
+   viva en un lugar distinto. */
+#d-achievements { margin-bottom: 14px; }
+#d-achievements[hidden] { display: none; }
+#d-achievements h3 {
+  font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; color: var(--warn);
+}
+#d-achievements h3 .icon { width: 14px; height: 14px; }
+.d-ach-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.d-ach-chip {
+  font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 6px;
+  display: inline-flex; align-items: center; gap: 4px;
+  border: 1px solid var(--border);
+}
+.d-ach-chip .icon { width: 11px; height: 11px; }
+.d-ach-chip.earned { color: var(--warn); background: color-mix(in srgb, var(--warn) 12%, transparent); border-color: color-mix(in srgb, var(--warn) 40%, transparent); }
+.d-ach-chip.next { color: var(--dim); background: var(--panel2); }
 
 .req-tier { margin-bottom: 12px; }
 .req-tier-title { font-size: 11px; text-transform: uppercase; letter-spacing: 1px; color: var(--dim); margin-bottom: 5px; }
@@ -998,7 +2025,10 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   display: flex; align-items: center; justify-content: center; gap: 8px;
 }
 .action-btn:hover { filter: brightness(1.15); }
-.action-btn.play { background: var(--accent); color: #fff; box-shadow: 0 0 18px rgba(109,93,240,0.4); }
+/* Antes rgba(109,93,240,…) fijo — el brillo de "Jugar" se quedaba violeta
+   sin importar la skin activa (mismo bug que ya se corrigió en el panel del
+   Companion). Ahora sigue el acento de la skin en uso. */
+.action-btn.play { background: var(--accent); color: #fff; box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 40%, transparent); }
 .action-btn.install { background: var(--panel2); color: var(--warn); border: 1px solid var(--warn); }
 
 /* Retro: verde = la ROM está en su sitio y se puede jugar ya mismo; gris =
@@ -1018,17 +2048,70 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 .action-btn.deriva-search:hover { color: var(--text); border-color: var(--accent); filter: none; }
 .action-btn.deriva-search .icon { width: 14px; height: 14px; }
 
+/* Panel de mods de GameBanana (ver toggleModPanel en app.js). Antes iba todo
+   por estilos inline sueltos — nombre del mod, categoría y el botón de
+   instalar quedaban apretados en 6px de padding, casi ilegibles. */
+.mod-panel {
+  margin-top: 10px; padding: 12px; border-radius: var(--radius-md, 12px);
+  background: var(--panel2); border: 1px solid var(--border);
+}
+.mod-panel-header {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  margin-bottom: 10px;
+}
+.mod-panel-title { font-size: 12px; font-weight: 700; color: var(--dim); }
+.mod-panel-title b { color: var(--text); }
+.mod-panel-sort { display: flex; gap: 4px; }
+.mod-panel-sort button {
+  font-size: 11px; font-weight: 700; padding: 5px 9px; border-radius: 999px;
+  border: 1px solid var(--border); background: transparent; color: var(--dim); cursor: pointer;
+}
+.mod-panel-sort button.active { background: var(--accent-soft); color: var(--accent); border-color: var(--accent); }
+.mod-panel-status { font-size: 12px; color: var(--dim); padding: 8px 2px; }
+.mod-panel-list { display: flex; flex-direction: column; gap: 8px; max-height: 320px; overflow-y: auto; }
+.mod-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px; border-radius: var(--radius-sm, 8px);
+  background: color-mix(in srgb, var(--text) 4%, transparent);
+  border: 1px solid transparent;
+}
+.mod-row:hover { border-color: var(--border); }
+.mod-row-thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 6px; flex-shrink: 0; background: var(--panel); }
+.mod-row-info { flex: 1; min-width: 0; }
+.mod-row-name {
+  font-size: 13px; font-weight: 700; color: var(--text); line-height: 1.35;
+  overflow: hidden; text-overflow: ellipsis; display: -webkit-box;
+  -webkit-line-clamp: 2; -webkit-box-orient: vertical;
+}
+.mod-row-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; font-size: 11px; color: var(--dim); }
+.mod-row-category {
+  padding: 2px 7px; border-radius: 999px; font-weight: 700;
+  background: color-mix(in srgb, var(--accent2) 16%, transparent); color: var(--accent2);
+}
+.mod-row-category.manual { background: color-mix(in srgb, var(--warn) 16%, transparent); color: var(--warn); }
+.mod-row-install { flex-shrink: 0; width: auto; padding: 9px 14px; font-size: 12px; }
+
 /* Botón "Multijugador" del sidebar de consola: solo aparece en consolas con
    online real (ver MULTIPLAYER_KEY en app.js, poblado desde
    updateMultiplayerControls) — acento propio (verde azulado) para
    diferenciarlo del resto de botones de esta sección, sin competir con
    "Descargar emulador"/"Instalar core". */
-.account-btn.multiplayer-btn {
-  color: var(--great); border-color: rgba(34,211,238,0.35); margin-top: 10px;
+.side-section-emulator .account-btn.multiplayer-btn {
+  color: var(--great); margin-top: 10px;
+  background: linear-gradient(180deg, rgba(34,211,238,0.1), transparent), var(--panel2);
+  border: 2px solid rgba(34,211,238,0.35);
 }
-.account-btn.multiplayer-btn:hover:not(.disabled):not(:disabled) {
-  border-color: var(--great); background: rgba(34,211,238,0.12);
+.side-section-emulator .account-btn.multiplayer-btn > svg,
+.side-section-emulator .account-btn.multiplayer-btn > i,
+.side-section-emulator .account-btn.multiplayer-btn > [data-icon] { color: var(--great); }
+.side-section-emulator .account-btn.multiplayer-btn:hover:not(.disabled):not(:disabled) {
+  border-color: var(--great);
+  background: linear-gradient(180deg, rgba(34,211,238,0.18), transparent), var(--panel2);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.4), 0 0 0 3px rgba(34,211,238,0.2);
 }
+.side-section-emulator .account-btn.multiplayer-btn:hover:not(.disabled):not(:disabled) > svg,
+.side-section-emulator .account-btn.multiplayer-btn:hover:not(.disabled):not(:disabled) > i,
+.side-section-emulator .account-btn.multiplayer-btn:hover:not(.disabled):not(:disabled) > [data-icon] { color: var(--great); }
 
 @keyframes launch-pulse {
   0% { transform: scale(1.05); } 50% { transform: scale(0.97); } 100% { transform: scale(1.05); }
@@ -1097,7 +2180,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 5px;
   text-transform: uppercase; letter-spacing: 0.5px;
 }
-.launcher-tag.clave { background: var(--accent-soft); color: #b6acff; }
+.launcher-tag.clave { background: var(--accent-soft); color: var(--accent); }
 .launcher-tag.nicho { background: rgba(139,145,163,0.15); color: var(--dim); }
 .launcher-status { font-size: 11px; color: var(--dim); margin-left: 6px; }
 .launcher-status.planned { color: var(--warn); }
@@ -1116,7 +2199,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   content: '▸'; color: var(--dim); font-size: 11px; transition: transform 0.15s var(--ease);
 }
 .collapsible-guide[open] summary::before { transform: rotate(90deg); }
-.collapsible-guide summary:hover { color: #b6acff; }
+.collapsible-guide summary:hover { color: var(--accent); }
 .collapsible-guide > *:not(summary) { margin-top: 4px; }
 .collapsible-guide .console-guide-intro { margin: 8px 0 10px; }
 .collapsible-guide[open] { padding-bottom: 14px; }
@@ -1131,11 +2214,11 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 .skin-card-title { font-size: 13.5px; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .skin-card-driver {
   font-size: 9.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
-  padding: 2px 7px; border-radius: 5px; background: var(--accent-soft); color: #b6acff;
+  padding: 2px 7px; border-radius: 5px; background: var(--accent-soft); color: var(--accent);
 }
 .skin-card-desc { font-size: 12px; color: var(--dim); margin: 4px 0 6px; line-height: 1.4; }
 .skin-card-credit { font-size: 11px; color: var(--dim); }
-.skin-card-credit a { color: #b6acff; text-decoration: none; }
+.skin-card-credit a { color: var(--accent); text-decoration: none; }
 .skin-card-credit a:hover { text-decoration: underline; }
 .skin-card-actions { flex-shrink: 0; display: flex; flex-direction: column; gap: 6px; align-items: stretch; min-width: 120px; }
 .skin-card-actions .account-btn { width: auto; margin-bottom: 0; white-space: nowrap; }
@@ -1180,13 +2263,134 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 .console-row:nth-child(odd) { background: var(--panel2); }
 .console-name { font-size: 12.5px; font-weight: 700; width: 150px; flex-shrink: 0; }
 .console-emu { font-size: 12.5px; color: var(--text); }
-.console-emu b { color: #b6acff; }
+.console-emu b { color: var(--accent); }
 .console-src {
   margin-left: auto; font-size: 9.5px; font-weight: 700; text-transform: uppercase;
   letter-spacing: 0.5px; padding: 2px 7px; border-radius: 5px; flex-shrink: 0;
   background: rgba(139,145,163,0.15); color: var(--dim);
 }
-.console-src.core { background: var(--accent-soft); color: #b6acff; }
+.console-src.core { background: var(--accent-soft); color: var(--accent); }
+
+/* ---------- Vista Inicio (dashboard de aterrizaje) ----------
+   Mismas 3 secciones que arma initHomeView() en app.js: Seguir jugando
+   (tiles grandes), Agregado recién (tiles normales) y Esta semana (lista).
+   Las tarjetas de las dos primeras SON .dock-icon reales (ver
+   buildHomeTile()) — heredan forma/hover/color por skin sin CSS propio acá,
+   solo se les da tamaño distinto por sección. */
+#home-wrap {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 26px 28px 34px; display: flex; flex-direction: column; gap: 36px;
+}
+#home-wrap[hidden] { display: none; }
+.home-section-title {
+  font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--dim); margin: 0 0 16px; display: flex; align-items: center; gap: 12px;
+}
+.home-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+.home-hero-grid, .home-card-grid { display: flex; flex-wrap: wrap; gap: 20px; }
+/* Fila hero ("Seguir jugando") un poco más grande que el dock normal (116px)
+   — es la fila que más importa en Inicio, se la distingue por tamaño en vez
+   de por un componente completamente nuevo. */
+.home-hero-grid .dock-icon { width: 150px; }
+.home-hero-grid .dock-icon .icon-face { width: 150px; height: 150px; }
+
+.home-week-list { display: flex; flex-direction: column; gap: 2px; max-width: 640px; }
+.home-week-row {
+  display: flex; align-items: center; gap: 12px; padding: 9px 6px; border-radius: 10px;
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s var(--ease);
+}
+.home-week-row:hover { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.home-week-row:last-child { border-bottom: none; }
+.home-week-cover {
+  flex-shrink: 0; width: 36px; height: 36px; border-radius: 9px; overflow: hidden;
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.08) inset;
+}
+.home-week-cover img { width: 100%; height: 100%; object-fit: cover; display: block; }
+/* Mismo --retro-accent que ya usa la lista semanal del pill de Companion —
+   se reconoce de un vistazo qué fue Retro sin leer la etiqueta. */
+.home-week-row.home-week-retro .home-week-cover { box-shadow: 0 0 0 2px var(--retro-accent); }
+.home-week-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.home-week-plat {
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--dim);
+}
+.home-week-row.home-week-retro .home-week-plat { color: var(--retro-accent); }
+.home-week-name {
+  font-size: 13.5px; font-weight: 600; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.home-week-hours { flex-shrink: 0; font-size: 13px; font-weight: 800; color: var(--accent2); }
+
+#home-empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 60px 20px; color: var(--dim); font-size: 14px; text-align: center;
+}
+#home-empty[hidden] { display: none; }
+#home-empty::before {
+  content: ''; width: 52px; height: 52px; border-radius: 16px; border: 2px dashed var(--border);
+}
+
+/* ---------- Vista Perfil (estadísticas unificadas) ----------
+   Ver initProfileView()/renderProfile() en app.js. "Más jugados" reusa
+   .dock-icon vía buildHomeTile() (la misma de Inicio) — nada de tarjeta
+   nueva ahí, solo el layout propio del resumen y las barras. */
+#profile-wrap {
+  flex: 1; overflow-y: auto; overflow-x: hidden;
+  padding: 26px 28px 34px; display: flex; flex-direction: column; gap: 30px;
+}
+#profile-wrap[hidden] { display: none; }
+#profile-header h2 { display: flex; align-items: center; gap: 8px; font-size: 20px; margin: 0; }
+
+.profile-section-title {
+  font-size: 12.5px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em;
+  color: var(--dim); margin: 0 0 16px; display: flex; align-items: center; gap: 12px;
+}
+.profile-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+#profile-summary { display: flex; gap: 14px; flex-wrap: wrap; }
+#profile-summary[hidden] { display: none; }
+.profile-stat {
+  flex: 1 1 200px; background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+  padding: 18px 20px;
+}
+.profile-stat-n {
+  font-size: 30px; font-weight: 800; color: var(--accent); line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+}
+.profile-stat-l { font-size: 12.5px; color: var(--dim); margin-top: 4px; }
+
+.profile-bars { display: flex; flex-direction: column; gap: 10px; max-width: 640px; }
+.profile-bar-row { display: flex; align-items: center; gap: 12px; }
+.profile-bar-label {
+  flex: 0 0 120px; font-size: 12.5px; font-weight: 700; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.profile-bar-track {
+  flex: 1; height: 10px; border-radius: 5px; background: color-mix(in srgb, var(--text) 8%, transparent);
+  overflow: hidden;
+}
+.profile-bar-fill { height: 100%; border-radius: 5px; transition: width 0.3s var(--ease); }
+.profile-bar-hours {
+  flex: 0 0 44px; text-align: right; font-size: 12.5px; font-weight: 800; color: var(--dim);
+  font-variant-numeric: tabular-nums;
+}
+
+#profile-untracked {
+  font-size: 12.5px; color: var(--dim); background: var(--panel); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px 16px;
+}
+#profile-untracked[hidden] { display: none; }
+
+#profile-empty {
+  flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 14px; padding: 60px 20px; color: var(--dim); font-size: 14px; text-align: center;
+}
+#profile-empty[hidden] { display: none; }
+#profile-empty::before {
+  content: ''; width: 52px; height: 52px; border-radius: 16px; border: 2px dashed var(--border);
+}
 
 /* ---------- Vista Retro (consolas + catálogo) ---------- */
 #retro-wrap {
@@ -1216,7 +2420,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 }
 .console-card:hover, .console-card.selected {
   transform: translateY(-4px);
-  box-shadow: 0 0 0 3px #000, 0 0 0 5px var(--accent), 0 10px 26px rgba(0,0,0,0.4), 0 0 18px rgba(109,93,240,0.25);
+  box-shadow: 0 0 0 3px #000, 0 0 0 5px var(--accent), 0 10px 26px rgba(0,0,0,0.4), 0 0 18px color-mix(in srgb, var(--accent) 25%, transparent);
 }
 .console-card .console-photo-box {
   width: 100%; aspect-ratio: 4 / 3;
@@ -1435,7 +2639,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   background: var(--panel2); border: 2px solid transparent; transition: border-color 0.12s, transform 0.12s;
 }
 .retro-game-card:hover { transform: translateY(-2px); }
-.retro-game-card.selected { border-color: var(--accent); box-shadow: 0 0 16px rgba(109,93,240,0.35); }
+.retro-game-card.selected { border-color: var(--accent); box-shadow: 0 0 16px color-mix(in srgb, var(--accent) 35%, transparent); }
 .retro-game-card .rg-cover {
   /* --cover-aspect se mide en vivo por consola (ver detectCoverAspect en
      app.js) y se hereda desde #retro-game-grid — 2/3 es solo el default
@@ -1462,7 +2666,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
    rg-rerelease vive en la esquina opuesta. */
 .retro-game-card .rg-texture-hd {
   position: absolute; bottom: 6px; right: 6px; font-size: 7.5px; font-weight: 800;
-  padding: 2px 6px; border-radius: 5px; background: rgba(109,93,240,0.92); color: #fff;
+  padding: 2px 6px; border-radius: 5px; background: var(--accent); color: #fff;
   text-transform: uppercase; text-align: right; line-height: 1.25; max-width: calc(100% - 12px);
 }
 .retro-game-card .rg-title {
@@ -1486,7 +2690,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 .retro-game-card .rg-cover .placeholder .plat-title { display: none; }
 
 /* ---- Logros (RetroAchievements) ---- */
-#achievements-wrap { padding: 28px 32px; overflow-y: auto; }
+#achievements-wrap { flex: 1; padding: 28px 32px; overflow-y: auto; }
 #ra-empty-state { max-width: 560px; margin: 60px auto; text-align: center; }
 #ra-empty-state h2 { font-size: 26px; margin-bottom: 12px; }
 #ra-empty-state p { color: var(--dim); line-height: 1.6; margin-bottom: 20px; }
@@ -1502,7 +2706,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
    casi nada. Aquí el botón debe medirse por su contenido, no estirarse. */
 .ra-connect-row .account-btn { width: auto; flex: 0 0 auto; white-space: nowrap; margin-bottom: 0; }
 #ra-empty-state .side-note { text-align: left; margin-top: 8px; }
-#ra-empty-state .side-note a { color: #b6acff; }
+#ra-empty-state .side-note a { color: var(--accent); }
 
 #ra-header {
   display: flex; align-items: center; justify-content: space-between;
@@ -1531,7 +2735,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   transition: border-color 0.12s, transform 0.12s;
 }
 .ra-game-card:hover { transform: translateY(-2px); border-color: var(--accent); }
-.ra-game-card .ra-icon { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #05060a; }
+.ra-game-card .ra-icon { width: 48px; height: 48px; border-radius: 8px; object-fit: cover; flex-shrink: 0; background: #05060a; filter: var(--cover-filter); }
 .ra-game-card .ra-game-info { flex: 1; min-width: 0; }
 .ra-game-card .ra-game-title {
   font-size: 13.5px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -1660,11 +2864,33 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 .toast.leaving { animation: toast-out 0.22s var(--ease) forwards; }
 .toast .icon { flex-shrink: 0; }
 .toast-msg { flex: 1; line-height: 1.4; }
-.toast.success { border-left-color: var(--ok); }
+.toast.success { border-left-color: var(--ok); box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 0 0 1px color-mix(in srgb, var(--ok) 18%, transparent); }
 .toast.success .icon { color: var(--ok); }
-.toast.error { border-left-color: var(--bad); }
+.toast.error { border-left-color: var(--bad); box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 0 0 1px color-mix(in srgb, var(--bad) 18%, transparent); }
 .toast.error .icon { color: var(--bad); }
-.toast.info { border-left-color: var(--accent); }
+.toast.info { border-left-color: var(--accent); box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent); }
+
+/* Logro desbloqueado (Fase 4, pulido): deja de compartir pinta con "mod
+   instalado"/"carpeta creada" — fondo con degradé dorado propio, trofeo
+   grande y una entrada con un poco de resorte, en vez del slide-in plano del
+   resto de los toasts genéricos. */
+.toast.achievement {
+  border-left: none;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--warn) 20%, var(--panel)), var(--panel) 70%);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 0 0 1px color-mix(in srgb, var(--warn) 35%, transparent), 0 0 24px -6px color-mix(in srgb, var(--warn) 55%, transparent);
+  animation: toast-ach-in 0.4s cubic-bezier(.2,1.4,.4,1);
+}
+.toast.achievement .icon { width: 22px; height: 22px; color: var(--warn); }
+.toast-ach-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.toast-ach-eyebrow {
+  font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--warn);
+}
+.toast.achievement .toast-msg { font-size: 13.5px; font-weight: 800; color: var(--text); }
+@keyframes toast-ach-in {
+  0% { opacity: 0; transform: translateX(30px) scale(0.9); }
+  60% { opacity: 1; transform: translateX(-4px) scale(1.03); }
+  100% { opacity: 1; transform: translateX(0) scale(1); }
+}
 @keyframes toast-in {
   0% { opacity: 0; transform: translateX(30px) scale(0.95); }
   100% { opacity: 1; transform: translateX(0) scale(1); }
@@ -1676,12 +2902,14 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 
 /* ---------- Búsqueda con resaltado ---------- */
 mark.search-hl {
-  background: rgba(109,93,240,0.4); color: #fff;
+  background: color-mix(in srgb, var(--accent) 55%, transparent); color: #fff;
   border-radius: 3px; padding: 0 1px;
 }
 
 /* ---------- Ordenar consolas retro ---------- */
-#retro-console-sort { align-items: center; margin-bottom: 4px; }
+/* Antes margin-bottom:4px — casi sin aire antes de que empiece la grilla de
+   consolas justo debajo, se veían pegados. */
+#retro-console-sort { align-items: center; margin-bottom: 18px; }
 #retro-console-sort .sort-label { font-size: 11px; color: var(--dim); font-weight: 700; margin-right: 2px; }
 .console-gen-header {
   grid-column: 1/-1;

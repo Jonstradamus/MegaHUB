@@ -39,6 +39,7 @@ module.exports = async function scanSteam() {
         const appid = (acf.match(/"appid"\s+"(\d+)"/) || [])[1];
         const name = (acf.match(/"name"\s+"([^"]+)"/) || [])[1];
         const sizeOnDisk = (acf.match(/"SizeOnDisk"\s+"(\d+)"/) || [])[1];
+        const installdir = (acf.match(/"installdir"\s+"([^"]+)"/) || [])[1];
         if (!appid || !name || NON_GAME_APPIDS.has(appid) || seen.has(appid)) continue;
         seen.add(appid);
         games.push({
@@ -50,6 +51,13 @@ module.exports = async function scanSteam() {
           heroUrl: `https://steamcdn-a.akamaihd.net/steam/apps/${appid}/library_hero.jpg`,
           // Exacto — Steam ya lo trackea en el manifiesto, sin necesidad de recorrer la carpeta.
           installSizeBytes: sizeOnDisk ? parseInt(sizeOnDisk, 10) : null,
+          // Para el monitor de procesos (processWatcher.js): Steam no escribe el
+          // acumulado de horas jugadas en localconfig.vdf hasta que CIERRAS el
+          // juego (visto real: 0 minutos nuevos con una sesión de Albion Online
+          // corriendo hace rato), así que una sesión en curso no se refleja en
+          // "esta semana" hasta que termine. Con installDir, el watcher puede
+          // detectar el .exe corriendo AHORA, igual que ya hace con Xbox.
+          installDir: installdir ? path.join(lib, 'common', installdir) : null,
         });
       } catch {}
     }

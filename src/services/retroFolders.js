@@ -14,21 +14,83 @@ const path = require('path');
 const { app, shell } = require('electron');
 const store = require('../util/store');
 
-// BUG CRÍTICO corregido: en desarrollo __dirname (src/services) cuelga del
-// propio proyecto, así que dos niveles arriba daba la raíz real de MegaHUB —
-// pero empaquetado, ese mismo __dirname vive DENTRO de resources/app.asar,
-// un archivo de solo lectura. fs.mkdirSync ahí fallaba en silencio (o con un
-// error que nadie veía) y por eso, ya instalado, "Crear carpetas del
-// emulador/ROMs" nunca creaba nada — ni tampoco el core install / los
-// presets de resolución, que dependen de estas mismas carpetas por debajo.
-// Empaquetado, se usa la carpeta REAL donde vive MegaHUB.exe (junto al
-// app.asar, no dentro) — sigue siendo "una carpeta más al lado de la app",
-// la misma idea original, solo que resuelta bien para los dos casos.
-const ROOT = app.isPackaged
-  ? path.dirname(app.getPath('exe'))
-  : path.join(__dirname, '..', '..');
-const EMULATORS_DIR = path.join(ROOT, 'emulators');
-const ROMS_DIR = path.join(ROOT, 'roms');
+// BUG CRÍTICO corregido: antes la raíz por defecto era la carpeta donde vive
+// MegaHUB.exe. En desarrollo eso resolvía bien, pero empaquetado esa carpeta
+// puede ser de solo lectura (dentro de resources/app.asar) o, si el usuario
+// instaló en "C:\Program Files\MegaHUB" (el instalador per-máquina instala
+// ahí por defecto, como cualquier app de Windows), requiere permisos de
+// administrador que MegaHUB no tiene en ejecución normal — fs.mkdirSync ahí
+// fallaba con EPERM ("Error creando carpetas: EPERM...").
+//
+// Ahora la raíz por defecto es SIEMPRE Documentos\MegaHUB, sin importar dónde
+// se instaló la app — igual que Documentos\Mis Juegos o Documentos\<Juego> de
+// cualquier otro programa de Windows, siempre escribible por el usuario
+// actual sin depender de permisos de instalación. El usuario puede cambiar
+// esta raíz desde Ajustes generales (ver setDefaultRoot) si prefiere otro
+// disco/carpeta.
+function isWritableDir(dir) {
+  try {
+    fs.mkdirSync(dir, { recursive: true });
+    const probe = path.join(dir, '.megahub-write-test');
+    fs.writeFileSync(probe, '');
+    fs.unlinkSync(probe);
+    return true;
+  } catch { return false; }
+}
+
+const DOCUMENTS_ROOT = path.join(app.getPath('documents'), 'MegaHUB');
+
+// store guarda la raíz elegida a mano por el usuario en Ajustes (o, como red
+// de seguridad, la que quedó fijada automáticamente si Documentos mismo
+// llegara a fallar) — si no hay nada guardado, se usa Documentos\MegaHUB.
+let ROOT = store.load('root-override', null) || DOCUMENTS_ROOT;
+let EMULATORS_DIR = path.join(ROOT, 'emulators');
+let ROMS_DIR = path.join(ROOT, 'roms');
+
+function applyRoot(newRoot, persist) {
+  ROOT = newRoot;
+  EMULATORS_DIR = path.join(ROOT, 'emulators');
+  ROMS_DIR = path.join(ROOT, 'roms');
+  if (persist) store.save('root-override', ROOT);
+}
+
+// Elegido a mano desde Ajustes generales: se valida que sea escribible antes
+// de aceptarlo, para no dejar al usuario con una raíz rota.
+function setDefaultRoot(newRoot) {
+  if (!isWritableDir(newRoot)) return { error: 'Esa carpeta no se puede escribir (permisos insuficientes).' };
+  applyRoot(newRoot, true);
+  return { ok: true, root: ROOT };
+}
+
+function resetDefaultRoot() {
+  store.save('root-override', null);
+  applyRoot(DOCUMENTS_ROOT, false);
+  return { ok: true, root: ROOT };
+}
+
+function switchToFallbackRoot() {
+  if (ROOT === DOCUMENTS_ROOT) return; // ya estamos en el fallback, nada más que probar
+  applyRoot(DOCUMENTS_ROOT, true);
+}
+
+// mkdirSync que, si falla por permisos, cambia toda la raíz a Documentos y
+// reintenta ahí — red de seguridad para el caso remoto de que la raíz activa
+// (Documentos por defecto, u otra que el usuario haya elegido a mano) deje de
+// ser escribible, en vez de dejar reventar la creación de carpetas del
+// emulador/ROMs con un EPERM que el usuario no puede resolver sin admin.
+function mkdirWithFallback(dirUnderRoot) {
+  try {
+    fs.mkdirSync(dirUnderRoot, { recursive: true });
+    return dirUnderRoot;
+  } catch (e) {
+    if (e.code !== 'EPERM' && e.code !== 'EACCES') throw e;
+    const rel = path.relative(ROOT, dirUnderRoot);
+    switchToFallbackRoot();
+    const retried = path.isAbsolute(rel) || rel.startsWith('..') ? dirUnderRoot : path.join(ROOT, rel);
+    fs.mkdirSync(retried, { recursive: true });
+    return retried;
+  }
+}
 
 // Formatos que de verdad lee cada core/emulador (verificado contra la
 // documentación de libretro y de cada emulador standalone) — no todos son
@@ -157,10 +219,16 @@ function getLocationInfo(consoleId) {
 }
 
 function ensureConsoleFolders(consoleId, consoleName, emulatorName) {
-  const emuDir = getEmuDir(consoleId);
-  const romDir = getRomDir(consoleId);
-  fs.mkdirSync(emuDir, { recursive: true });
-  fs.mkdirSync(romDir, { recursive: true });
+  // Carpetas propias que el usuario señaló a mano (ubicador) NO pasan por el
+  // fallback automático: si esa carpeta específica no es escribible, es un
+  // problema de la carpeta que el usuario eligió, no de dónde vive MegaHUB.
+  let emuDir = getEmuDir(consoleId);
+  if (isCustomEmuDir(consoleId)) fs.mkdirSync(emuDir, { recursive: true });
+  else emuDir = mkdirWithFallback(emuDir);
+
+  let romDir = getRomDir(consoleId);
+  if (isCustomRomDir(consoleId)) fs.mkdirSync(romDir, { recursive: true });
+  else romDir = mkdirWithFallback(romDir);
 
   // Solo se escriben los LEEME dentro de las carpetas por defecto de MegaHUB —
   // si el usuario señaló una carpeta propia ya existente, no le dejamos
@@ -282,7 +350,14 @@ function listRomFiles(consoleId) {
 }
 
 module.exports = {
-  ensureConsoleFolders, openFolder, listRomFiles, EMULATORS_DIR, ROMS_DIR, ROOT,
+  ensureConsoleFolders, openFolder, listRomFiles,
+  // ROOT/EMULATORS_DIR/ROMS_DIR se exponen como getters (no como el valor ya
+  // resuelto) porque pueden cambiar en caliente si mkdirWithFallback tiene
+  // que saltar a Documentos\MegaHUB después de que este módulo ya se cargó.
+  get ROOT() { return ROOT; },
+  get EMULATORS_DIR() { return EMULATORS_DIR; },
+  get ROMS_DIR() { return ROMS_DIR; },
   getEmuDir, getRomDir, getLocationInfo, getXemuConfigPath, setXemuDvdPath,
   setCustomEmuDir, setCustomRomDir, clearCustomEmuDir, clearCustomRomDir,
+  setDefaultRoot, resetDefaultRoot, DOCUMENTS_ROOT,
 };

@@ -13,7 +13,8 @@
     "electron-builder": "^24.13.3"
   },
   "dependencies": {
-    "7zip-min": "^3.0.1"
+    "7zip-min": "^3.0.1",
+    "node-unrar-js": "^2.0.2"
   },
   "build": {
     "appId": "app.deriva.megahub",
@@ -36,14 +37,14 @@
     },
     "nsis": {
       "oneClick": false,
-      "perMachine": false,
+      "perMachine": true,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "MegaHUB"
     },
     "asarUnpack": [
-      "node_modules/7zip-bin/**/*"
+      "**/node_modules/7zip-bin/**/*"
     ]
   }
 }
