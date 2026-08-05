@@ -15,13 +15,13 @@
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
-const { execFile } = require('child_process');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
 const romMetadata = require('./romMetadata');
 const retroFolders = require('./retroFolders');
 const scanRetroArch = require('../scanners/retroarch');
 const store = require('../util/store');
+const archiveExtract = require('./archiveExtract');
 
 const API = 'https://gamebanana.com/apiv11';
 
@@ -58,13 +58,30 @@ async function searchGame(title) {
   return [];
 }
 
-async function listMods(gameId, page = 1) {
-  const res = await fetch(`${API}/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=20&_sSort=new&_csvModelInclusions=Mod`);
+// Categorías cuyo contenido son PNG/DDS de reemplazo que Dolphin (Load/Textures)
+// o PPSSPP (TEXTURES) cargan solos con solo dejarlos en la carpeta correcta —
+// verificado que en GameBanana, para GC/Wii/PSP, "Skins" y "Retextures" son el
+// mismo mecanismo técnico que "Textures" (así etiquetan mods de piel de
+// personaje/reemplazo visual que en el fondo son solo texturas), así que se
+// tratan igual a la hora de decidir si el instalado automático es seguro.
+// Todo lo demás (traducciones, saves, trainers, herramientas, sonidos, mapas,
+// GUIs...) NO usa ese mecanismo — cada una necesita su propio proceso (parchar
+// la ISO, copiar a otra carpeta del sistema, etc.) que MegaHUB no puede
+// adivinar de forma genérica, así que esos se dejan solo para descargar y el
+// usuario los coloca a mano siguiendo las instrucciones del propio mod.
+const AUTO_INSTALL_CATEGORY_RE = /textur|skin|retextur|hd\b|remaster|repaint|4k|uhd|material|effect/i;
+
+function isAutoInstallable(mod) {
+  return AUTO_INSTALL_CATEGORY_RE.test(`${mod.name} ${mod.category || ''}`);
+}
+
+async function listMods(gameId, page = 1, sort = 'new', perPage = 20) {
+  const res = await fetch(`${API}/Game/${gameId}/Subfeed?_nPage=${page}&_nPerpage=${perPage}&_sSort=${sort}&_csvModelInclusions=Mod`);
   if (!res.ok) return { mods: [], total: 0 };
   const json = await res.json();
   const mods = (json._aRecords || []).map(r => {
     const img = r._aPreviewMedia && r._aPreviewMedia._aImages && r._aPreviewMedia._aImages[0];
-    return {
+    const mod = {
       id: r._idRow,
       name: r._sName,
       category: r._aRootCategory ? r._aRootCategory._sName : null,
@@ -73,6 +90,8 @@ async function listMods(gameId, page = 1) {
       profileUrl: r._sProfileUrl,
       thumbUrl: img ? `${img._sBaseUrl}/${img._sFile220 || img._sFile}` : null,
     };
+    mod.autoInstallable = isAutoInstallable(mod);
+    return mod;
   });
   return { mods, total: (json._aMetadata && json._aMetadata._nRecordCount) || mods.length };
 }
@@ -134,7 +153,9 @@ function readPspGameId(romPath) {
 }
 
 // Dónde debe quedar el pack ya descomprimido para que el emulador lo
-// levante solo, sin configuración adicional del usuario.
+// levante solo, sin configuración adicional del usuario. SOLO aplica a mods
+// clasificados como auto-instalables (ver isAutoInstallable) — es la única
+// ubicación que Dolphin/PPSSPP escanean solos.
 function getTextureDestDir(consoleId, romPath) {
   if (consoleId === 'gamecube' || consoleId === 'wii') {
     const gameId = readGameCubeWiiId(romPath);
@@ -151,38 +172,67 @@ function getTextureDestDir(consoleId, romPath) {
   return null;
 }
 
-function extractZip(zipPath, destDir) {
-  return new Promise((resolve, reject) => {
-    execFile('powershell.exe', [
-      '-NoProfile', '-NonInteractive', '-Command',
-      `Expand-Archive -Path "${zipPath}" -DestinationPath "${destDir}" -Force`,
-    ], (err) => (err ? reject(err) : resolve()));
-  });
+function sanitizeFolderName(name) {
+  return (name || 'mod').replace(/[\\/:*?"<>|]/g, '_').trim().slice(0, 80) || 'mod';
+}
+
+// Para mods que NO son textura/skin (idiomas, modelos, cheats, herramientas,
+// etc.): no hay una carpeta "mágica" donde el emulador los recoja solo, así
+// que se dejan en una carpeta propia de MegaHUB, bien identificada por juego
+// y por mod, para que el usuario los mueva a mano según las instrucciones que
+// traiga cada uno — mejor eso que adivinar mal y que el mod no funcione o
+// pise archivos que no debía.
+function getManualModDestDir(consoleId, romPath, modId, modName) {
+  const folderName = `${modId}-${sanitizeFolderName(modName)}`;
+  if (consoleId === 'gamecube' || consoleId === 'wii') {
+    const gameId = readGameCubeWiiId(romPath) || 'juego-desconocido';
+    const { emuDir } = retroFolders.getLocationInfo(consoleId);
+    return path.join(emuDir, 'MegaHUB-Mods', gameId, folderName);
+  }
+  if (consoleId === 'psp') {
+    const gameId = readPspGameId(romPath) || 'juego-desconocido';
+    const exe = scanRetroArch.findRetroArch();
+    if (!exe) return null;
+    return path.join(path.dirname(exe), 'system', 'MegaHUB-Mods', gameId, folderName);
+  }
+  return null;
 }
 
 // Se llama SOLO después de que el renderer ya mostró nombre/tamaño y el
 // usuario confirmó — mismo límite de seguridad que emulatorDownload.js.
-async function downloadAndInstall(consoleId, romPath, modId) {
-  const destDir = getTextureDestDir(consoleId, romPath);
+// `mod` trae { id, name, autoInstallable } — el renderer ya tiene ese dato de
+// listMods, así que no hace falta volver a pedirlo aquí.
+async function downloadAndInstall(consoleId, romPath, mod) {
+  const modId = mod.id;
+  const destDir = mod.autoInstallable
+    ? getTextureDestDir(consoleId, romPath)
+    : getManualModDestDir(consoleId, romPath, modId, mod.name);
   if (!destDir) {
     return { error: 'No se pudo identificar el ID del juego (o falta el emulador correspondiente) para saber dónde instalar el pack.' };
   }
   const info = await getModDownloadInfo(modId);
   if (!info) throw new Error('No se pudo obtener el archivo de descarga de GameBanana');
+  // GameBanana acepta subir .zip, .7z o .rar indistintamente — el nombre del
+  // archivo temporal tiene que usar la extensión REAL para que archiveExtract
+  // sepa con qué descompresor abrirlo (antes se forzaba ".zip" fijo y los
+  // packs subidos en .rar/.7z fallaban al intentar leerlos como zip).
+  if (!archiveExtract.isSupportedArchive(info.fileName)) {
+    return { error: `"${info.fileName}" no es un formato que MegaHUB pueda descomprimir (solo .zip, .7z y .rar).` };
+  }
 
-  const tmpZip = path.join(os.tmpdir(), `megahub-texture-${modId}-${Date.now()}.zip`);
+  const tmpArchive = path.join(os.tmpdir(), `megahub-mod-${modId}-${Date.now()}${path.extname(info.fileName)}`);
   const res = await fetch(info.downloadUrl);
   if (!res.ok) throw new Error(`Descarga falló: HTTP ${res.status}`);
-  await pipeline(Readable.fromWeb(res.body), fs.createWriteStream(tmpZip));
+  await pipeline(Readable.fromWeb(res.body), fs.createWriteStream(tmpArchive));
 
   fs.mkdirSync(destDir, { recursive: true });
-  await extractZip(tmpZip, destDir);
-  fs.unlinkSync(tmpZip);
+  await archiveExtract.extractArchive(tmpArchive, destDir);
+  fs.unlinkSync(tmpArchive);
 
-  // Muchos packs traen sus PNG en una subcarpeta dentro del .zip en vez de
+  // Muchos packs traen sus PNG en una subcarpeta dentro del archivo en vez de
   // sueltos — no hay forma fiable de saberlo de antemano, así que se avisa
   // en vez de asumir que siempre queda bien.
-  return { ok: true, destDir, fileName: info.fileName };
+  return { ok: true, destDir, fileName: info.fileName, manual: !mod.autoInstallable };
 }
 
 // Para marcar en el catálogo (juegos que el usuario NO tiene) cuáles sí

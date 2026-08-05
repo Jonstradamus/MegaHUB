@@ -104,10 +104,18 @@ function ramGb(text) {
 
 function pct(userScore, reqScore) {
   if (userScore == null || reqScore == null || reqScore <= 0) return null;
-  const raw = (userScore / reqScore) * 100;
-  // Sin techo artificial: un PC muy superior debe reflejarse como tal (300%, 500%...).
-  // Solo se acota un máximo defensivo para blindar contra falsos positivos de parseo.
-  return Math.round(Math.max(0, Math.min(500, raw)));
+  const raw = userScore / reqScore; // 1.0 = exactamente los requisitos pedidos
+  if (raw <= 1) return Math.round(raw * 100); // por debajo: lineal y sin adornos, para que "justo"/"insuficiente" sigan siendo honestos
+  // Por encima del 100% se comprime en escala logarítmica en vez de lineal:
+  // con la fórmula lineal de antes, cualquier PC moderno contra un juego de
+  // hace unos años ya pegaba en el techo de 500% — no distinguía "un poco
+  // sobrado" de "puede correrlo con los ojos cerrados". Con esto, 100% sigue
+  // siendo "corre al máximo tal como pide el juego" y hace falta un hardware
+  // realmente ~4x más potente que lo recomendado para llegar a 200%
+  // ("sobregirado" — ver gradeOverall/verdict más abajo, que ya usan ese
+  // corte). Techo en 300% para casos extremos, en vez del 500% sin sentido.
+  const val = 100 + 50 * Math.log2(raw);
+  return Math.round(Math.max(0, Math.min(300, val)));
 }
 
 function analyzeTier(reqHtml, specs) {

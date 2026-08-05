@@ -15,6 +15,9 @@
   </div>
 
   <header id="titlebar">
+    <div id="titlebar-controls-left">
+      <button id="tb-widget" class="tb-btn" title="Modo widget" aria-label="Activar modo widget"><i data-icon="grid"></i></button>
+    </div>
     <div id="titlebar-drag"></div>
     <div id="titlebar-controls">
       <button id="tb-min" class="tb-btn" title="Minimizar" aria-label="Minimizar"><i data-icon="winMin"></i></button>
@@ -22,6 +25,42 @@
       <button id="tb-close" class="tb-btn tb-close" title="Cerrar" aria-label="Cerrar"><i data-icon="winClose"></i></button>
     </div>
   </header>
+
+  <!-- Modo widget: MegaHUB se encoge a esto en vez de abrir una ventana aparte
+       (ver initWidgetMode() en app.js + win-enter-widget-mode en main.js).
+       Reusa allGames, ya cargado por el rescan() normal — no vuelve a escanear.
+       Solo 2 botones importantes (PC / RETRO) + cerrar; al elegir un juego se
+       muestra su carátula y un único botón "Jugar" (salvo en forma "dock
+       vertical", que lanza directo — ver initWidgetMode()).
+       #widget-peek: tira que se ve cuando el widget está pegado a un borde de
+       pantalla y retraído (auto-ocultar, ver flushBoundsForEdge/doRetract en
+       main.js) — pasar el mouse por encima lo despliega de nuevo. -->
+  <div id="widget-view" data-shape="rect">
+    <div id="widget-peek"></div>
+    <div id="widget-bar">
+      <div id="widget-drag"></div>
+      <div id="widget-tabs">
+        <button type="button" class="wg-tab active" data-tab="pc">PC</button>
+        <button type="button" class="wg-tab" data-tab="retro">RETRO</button>
+      </div>
+      <div id="widget-shapes">
+        <button type="button" class="wg-shape" data-shape="square" title="Cuadro" aria-label="Forma cuadro">◻</button>
+        <button type="button" class="wg-shape active" data-shape="rect" title="Rectángulo" aria-label="Forma rectángulo">▯</button>
+        <button type="button" class="wg-shape" data-shape="vertical" title="Dock vertical" aria-label="Forma dock vertical">▮</button>
+      </div>
+      <button id="widget-exit" title="Volver a MegaHUB expandido" aria-label="Volver a MegaHUB expandido"><i data-icon="winRestore"></i></button>
+    </div>
+    <div id="widget-body">
+      <div id="widget-empty" hidden>Sin juegos instalados todavía.</div>
+      <div id="widget-list"></div>
+      <div id="widget-detail" hidden>
+        <button id="widget-detail-back" aria-label="Volver a la lista"><i data-icon="chevron"></i></button>
+        <div id="widget-detail-cover"></div>
+        <div id="widget-detail-title"></div>
+        <button id="widget-detail-play">Jugar</button>
+      </div>
+    </div>
+  </div>
 
   <div id="app-grid">
   <div id="sidebar-slot">
@@ -44,43 +83,14 @@
           <span class="companion-pill-dot"></span>
           <span class="companion-pill-text">DERIVA Companion</span>
         </div>
-        <!-- Panel ampliado al pasar el mouse — calcado del propio mando de
-             Companion (companion-desktop/radio.html): carátula, título/artista,
-             transporte circular, volumen y guardar. Oculto salvo :hover (ver
-             app.css). -->
+        <!-- Panel ampliado al pasar el mouse: ya no es la radio (se sacó por
+             depender de que DERIVA Companion, "el gato", esté corriendo
+             aparte para algo tan básico como reproducir música). Ahora
+             muestra cuánto se jugó esta semana, con datos propios de MegaHUB
+             — ver activityLog.js. -->
         <div class="companion-pill-expand">
-          <div class="cpx-np">
-            <div class="cpx-cover"><span class="cpx-cover-fallback">🎵</span><img class="cpx-cover-img" hidden alt="" /></div>
-            <div class="cpx-meta">
-              <div class="cpx-lbl"><span class="cpx-live-dot"></span><span class="cpx-genre">Radio</span></div>
-              <div class="cpx-title">—</div>
-              <div class="cpx-artist"></div>
-            </div>
-          </div>
-          <div class="cpx-transport">
-            <button type="button" class="cpx-tb" data-cmd="prev" title="Anterior" aria-label="Anterior">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-            </button>
-            <button type="button" class="cpx-tb cpx-play" data-cmd="toggle" title="Reproducir/pausar" aria-label="Reproducir/pausar">
-              <svg viewBox="0 0 24 24" fill="currentColor" class="cpx-play-ico"><path d="M8 5v14l11-7z"/></svg>
-            </button>
-            <button type="button" class="cpx-tb" data-cmd="next" title="Siguiente" aria-label="Siguiente">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg>
-            </button>
-            <button type="button" class="cpx-tb" data-cmd="random" title="Radio aleatoria" aria-label="Radio aleatoria">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
-            </button>
-          </div>
-          <div class="cpx-volume-row">
-            <button type="button" class="cpx-mute" data-cmd="mute" title="Silenciar" aria-label="Silenciar">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4.03v8.06A4.5 4.5 0 0016.5 12z"/></svg>
-            </button>
-            <input type="range" class="cpx-volume" min="0" max="100" value="70" title="Volumen" aria-label="Volumen" />
-          </div>
-          <div class="cpx-actions">
-            <button type="button" class="cpx-like" data-cmd="like" title="Me gusta" aria-label="Me gusta">♡</button>
-            <button type="button" class="cpx-save" data-cmd="save" title="Guardar en Mi lista" aria-label="Guardar en Mi lista">💟 Guardar en Mi lista</button>
-          </div>
+          <div class="cpx-activity-title">Esta semana</div>
+          <div class="cpx-activity-list"></div>
         </div>
       </div>
 
@@ -152,43 +162,14 @@
           <span class="companion-pill-dot"></span>
           <span class="companion-pill-text">DERIVA Companion</span>
         </div>
-        <!-- Panel ampliado al pasar el mouse — calcado del propio mando de
-             Companion (companion-desktop/radio.html): carátula, título/artista,
-             transporte circular, volumen y guardar. Oculto salvo :hover (ver
-             app.css). -->
+        <!-- Panel ampliado al pasar el mouse: ya no es la radio (se sacó por
+             depender de que DERIVA Companion, "el gato", esté corriendo
+             aparte para algo tan básico como reproducir música). Ahora
+             muestra cuánto se jugó esta semana, con datos propios de MegaHUB
+             — ver activityLog.js. -->
         <div class="companion-pill-expand">
-          <div class="cpx-np">
-            <div class="cpx-cover"><span class="cpx-cover-fallback">🎵</span><img class="cpx-cover-img" hidden alt="" /></div>
-            <div class="cpx-meta">
-              <div class="cpx-lbl"><span class="cpx-live-dot"></span><span class="cpx-genre">Radio</span></div>
-              <div class="cpx-title">—</div>
-              <div class="cpx-artist"></div>
-            </div>
-          </div>
-          <div class="cpx-transport">
-            <button type="button" class="cpx-tb" data-cmd="prev" title="Anterior" aria-label="Anterior">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6 6h2v12H6zm3.5 6l8.5 6V6z"/></svg>
-            </button>
-            <button type="button" class="cpx-tb cpx-play" data-cmd="toggle" title="Reproducir/pausar" aria-label="Reproducir/pausar">
-              <svg viewBox="0 0 24 24" fill="currentColor" class="cpx-play-ico"><path d="M8 5v14l11-7z"/></svg>
-            </button>
-            <button type="button" class="cpx-tb" data-cmd="next" title="Siguiente" aria-label="Siguiente">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M16 6h2v12h-2zM6 6l8.5 6L6 18z"/></svg>
-            </button>
-            <button type="button" class="cpx-tb" data-cmd="random" title="Radio aleatoria" aria-label="Radio aleatoria">
-              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M10.59 9.17L5.41 4 4 5.41l5.17 5.17 1.42-1.41zM14.5 4l2.04 2.04L4 18.59 5.41 20 17.96 7.46 20 9.5V4h-5.5zm.33 9.41l-1.41 1.41 3.13 3.13L14.5 20H20v-5.5l-2.04 2.04-3.13-3.13z"/></svg>
-            </button>
-          </div>
-          <div class="cpx-volume-row">
-            <button type="button" class="cpx-mute" data-cmd="mute" title="Silenciar" aria-label="Silenciar">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M3 10v4h4l5 5V5L7 10H3zm13.5 2a4.5 4.5 0 00-2.5-4.03v8.06A4.5 4.5 0 0016.5 12z"/></svg>
-            </button>
-            <input type="range" class="cpx-volume" min="0" max="100" value="70" title="Volumen" aria-label="Volumen" />
-          </div>
-          <div class="cpx-actions">
-            <button type="button" class="cpx-like" data-cmd="like" title="Me gusta" aria-label="Me gusta">♡</button>
-            <button type="button" class="cpx-save" data-cmd="save" title="Guardar en Mi lista" aria-label="Guardar en Mi lista">💟 Guardar en Mi lista</button>
-          </div>
+          <div class="cpx-activity-title">Esta semana</div>
+          <div class="cpx-activity-list"></div>
         </div>
       </div>
 
@@ -210,7 +191,7 @@
           <div class="side-note" id="retro-count"></div>
         </section>
 
-        <section class="side-section">
+        <section class="side-section side-section-emulator">
           <a id="retro-download-link" class="account-btn" target="_blank" rel="noopener"><i data-icon="download"></i> <span>Descargar emulador</span></a>
           <button id="retro-auto-download-btn" class="account-btn" hidden><i data-icon="zap"></i> <span>Descargar e instalar automáticamente (con tu confirmación)</span></button>
           <button id="retro-locate-emulator-btn" class="account-btn" hidden><i data-icon="pin"></i> <span>Ya lo tengo — ubicar carpeta</span></button>
@@ -241,11 +222,12 @@
             <button class="chip" data-tier="1080p">1080p</button>
             <button class="chip" data-tier="2k">2K</button>
             <button class="chip" data-tier="4k">4K</button>
+            <button class="chip chip-original" data-tier="original" hidden title="4:3 (o el aspecto original de la consola) + un shader que reproduce cómo se veía en su época — TV de tubo para sobremesa/arcade, pantalla LCD para portátiles.">Original</button>
           </div>
           <div class="side-note" id="retro-resolution-status"></div>
         </section>
 
-        <section class="side-section">
+        <section class="side-section side-section-folders">
           <h3>Carpetas locales</h3>
           <button id="retro-create-folders-btn" class="account-btn"><i data-icon="folder"></i> Crear carpetas del emulador/ROMs</button>
           <button id="retro-open-roms-btn" class="account-btn"><i data-icon="folderOpen"></i> Abrir carpeta de ROMs</button>
@@ -260,9 +242,17 @@
   <div id="main-col">
     <header id="topbar">
       <button class="icon-btn" id="sidebar-toggle" title="Mostrar/ocultar panel lateral"><i data-icon="menu"></i></button>
-      <input id="search" type="text" placeholder="Buscar juego…  ( / )" />
+      <div id="search-wrap">
+        <input id="search" type="text" placeholder="Buscar juego…  ( / )" autocomplete="off" />
+        <!-- Búsqueda global (Fase 6): cruza biblioteca + logros + ofertas ya
+             cargados, aparte del filtrado normal de la vista actual (que
+             sigue funcionando igual, ver el listener de #search en app.js).
+             Se arma en renderSearchResults()/buildSearchResultGroups(). -->
+        <div id="search-results" hidden></div>
+      </div>
       <span id="count"></span>
       <div id="view-switch">
+        <button class="view-btn view-home-btn" data-view="home" title="Inicio"><i data-icon="home" class="icon-lg"></i></button>
         <div class="view-group">
           <span class="view-group-label">PC</span>
           <button class="view-btn active" data-view="dock" title="Vista Dock"><i data-icon="grid"></i></button>
@@ -270,10 +260,35 @@
         </div>
         <button class="view-btn view-retro-btn" data-view="retro" title="Consolas Retro"><i data-icon="gamepad" class="icon-lg"></i> <span>RETRO</span></button>
         <button class="view-btn view-achievements-btn" data-view="achievements" title="Logros (RetroAchievements)"><i data-icon="trophy" class="icon-lg"></i></button>
+        <button class="view-btn view-deals-btn" data-view="deals" title="Ofertas">
+          <span class="deals-icon-wrap"><i data-icon="tag" class="icon-lg"></i><span id="deals-badge" class="deals-badge" hidden></span></span>
+        </button>
+        <button class="view-btn view-profile-btn" data-view="profile" title="Perfil (estadísticas)"><i data-icon="chart" class="icon-lg"></i></button>
       </div>
       <button class="icon-btn" id="settings-open" title="Ajustes"><i data-icon="settings"></i></button>
       <span id="gamepad-status"><i data-icon="plug"></i> <span id="gamepad-status-label">sin mando</span></span>
     </header>
+
+    <!-- Inicio: dashboard de aterrizaje (ver initHomeView() en app.js). Reusa
+         allGames (ya cargado por rescan()) y activityLog.js — no vuelve a
+         escanear ni pide datos que la app no tuviera ya. Cada sección se
+         oculta sola si no hay datos para mostrarla (ver renderHome()), en vez
+         de mostrar una franja vacía. -->
+    <main id="home-wrap" hidden>
+      <section id="home-continue" class="home-section" hidden>
+        <h2 class="home-section-title">Seguir jugando</h2>
+        <div id="home-continue-grid" class="home-hero-grid"></div>
+      </section>
+      <section id="home-recent" class="home-section" hidden>
+        <h2 class="home-section-title">Agregado recién</h2>
+        <div id="home-recent-grid" class="home-card-grid"></div>
+      </section>
+      <section id="home-week" class="home-section" hidden>
+        <h2 class="home-section-title">Esta semana</h2>
+        <div id="home-week-list" class="home-week-list"></div>
+      </section>
+      <div id="home-empty" hidden>Instala o abre un juego para ver tu resumen acá.</div>
+    </main>
 
     <main id="dock-wrap">
       <div id="dock" tabindex="0"></div>
@@ -405,10 +420,89 @@
       </div>
     </main>
 
+    <!-- Vista de Ofertas: agrega Steam/GOG/Epic (+ el resto de tiendas que
+         trackea CheapShark) en secciones separadas, más "Recomendado para ti"
+         según el microgénero más jugado — ver initDealsView() en app.js y
+         services/dealsEngine.js para la lógica. -->
+    <main id="deals-wrap" hidden>
+      <div id="deals-header">
+        <div>
+          <h2><i data-icon="tag" class="icon-xl"></i> Ofertas</h2>
+        </div>
+        <button id="deals-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span>Actualizar</span></button>
+      </div>
+
+      <section id="deals-reco-section" hidden>
+        <h3 class="deals-section-title"></h3>
+        <div class="deals-grid" id="deals-reco-grid"></div>
+      </section>
+
+      <section class="deals-store-section" data-store="steam">
+        <h3 class="deals-section-title"><i data-icon="tag"></i> Steam <span class="deals-count"></span></h3>
+        <div class="deals-grid"></div>
+        <button class="deals-more-btn account-btn" hidden>Ver más</button>
+      </section>
+
+      <section class="deals-store-section" data-store="gog">
+        <h3 class="deals-section-title"><i data-icon="tag"></i> GOG <span class="deals-count"></span></h3>
+        <div class="deals-grid"></div>
+        <button class="deals-more-btn account-btn" hidden>Ver más</button>
+      </section>
+
+      <section class="deals-store-section" data-store="epic">
+        <h3 class="deals-section-title"><i data-icon="tag"></i> Epic Games <span class="deals-count"></span></h3>
+        <div class="deals-grid"></div>
+        <button class="deals-more-btn account-btn" hidden>Ver más</button>
+      </section>
+
+      <section class="deals-store-section" data-store="other">
+        <h3 class="deals-section-title"><i data-icon="tag"></i> Otras tiendas <span class="deals-count"></span></h3>
+        <div class="deals-grid"></div>
+        <button class="deals-more-btn account-btn" hidden>Ver más</button>
+      </section>
+    </main>
+
+    <!-- Perfil: estadísticas unificadas (ver initProfileView() en app.js).
+         Solo cruza las 2 fuentes con horas REALES de por vida — Steam
+         (localconfig.vdf) y Retro (sesiones que MegaHUB mismo mide). El
+         resto de launchers se listan aparte, sin inventarles horas — ver el
+         comentario del handler get-profile-stats en main.js. -->
+    <main id="profile-wrap" hidden>
+      <div id="profile-header">
+        <h2><i data-icon="chart" class="icon-xl"></i> Perfil</h2>
+      </div>
+
+      <section id="profile-summary" class="profile-section" hidden>
+        <div class="profile-stat">
+          <div class="profile-stat-n" id="profile-total-hours">—</div>
+          <div class="profile-stat-l">Horas jugadas (Steam + Retro)</div>
+        </div>
+        <div class="profile-stat">
+          <div class="profile-stat-n" id="profile-days-played">—</div>
+          <div class="profile-stat-l">Días distintos jugados</div>
+        </div>
+      </section>
+
+      <section id="profile-breakdown" class="profile-section" hidden>
+        <h3 class="profile-section-title">Horas por plataforma</h3>
+        <div id="profile-breakdown-bars" class="profile-bars"></div>
+      </section>
+
+      <section id="profile-top" class="profile-section" hidden>
+        <h3 class="profile-section-title">Más jugados</h3>
+        <div id="profile-top-grid" class="home-card-grid"></div>
+      </section>
+
+      <div id="profile-untracked" hidden></div>
+
+      <div id="profile-empty" hidden>Todavía no hay horas registradas — jugá algo desde MegaHUB para ver tus estadísticas acá.</div>
+    </main>
+
     <footer id="controls">
       <span><b>←→↑↓</b>/stick — navegar</span>
       <span><b>Enter</b>/<b>A</b> — jugar · instalar</span>
       <span><b>Q·E</b>/<b>LB·RB</b> — plataforma</span>
+      <span><b>LT·RT</b> — cambiar de vista</span>
       <span><b>/</b> — buscar</span>
     </footer>
   </div>
@@ -422,6 +516,7 @@
       <div id="d-badges"></div>
       <p id="d-desc"></p>
       <div id="d-meta"></div>
+      <div id="d-achievements" hidden></div>
       <div id="d-reqs">
         <h3>¿Lo mueve tu PC?</h3>
         <div id="d-reqs-body">—</div>
@@ -461,6 +556,20 @@
             </div>
             <div class="retro-status" id="retro-status">Buscando RetroArch…</div>
           </div>
+
+          <section class="side-section" style="margin-top:18px;">
+            <h3>Carpeta de emuladores y ROMs</h3>
+            <div class="settings-intro" style="margin-bottom:10px;">
+              Carpeta raíz donde MegaHUB crea <code>emulators/</code> y <code>roms/</code> para las consolas
+              que no tengan su propia ubicación señalada a mano. Por defecto es tu carpeta de Documentos
+              (siempre escribible, sin importar dónde se instaló MegaHUB).
+            </div>
+            <div class="side-note" id="default-root-path">Cargando…</div>
+            <div style="display:flex; gap:8px; margin-top:10px;">
+              <button id="default-root-change-btn" class="account-btn"><i data-icon="folderOpen"></i> <span>Cambiar carpeta…</span></button>
+              <button id="default-root-reset-btn" class="account-btn" hidden><i data-icon="refresh"></i> <span>Restaurar Documentos</span></button>
+            </div>
+          </section>
 
           <section class="side-section" style="margin-top:18px;">
             <h3>Skins de RetroArch</h3>
@@ -504,6 +613,20 @@
             cambia MegaHUB.)
           </div>
           <div id="theme-grid" class="theme-grid"></div>
+
+          <section class="side-section" style="margin-top:18px;">
+            <h3>Modo widget</h3>
+            <div class="launcher-row" style="border:none;padding:0;">
+              <span class="launcher-name">Auto-ocultar al pegarlo a un borde de la pantalla</span>
+              <div class="toggle-switch" id="widget-autohide-toggle"></div>
+            </div>
+            <div class="settings-intro" style="margin-top:8px;margin-bottom:0;">
+              Si arrastras el widget hasta un borde de la pantalla, con esto activado se retrae a una
+              tira fina cuando sacas el mouse de encima (como la barra de tareas de Windows) y se
+              despliega al volver a pasarlo por ahí. Desactívalo si prefieres que se quede fijo, como un
+              dock normal, sin contraerse nunca.
+            </div>
+          </section>
         </div>
 
         <div class="settings-panel" data-panel="backup" hidden>

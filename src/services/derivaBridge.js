@@ -4,12 +4,13 @@
 // Companion no está instalado, este archivo simplemente nunca se lee —
 // ninguna de las dos apps depende de la otra.
 //
-// Honesto sobre sus límites (mismo criterio que achievementEngine.js): solo
-// para ROMs retro (retro-launch-rom) MegaHUB tiene el proceso real y sabe
-// CUÁNDO termina la sesión. Para el resto de plataformas (Steam/Epic/GOG/
-// Battle.net/Riot/Xbox/Rockstar/Ubisoft/EA) solo sabemos que se lanzó — el
-// campo "source" distingue ambos casos para que quien lea este archivo no
-// asuma una precisión que no existe.
+// Honesto sobre sus límites (mismo criterio que achievementEngine.js): para
+// "ahora mismo estoy jugando esto" (setNowPlaying), solo Retro tiene proceso
+// propio que avisa CUÁNDO termina — el resto de plataformas solo se sabe que
+// se lanzó (campo "source"). Para la DURACIÓN ya cerrada de una sesión
+// (setLastSession) la precisión es mejor: Retro y Rockstar/Ubisoft/EA vía
+// proceso propio, Battle.net/Riot/Xbox vía el monitor de procesos de
+// activityLog.js/processWatcher.js — todas reales, ninguna inventada.
 const fs = require('fs');
 const path = require('path');
 const os = require('os');
@@ -45,6 +46,15 @@ function setAchievementsSummary(summary) {
   writeBridge({ achievements: summary });
 }
 
+// Sesión de juego recién CERRADA (no "ahora mismo", eso es setNowPlaying) —
+// mismo patrón que setAchievementsSummary: Companion dedupe por
+// `title+endedAt` (ver megahubBridge.js del lado de Companion) y solo
+// reenvía la más nueva, no un historial completo — DERIVA no pretende
+// conocer todas las sesiones de MegaHUB, solo la actividad reciente.
+function setLastSession({ title, platform, minutes }) {
+  writeBridge({ lastSession: { title, platform, minutes: Math.round(minutes), endedAt: new Date().toISOString() } });
+}
+
 // Se llama una sola vez al arrancar (ver main.js) — así el botón "Abrir
 // MegaHUB" de DERIVA Companion sabe qué ejecutar. exePath solo viene poblado
 // cuando MegaHUB corre ya empaquetado (electron-builder); en desarrollo
@@ -54,4 +64,4 @@ function setAppInfo({ exePath }) {
   writeBridge({ app: { exePath: exePath || null } });
 }
 
-module.exports = { setNowPlaying, setAchievementsSummary, setAppInfo, BRIDGE_FILE };
+module.exports = { setNowPlaying, setAchievementsSummary, setAppInfo, setLastSession, BRIDGE_FILE };

@@ -3,7 +3,7 @@
 // para Windows, sin instalador). El resto usa únicamente el enlace a la
 // página oficial.
 //
-// Al ser todas builds "portable" (zip/7z sin instalador), MegaHUB puede
+// Al ser todas builds "portable" (zip/7z/rar sin instalador), MegaHUB puede
 // descargar + descomprimir + dejar listo el ejecutable dentro de su propia
 // carpeta emulators/<consola>/, y detectar si ya está ahí — el usuario no
 // tiene que ir emulador por emulador. Sigue habiendo un límite de seguridad
@@ -13,11 +13,10 @@
 // instaladores .exe silenciosos.
 const fs = require('fs');
 const path = require('path');
-const { execFile } = require('child_process');
 const { Readable } = require('stream');
 const { pipeline } = require('stream/promises');
-const sevenZip = require('7zip-min');
 const retroFolders = require('./retroFolders');
+const archiveExtract = require('./archiveExtract');
 
 const DOWNLOAD_SOURCES = {
   xbox: {
@@ -112,21 +111,6 @@ async function downloadFile(url, destPath) {
   await pipeline(Readable.fromWeb(res.body), fs.createWriteStream(destPath));
 }
 
-function extractZip(zipPath, destDir) {
-  return new Promise((resolve, reject) => {
-    execFile('powershell.exe', [
-      '-NoProfile', '-NonInteractive', '-Command',
-      `Expand-Archive -Path "${zipPath}" -DestinationPath "${destDir}" -Force`,
-    ], (err) => (err ? reject(err) : resolve()));
-  });
-}
-
-function extract7z(archivePath, destDir) {
-  return new Promise((resolve, reject) => {
-    sevenZip.unpack(archivePath, destDir, (err) => (err ? reject(err) : resolve()));
-  });
-}
-
 // Se llama SOLO después de que el renderer ya mostró la confirmación al usuario.
 async function downloadEmulator(consoleId, consoleName, emulatorName) {
   const info = await getDownloadInfo(consoleId);
@@ -135,8 +119,7 @@ async function downloadEmulator(consoleId, consoleName, emulatorName) {
   const destPath = path.join(emuDir, info.name);
   await downloadFile(info.url, destPath);
 
-  if (/\.zip$/i.test(info.name)) await extractZip(destPath, emuDir);
-  else if (/\.7z$/i.test(info.name)) await extract7z(destPath, emuDir);
+  if (archiveExtract.isSupportedArchive(info.name)) await archiveExtract.extractArchive(destPath, emuDir);
   fs.unlinkSync(destPath);
 
   const exePath = findInstalledExe(consoleId, emuDir);

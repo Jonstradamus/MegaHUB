@@ -3,7 +3,7 @@ const store = require('../util/store');
 // Caché en disco de appdetails de Steam: { [appid]: { at, v, meta } }
 // CACHE_VERSION fuerza un refetch cuando cambiamos qué campos guardamos (p.ej. al
 // añadir headerImage), para que las entradas viejas no se queden sin el dato nuevo.
-const CACHE_VERSION = 2;
+const CACHE_VERSION = 3;
 let cache = null;
 function getCache() {
   if (!cache) cache = store.load('steam-meta', {});
@@ -46,6 +46,7 @@ async function getSteamMeta(appid, { force = false } = {}) {
           recommended: (d.pc_requirements && d.pc_requirements.recommended) || null,
         },
         shortDesc: d.short_description || null,
+        metacriticScore: (d.metacritic && d.metacritic.score) || null,
         trailerUrl: trailerUrl || null,
         trailerPoster: (movie && movie.thumbnail) || null,
         // header_image SIEMPRE existe para cualquier app con ficha en Steam (a

@@ -18,13 +18,41 @@ const retroFolders = require('./retroFolders');
 const retroCoreInstall = require('./retroCoreInstall');
 const scanRetroArch = require('../scanners/retroarch');
 
-const TIERS = ['default', '1080p', '2k', '4k'];
+const TIERS = ['default', '1080p', '2k', '4k', 'original'];
 const TIER_LABEL = {
   default: 'nativo (mejor rendimiento)',
   '1080p': '1080p',
   '2k': '1440p / 2K',
   '4k': '4K',
+  original: 'Original',
 };
+
+// "Original": no es un nivel de resolución más, es un modo aparte — 4:3 (o el
+// aspecto real de cada sistema) + un shader que reproduce cómo se veía la
+// consola en su época, en vez de perseguir más nitidez. Solo tiene sentido
+// para las consolas que emula RetroArch (retroCoreInstall.CORE_MAP) — PS2/
+// PS3/Xbox/GameCube/etc. usan emuladores standalone con su propio sistema de
+// configuración, sin shaders de RetroArch disponibles.
+//
+// La aproximación correcta NO es la misma para los tres grupos:
+//  - Sobremesa (tocaban un TV con tubo de rayos catódicos, 4:3 real): fuerza
+//    aspect_ratio_index=0 ("4:3") + shader crt-easymode (scanlines + halo de
+//    fósforo — el shader CRT "de referencia" que trae RetroArch, con buen
+//    balance calidad/rendimiento).
+//  - Arcade: también eran CRT, pero muchos gabinetes eran verticales (shooters
+//    verticales, etc.) — mismo shader crt-easymode, pero aspect_ratio_index=22
+//    ("Core Provided") en vez de 4:3 fijo, porque FinalBurn Neo/Flycast ya
+//    reportan el aspecto correcto por juego; forzar 4:3 estiraría/recortaría
+//    mal los juegos verticales.
+//  - Portátiles (pantalla LCD propia — nunca tocaron un televisor): un shader
+//    CRT no tiene sentido físico acá. Usan shader lcd1x (rejilla de
+//    subpíxeles LCD) + aspect_ratio_index=22 (nativo): ninguna portátil de
+//    esta lista es 4:3 real, forzarlo distorsionaría la imagen.
+const ORIGINAL_ASPECT_4_3 = '"0"';
+const ORIGINAL_ASPECT_CORE_PROVIDED = '"22"';
+const ORIGINAL_TV = ['nes', 'sms', 'genesis', 'segacd', 'snes', 'psx', 'saturn', 'pcengine', 'atari2600', 'n64', 'intellivision', 'atari5200', 'colecovision', 'vectrex', 'msx', 'atari7800', 'threedo', 'atarijaguar', 'dreamcast', 'neogeo'];
+const ORIGINAL_ARCADE = ['arcade', 'naomi'];
+const ORIGINAL_HANDHELD = ['gamegear', 'gb', 'gbc', 'gba', 'nds', 'psp', 'n3ds', 'atarilynx', 'virtualboy', 'ngp', 'wonderswan'];
 
 // [multiplicador de resolución interna, resolución de ventana/salida o null]
 const PRESET_VALUES = {
@@ -284,6 +312,67 @@ function applyPixelShaderPreset(consoleId, tier) {
   return { error: `No se encontró el shader "${want}" en tu carpeta shaders/ de RetroArch.` };
 }
 
+// Escribe/borra el override de shader por-core (mismo mecanismo "#reference"
+// de arriba) para un nombre de shader arbitrario — lo reutilizan tanto
+// applyPixelShaderPreset (xBRZ) como applyOriginalPreset (CRT/LCD).
+function writeShaderReference(ctx, shaderBasename) {
+  const shadersRoot = path.join(path.dirname(ctx.exe), 'shaders');
+  for (const [subdir, ext] of [['shaders_slang', 'slangp'], ['shaders_glsl', 'glslp']]) {
+    const root = path.join(shadersRoot, subdir);
+    if (!fs.existsSync(root)) continue;
+    const found = findShaderPreset(root, `${shaderBasename}.${ext}`);
+    if (!found) continue;
+    fs.writeFileSync(path.join(ctx.coreDir, `${ctx.folder}.${ext}`), `#reference "${found}"\n`);
+    return true;
+  }
+  return false;
+}
+
+// Borra el override de config del core (aspect_ratio_index/video_smooth) que
+// solo existe por haber aplicado "Original" alguna vez — al cambiar a
+// cualquier otro tier hay que limpiarlo, si no el 4:3/CRT forzado se queda
+// pegado por debajo de la nueva resolución elegida.
+function clearOriginalOverride(consoleId) {
+  const ctx = ensureCoreConfigDir(consoleId);
+  if (ctx.error) return;
+  const cfgPath = path.join(ctx.coreDir, `${ctx.folder}.cfg`);
+  if (fs.existsSync(cfgPath)) fs.unlinkSync(cfgPath);
+}
+
+function applyOriginalPreset(consoleId) {
+  const ctx = ensureCoreConfigDir(consoleId);
+  if (ctx.error) return ctx;
+
+  let shaderName, aspect, familyLabel;
+  if (ORIGINAL_TV.includes(consoleId)) { shaderName = 'crt-easymode'; aspect = ORIGINAL_ASPECT_4_3; familyLabel = 'TV CRT 4:3'; }
+  else if (ORIGINAL_ARCADE.includes(consoleId)) { shaderName = 'crt-easymode'; aspect = ORIGINAL_ASPECT_CORE_PROVIDED; familyLabel = 'CRT de arcade, aspecto original del gabinete'; }
+  else if (ORIGINAL_HANDHELD.includes(consoleId)) { shaderName = 'lcd1x'; aspect = ORIGINAL_ASPECT_CORE_PROVIDED; familyLabel = 'pantalla LCD original'; }
+  else return { error: 'Esta consola no tiene un modo Original disponible.' };
+
+  // Si el sistema tiene resolución interna real (3D: N64/PSX/Dreamcast/PSP/
+  // etc.), Original la resetea a nativa — el objetivo es "cómo se veía en su
+  // época", no un upscale con estética CRT/LCD encima.
+  if (RETROARCH_PRESET_VALUES[consoleId]) {
+    const optPath = path.join(ctx.coreDir, `${ctx.folder}.opt`);
+    let optText = fs.existsSync(optPath) ? fs.readFileSync(optPath, 'utf8') : '';
+    for (const [key, value] of Object.entries(RETROARCH_PRESET_VALUES[consoleId].default)) {
+      optText = patchFlatOption(optText, key, value);
+    }
+    fs.writeFileSync(optPath, optText);
+  }
+
+  const cfgPath = path.join(ctx.coreDir, `${ctx.folder}.cfg`);
+  let cfgText = fs.existsSync(cfgPath) ? fs.readFileSync(cfgPath, 'utf8') : '';
+  cfgText = patchFlatOption(cfgText, 'aspect_ratio_index', aspect);
+  cfgText = patchFlatOption(cfgText, 'video_smooth', '"false"');
+  fs.writeFileSync(cfgPath, cfgText);
+
+  if (!writeShaderReference(ctx, shaderName)) {
+    return { error: `No se encontró el shader "${shaderName}" en tu carpeta shaders/ de RetroArch.` };
+  }
+  return { ok: true, message: `${ctx.folder}: modo Original aplicado (${familyLabel}). Reinicia el juego/RetroArch si estaba abierto.` };
+}
+
 async function getInstalledDir(consoleId) {
   const status = await emulatorDownload.getEmulatorStatus(consoleId, '', '');
   if (!status || !status.installed) return null;
@@ -385,6 +474,17 @@ async function applyPreset(consoleId, tier) {
   if (!TIERS.includes(tier)) return { error: 'Preset desconocido.' };
 
   try {
+    if (tier === 'original') {
+      if (!retroCoreInstall.CORE_MAP[consoleId]) {
+        return { error: 'El modo Original solo está disponible para consolas emuladas con RetroArch.' };
+      }
+      return applyOriginalPreset(consoleId);
+    }
+    // Cambiar a cualquier tier que no sea Original limpia su override de
+    // aspecto/shader CRT-LCD — si no, se queda pegado por debajo de la nueva
+    // resolución elegida (ver clearOriginalOverride más arriba).
+    if (retroCoreInstall.CORE_MAP[consoleId]) clearOriginalOverride(consoleId);
+
     if (consoleId === 'gamecube' || consoleId === 'wii') {
       const message = applyDolphin(consoleId, tier);
       if (!message) return { error: 'Ubica primero tu carpeta de Dolphin ("Ya lo tengo — ubicar carpeta").' };
