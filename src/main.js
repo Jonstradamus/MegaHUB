@@ -1142,6 +1142,24 @@ function buildTray() {
   ]));
 }
 
+// Sin esto, cada login de Windows (autostart) o doble-click accidental lanza
+// OTRO proceso encima del anterior en vez de reusar el que ya corre — cada uno
+// vigila procesos y logros por su cuenta (processWatcher.js/achievementEngine.js)
+// y reporta a DERIVA por separado, viéndose ahí como logros/sesiones duplicadas
+// de la MISMA partida real. Solo el primer proceso se queda; los siguientes se
+// cierran solos y le piden al primero que muestre su ventana.
+const gotSingleInstanceLock = app.requestSingleInstanceLock();
+if (!gotSingleInstanceLock) {
+  app.quit();
+  return;
+}
+app.on('second-instance', () => {
+  if (!mainWindow) return;
+  if (mainWindow.isMinimized()) mainWindow.restore();
+  mainWindow.show();
+  mainWindow.focus();
+});
+
 app.whenReady().then(() => {
   // Primera vez que corre esta versión con soporte de bandeja: activa el
   // inicio automático por defecto una sola vez — después el usuario decide
