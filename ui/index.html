@@ -670,6 +670,59 @@
     </div>
   </div>
 
+  <!-- Onboarding de primer uso (Fase 7): 3 pasos cortos, "Omitir" siempre
+       visible en las tres — orienta, no bloquea. Todo lo que ofrece acá ya
+       es alcanzable después desde Ajustes/Retro, así que saltearlo no deja
+       a nadie sin la función. Ver initOnboarding() en app.js. -->
+  <div id="onboarding-overlay" hidden>
+    <div id="onboarding-modal">
+      <button id="onboarding-skip" type="button">Omitir</button>
+
+      <section class="onboarding-step" data-step="1">
+        <div class="onboarding-icon"><i data-icon="grid" class="icon-xl"></i></div>
+        <h2>Bienvenido a MegaHUB</h2>
+        <p class="onboarding-copy">
+          Ya escaneamos tu PC: Steam, Battle.net, Rockstar, Ubisoft y EA se detectan solos.
+          Si además usas GOG o Epic Games, conéctalos aquí para sumarlos a la biblioteca.
+        </p>
+        <div class="onboarding-accounts">
+          <button class="account-btn" data-account="gog"><span class="dot"></span> GOG <span class="account-state">conectar</span></button>
+          <button class="account-btn" data-account="epic"><span class="dot"></span> Epic Games <span class="account-state">conectar</span></button>
+        </div>
+      </section>
+
+      <section class="onboarding-step" data-step="2" hidden>
+        <h2>Elige un estilo</h2>
+        <p class="onboarding-copy">10 skins con forma e identidad propia, no solo color — se puede cambiar cuando quieras desde Ajustes → Apariencia.</p>
+        <div id="onboarding-theme-grid" class="theme-grid"></div>
+      </section>
+
+      <section class="onboarding-step" data-step="3" hidden>
+        <h2>¿Tienes juegos retro?</h2>
+        <p class="onboarding-copy">
+          MegaHUB también emula consolas, desde el Atari 2600 hasta la Xbox 360 — instala
+          cores, resuelve carpetas y reconoce tus ROMs contra un catálogo público. Si no
+          juegas retro, no hace falta tocar nada aquí.
+        </p>
+        <button id="onboarding-retro-btn" type="button" class="account-btn">
+          <i data-icon="gamepad"></i> <span>Ir al Modo Retro</span>
+        </button>
+      </section>
+
+      <div id="onboarding-footer">
+        <div id="onboarding-dots">
+          <span class="onboarding-dot active" data-dot="1"></span>
+          <span class="onboarding-dot" data-dot="2"></span>
+          <span class="onboarding-dot" data-dot="3"></span>
+        </div>
+        <div id="onboarding-nav">
+          <button id="onboarding-back" type="button" hidden>Atrás</button>
+          <button id="onboarding-next" type="button">Siguiente</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="toast-container"></div>
 
   <script src="app.js"></script>

@@ -2982,10 +2982,13 @@ searchInput.addEventListener('input', () => {
 /* ---- Cuentas ---- */
 
 function markConnected(platform, count) {
-  const btn = document.querySelector(`.account-btn[data-account="${platform}"]`);
-  if (!btn) return;
-  btn.classList.add('connected');
-  btn.querySelector('.account-state').textContent = count == null ? 'conectado' : `${count} juegos`;
+  // querySelectorAll, no solo el primero: el mismo botón "Conectar GOG/Epic"
+  // vive duplicado en el sidebar Y en el onboarding de primer uso — los dos
+  // tienen que reflejar el estado, no solo el que se ve por defecto al cargar.
+  document.querySelectorAll(`.account-btn[data-account="${platform}"]`).forEach((btn) => {
+    btn.classList.add('connected');
+    btn.querySelector('.account-state').textContent = count == null ? 'conectado' : `${count} juegos`;
+  });
 }
 
 document.querySelectorAll('.account-btn').forEach(btn => {
@@ -3387,8 +3390,8 @@ function applyTheme(id, persist) {
   });
 }
 
-function renderThemeGrid() {
-  const grid = document.getElementById('theme-grid');
+function renderThemeGrid(gridId = 'theme-grid') {
+  const grid = document.getElementById(gridId);
   if (!grid || grid.dataset.built === '1') return;
   grid.dataset.built = '1';
   const current = localStorage.getItem(THEME_STORAGE_KEY) || '';
@@ -4738,6 +4741,45 @@ async function rescan() {
 // no dejaba ningún rastro visible.
 window.megahub.onRetroLaunchIssue(({ message }) => showToast(message, 'error', 9000));
 
+/* ================= Onboarding de primer uso (Fase 7) =================
+   3 pasos cortos: conectar el primer launcher opcional, elegir skin, y un
+   atajo a Retro si aplica — "Omitir" siempre visible en las tres, orienta,
+   no bloquea. Se guarda un flag en localStorage (mismo patrón que
+   megahub-view/megahub-theme) para no volver a mostrarlo. */
+const ONBOARDING_SEEN_KEY = 'megahub-onboarding-seen';
+const ONBOARDING_STEPS = 3;
+let onboardingStep = 1;
+
+function showOnboardingStep(n) {
+  onboardingStep = n;
+  document.querySelectorAll('.onboarding-step').forEach((el) => { el.hidden = Number(el.dataset.step) !== n; });
+  document.querySelectorAll('.onboarding-dot').forEach((el) => { el.classList.toggle('active', Number(el.dataset.dot) === n); });
+  document.getElementById('onboarding-back').hidden = n === 1;
+  document.getElementById('onboarding-next').textContent = n === ONBOARDING_STEPS ? 'Empezar' : 'Siguiente';
+}
+function closeOnboarding() {
+  document.getElementById('onboarding-overlay').hidden = true;
+  localStorage.setItem(ONBOARDING_SEEN_KEY, '1');
+}
+function initOnboarding() {
+  if (localStorage.getItem(ONBOARDING_SEEN_KEY)) return;
+  renderThemeGrid('onboarding-theme-grid');
+  showOnboardingStep(1);
+  document.getElementById('onboarding-overlay').hidden = false;
+}
+document.getElementById('onboarding-skip').addEventListener('click', closeOnboarding);
+document.getElementById('onboarding-next').addEventListener('click', () => {
+  if (onboardingStep >= ONBOARDING_STEPS) closeOnboarding();
+  else showOnboardingStep(onboardingStep + 1);
+});
+document.getElementById('onboarding-back').addEventListener('click', () => {
+  if (onboardingStep > 1) showOnboardingStep(onboardingStep - 1);
+});
+document.getElementById('onboarding-retro-btn').addEventListener('click', () => {
+  closeOnboarding();
+  switchViewMode('retro');
+});
+
 (async () => {
   await rescan();
   loadSpecs();
@@ -4753,4 +4795,5 @@ window.megahub.onRetroLaunchIssue(({ message }) => showToast(message, 'error', 9
   // avisa igual apenas arranca — sin esto, el toast solo disparaba si el
   // usuario ya había abierto Logros o la ficha de ese juego en esta sesión.
   fetchMhAchievements().catch(() => {});
+  initOnboarding();
 })();
