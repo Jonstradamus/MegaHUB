@@ -17,6 +17,7 @@
 const store = require('../util/store');
 const steamPlaytimeSvc = require('./steamPlaytime');
 const derivaBridge = require('./derivaBridge');
+const { NON_GAME_APPIDS } = require('./steamKnownApps');
 
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 const LOG_RETENTION_MS = 60 * 24 * 60 * 60 * 1000; // 60 días, de sobra para "esta semana"
@@ -71,6 +72,13 @@ function recordSteamSnapshotsIfNeeded() {
   const today = todayKey();
   let dirty = false;
   for (const [appid, info] of Object.entries(totals)) {
+    // localconfig.vdf trackea Playtime hasta para apps internas de Steam sin
+    // ficha de juego real (ej. 480 = Spacewar, la app de pruebas del SDK) —
+    // mismo filtro que ya usa achievementEngine.js/steamOwned.js para no
+    // mostrarlas en logros/biblioteca. Sin este filtro acá, un delta de
+    // tiempo en una de esas apps se logueaba como una sesión real de "Steam
+    // App 480" (visto real: 12h en una semana que el usuario no jugó eso).
+    if (NON_GAME_APPIDS.has(appid)) continue;
     const list = snapshots[appid] || [];
     const last = list[list.length - 1];
     if (last && todayKey(last.at) === today) continue; // ya hay uno de hoy

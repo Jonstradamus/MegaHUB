@@ -157,6 +157,17 @@ function getRunningProcessNames() {
 
 let watchTargets = []; // [{ key, title, platform, names: [...] }]
 const activeSessions = new Map(); // key -> startedAt
+// Suscriptores para "una sesión de juego recién terminó" (ver
+// notifySessionEnded en main.js, resumen de sesión al cerrar) — este módulo
+// no tiene mainWindow propio, así que en vez de acoplarse a Electron acá
+// mismo, main.js se suscribe una vez y decide qué hacer con el aviso.
+const sessionEndListeners = [];
+function onSessionEnd(fn) { sessionEndListeners.push(fn); }
+// Mismo patrón para "arrancó una sesión" (widget: estado "jugando ahora",
+// ver auditoría UX) — separado de onSessionEnd porque son momentos distintos
+// del mismo ciclo, no todo suscriptor quiere ambos.
+const sessionStartListeners = [];
+function onSessionStart(fn) { sessionStartListeners.push(fn); }
 // Último gameMode visto durante la sesión activa de League (ver
 // queryLeagueGameMode) — se consulta en cada tick mientras la sesión sigue
 // abierta y se usa recién al cerrarla para decidir el título final.
@@ -165,10 +176,35 @@ const leagueSessionModes = new Map(); // key -> 'CLASSIC' | 'TFT' | ...
 // Se llama cada vez que termina un scan-games (ver main.js) — la lista de
 // juegos instalados puede cambiar entre escaneos.
 function setWatchTargets(games) {
-  watchTargets = games
+  const raw = games
     .filter(g => ['battlenet', 'riot', 'xbox', 'rockstar', 'ubisoft', 'ea', 'steam'].includes(g.platform))
     .map(g => ({ key: g.id, title: g.title, platform: g.platform, names: candidateNamesFor(g) }))
     .filter(t => t.names.length);
+  watchTargets = dedupeByProcessOverlap(raw);
+}
+
+// Distintas entradas de biblioteca (sobre todo Battle.net, donde el mapeo es
+// por regex sobre el título, ver KNOWN_PROCESS_NAMES) pueden compartir el
+// MISMO set de nombres de proceso — p.ej. "World of Warcraft" y "World of
+// Warcraft: Dragonflight" (u otra entrada vieja de un escaneo anterior)
+// matchean ambas /world of warcraft/i → [wow.exe, wow-64.exe, wowt.exe].
+// Sin deduplicar, tick() de abajo trata cada una como un target
+// INDEPENDIENTE — cuando el usuario abre wow.exe UNA sola vez, las N
+// entradas "ven" el mismo proceso corriendo y cada una loguea su PROPIA
+// sesión con la MISMA duración real, multiplicando las horas (visto real:
+// "World of Warcraft" 3 veces con exactamente 31h cada una en la misma
+// semana). Fusiona cualquier par de targets que comparta al menos un nombre
+// de proceso en uno solo — el título más corto gana (más probable de ser el
+// genérico correcto, no una variante con sufijo de expansión).
+function dedupeByProcessOverlap(targets) {
+  const merged = [];
+  for (const t of targets) {
+    const overlap = merged.find((m) => m.names.some((n) => t.names.includes(n)));
+    if (!overlap) { merged.push({ ...t, names: [...t.names] }); continue; }
+    for (const n of t.names) if (!overlap.names.includes(n)) overlap.names.push(n);
+    if (t.title.length < overlap.title.length) overlap.title = t.title;
+  }
+  return merged;
 }
 
 function finalTitleFor(target, key) {
@@ -192,6 +228,7 @@ async function tick() {
     if (isRunning && !session) {
       activeSessions.set(target.key, now);
       if (target.title === 'League of Legends') leagueSessionModes.delete(target.key);
+      for (const fn of sessionStartListeners) { try { fn({ platform: target.platform, title: target.title }); } catch {} }
     } else if (isRunning && session && target.title === 'League of Legends') {
       // Mientras la sesión sigue abierta: preguntarle al cliente qué cola es
       // ahora mismo. No se espera esta consulta (no bloquea el resto del
@@ -206,6 +243,7 @@ async function tick() {
       leagueSessionModes.delete(target.key);
       activityLog.logSession({ platform: target.platform, title, minutes });
       derivaBridge.setLastSession({ platform: target.platform, title, minutes });
+      for (const fn of sessionEndListeners) { try { fn({ platform: target.platform, title, minutes }); } catch {} }
       // Evita el doble conteo con el diffing de snapshots de Steam (ver
       // activityLog.js) — sin esto, estos mismos minutos se sumarían otra vez
       // cuando el snapshot diario "alcance" el nuevo total de Steam.
@@ -223,4 +261,4 @@ function start() {
   timer = setInterval(tick, INTERVAL_MS);
 }
 
-module.exports = { setWatchTargets, start };
+module.exports = { setWatchTargets, start, onSessionEnd, onSessionStart };
