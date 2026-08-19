@@ -77,8 +77,12 @@ function queryLeagueGameMode() {
 // Battle.net y Riot no exponen el .exe real del juego (solo el del launcher)
 // — mapa curado a mano, mismo criterio que PRODUCT_CODES en scanners/battlenet.js.
 const KNOWN_PROCESS_NAMES = [
-  [/world of warcraft classic/i, ['wowclassic.exe', 'wowclassict.exe']],
-  [/world of warcraft/i, ['wow.exe', 'wow-64.exe', 'wowt.exe']],
+  // Un solo balde para Retail + Classic + PTR (wowt.exe) — pedido explícito
+  // del mantenedor: da igual qué cliente de WoW se abra, cuenta como el
+  // mismo consumo. Antes Classic tenía su propia entrada separada; con
+  // nombres de proceso disjuntos, dedupeByProcessOverlap() (ver abajo) no
+  // los fusionaba — cada cliente generaba su propia sesión/entrada.
+  [/world of warcraft/i, ['wow.exe', 'wow-64.exe', 'wowt.exe', 'wowclassic.exe', 'wowclassict.exe']],
   [/overwatch/i, ['overwatch.exe']],
   [/diablo iv|diablo 4/i, ['diablo iv.exe']],
   [/diablo iii|diablo 3/i, ['diablo iii64.exe', 'diablo iii.exe']],
