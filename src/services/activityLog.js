@@ -86,7 +86,20 @@ function recordSteamSnapshotsIfNeeded() {
     const current = info.playtimeMinutes || 0;
     if (last) {
       const untracked = current - last.totalMinutes;
-      if (untracked >= 1) {
+      // Bug real (visto con captura): si MegaHUB estuvo cerrado varios días
+      // (viaje, semana sin abrirlo...), `last` puede ser de hace 2+ semanas —
+      // el diff completo de ESE hueco entero se logueaba con `at: Date.now()`
+      // (HOY), así que getWeeklyActivity() lo mostraba como "jugado esta
+      // semana" aunque las horas reales fueran de semanas atrás (Path of
+      // Exile 20h / World War Z 5h que el usuario no tocó en 7 días). No hay
+      // forma de saber CUÁNDO dentro de ese hueco se jugó, así que atribuirlo
+      // entero a "ahora" es inventar el dato — mismo criterio de honestidad
+      // que el resto de este módulo. Solo se loguea como sesión "reciente" si
+      // el hueco es chico (≤2 días, variación normal de uso diario); un hueco
+      // más grande solo actualiza la base del snapshot en silencio, sin
+      // sesión falsa — se pierde precisión sobre ESE tramo, pero no se miente.
+      const gapDays = (Date.now() - last.at) / 86_400_000;
+      if (untracked >= 1 && gapDays <= 2) {
         const title = (steamMetaCache[appid] && steamMetaCache[appid].meta && steamMetaCache[appid].meta.name) || `Steam App ${appid}`;
         logSession({ platform: 'steam', title, minutes: untracked });
         derivaBridge.setLastSession({ platform: 'steam', title, minutes: untracked });

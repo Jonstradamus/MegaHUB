@@ -14,6 +14,7 @@
 // (Le Fluffie, Horizon, JQE360) para este mismo formato GPD.
 const fs = require('fs');
 const path = require('path');
+const { app } = require('electron');
 const emulatorDownload = require('./emulatorDownload');
 
 const ENTRY_SIZE = 18; // namespace:u16 + id:u64 + offset:u32 + length:u32
@@ -114,8 +115,23 @@ async function getXeniaDir() {
   return status.emuDir;
 }
 
-function listProfiles(emuDir) {
-  const contentDir = path.join(emuDir, 'content');
+// Dónde vive realmente el perfil (content/<xuid>/...) depende de si Xenia
+// corre en modo portátil: Xenia Canary lo es POR DEFECTO (guarda junto al
+// .exe, que es lo único que MegaHUB conoce como "emuDir"), pero un build de
+// Xenia normal (no Canary) o uno sin el marcador portable.txt guarda en
+// Documentos\xenia\content en su lugar — fuera de la carpeta que MegaHUB
+// gestiona. Sin este segundo candidato, un usuario con Xenia normal (no
+// Canary) instalado y jugado veía "nada todavía" aunque el emulador esté
+// perfectamente detectado y funcionando (ver getXeniaDir arriba, que sí lo
+// encuentra para lanzar juegos — es solo el perfil el que vive en otro lado).
+function candidateContentDirs(emuDir) {
+  const dirs = [path.join(emuDir, 'content')];
+  const docsDir = path.join(app.getPath('documents'), 'xenia', 'content');
+  if (!dirs.includes(docsDir)) dirs.push(docsDir);
+  return dirs;
+}
+
+function listProfiles(contentDir) {
   if (!fs.existsSync(contentDir)) return [];
   return fs.readdirSync(contentDir, { withFileTypes: true })
     .filter(e => e.isDirectory() && /^[0-9A-Fa-f]{16}$/.test(e.name) && !/^0+$/.test(e.name))
@@ -125,8 +141,8 @@ function listProfiles(emuDir) {
 // Un juego por cada .gpd de logros que Xenia haya generado para ese perfil
 // (se crea en cuanto se lanza el juego una vez, aunque no se haya desbloqueado
 // nada todavía).
-function listTitleGpds(emuDir, profileId) {
-  const gpdDir = path.join(emuDir, 'content', profileId, 'FFFE07D1', '00010000', profileId);
+function listTitleGpds(contentDir, profileId) {
+  const gpdDir = path.join(contentDir, profileId, 'FFFE07D1', '00010000', profileId);
   if (!fs.existsSync(gpdDir)) return [];
   return fs.readdirSync(gpdDir)
     .filter(f => /^[0-9A-Fa-f]{8}\.gpd$/.test(f) && f.toUpperCase() !== 'FFFE07D1.GPD')
@@ -139,31 +155,34 @@ async function getProfilesAchievements() {
   const emuDir = await getXeniaDir();
   if (!emuDir) return { installed: false, profiles: [] };
 
-  const profiles = [];
-  for (const profileId of listProfiles(emuDir)) {
-    const games = [];
-    for (const { titleId, file } of listTitleGpds(emuDir, profileId)) {
-      // Un .gpd puntual corrupto/truncado (partida a medio escribir, disco
-      // lleno, lo que sea) no debe tumbar el resto del perfil — se salta ese
-      // juego nada más en vez de que toda la pestaña se quede sin cargar.
-      try {
-        const buf = fs.readFileSync(file);
-        const xdbf = parseXdbf(buf);
-        if (!xdbf) continue;
-        const achievements = parseAchievements(xdbf);
-        if (!achievements.length) continue;
-        games.push({
-          titleId,
-          title: readString(xdbf, NS_STRING, TITLE_NAME_ID) || `Xbox 360 (${titleId})`,
-          iconDataUrl: readImageDataUrl(xdbf, TITLE_ICON_ID),
-          totalGamerscore: achievements.reduce((s, a) => s + a.gamerscore, 0),
-          earnedGamerscore: achievements.filter(a => a.earned).reduce((s, a) => s + a.gamerscore, 0),
-          achievements,
-        });
-      } catch { continue; }
+  const profilesById = new Map();
+  for (const contentDir of candidateContentDirs(emuDir)) {
+    for (const profileId of listProfiles(contentDir)) {
+      const games = profilesById.get(profileId) || [];
+      for (const { titleId, file } of listTitleGpds(contentDir, profileId)) {
+        // Un .gpd puntual corrupto/truncado (partida a medio escribir, disco
+        // lleno, lo que sea) no debe tumbar el resto del perfil — se salta ese
+        // juego nada más en vez de que toda la pestaña se quede sin cargar.
+        try {
+          const buf = fs.readFileSync(file);
+          const xdbf = parseXdbf(buf);
+          if (!xdbf) continue;
+          const achievements = parseAchievements(xdbf);
+          if (!achievements.length) continue;
+          games.push({
+            titleId,
+            title: readString(xdbf, NS_STRING, TITLE_NAME_ID) || `Xbox 360 (${titleId})`,
+            iconDataUrl: readImageDataUrl(xdbf, TITLE_ICON_ID),
+            totalGamerscore: achievements.reduce((s, a) => s + a.gamerscore, 0),
+            earnedGamerscore: achievements.filter(a => a.earned).reduce((s, a) => s + a.gamerscore, 0),
+            achievements,
+          });
+        } catch { continue; }
+      }
+      if (games.length) profilesById.set(profileId, games);
     }
-    if (games.length) profiles.push({ profileId, games });
   }
+  const profiles = Array.from(profilesById, ([profileId, games]) => ({ profileId, games }));
   return { installed: true, profiles };
 }
 

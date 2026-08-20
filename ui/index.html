@@ -43,6 +43,11 @@
         <button type="button" class="wg-tab active" data-tab="pc">PC</button>
         <button type="button" class="wg-tab" data-tab="retro">RETRO</button>
       </div>
+      <!-- "Jugando ahora" (auditoría UX, "qué vale la pena sumar") — antes el
+           widget no mostraba nada de la sesión en curso ni expandido ni
+           retraído; updateNowPlaying() en app.js le pone/saca el texto y la
+           clase "on" según haya una sesión activa. -->
+      <span id="widget-now-playing" class="wg-now-playing"><span class="wg-now-dot"></span><span id="widget-now-playing-text"></span></span>
       <div id="widget-shapes">
         <button type="button" class="wg-shape" data-shape="square" title="Cuadro" aria-label="Forma cuadro">◻</button>
         <button type="button" class="wg-shape active" data-shape="rect" title="Rectángulo" aria-label="Forma rectángulo">▯</button>
@@ -252,21 +257,47 @@
       </div>
       <span id="count"></span>
       <div id="view-switch">
-        <button class="view-btn view-home-btn" data-view="home" title="Inicio"><i data-icon="home" class="icon-lg"></i></button>
-        <div class="view-group">
-          <span class="view-group-label">PC</span>
-          <button class="view-btn active" data-view="dock" title="Vista Dock"><i data-icon="grid"></i></button>
-          <button class="view-btn" data-view="list" title="Vista Lista"><i data-icon="menu"></i></button>
+        <!-- Primaria: "dónde juego" (PC/Retro), a la izquierda, grande y con
+             más contraste — son los dos botones que realmente importan.
+             Secundaria: "dónde reviso cosas" (Inicio/Logros/Ofertas/Perfil/
+             Ajustes), agrupada a la derecha en botones chicos con su nombre
+             debajo del ícono, para que no compitan visualmente con PC/RETRO
+             (ver auditoría UX). -->
+        <div class="view-primary">
+          <div class="view-group">
+            <span class="view-group-label">PC</span>
+            <button class="view-btn active" data-view="dock" title="Vista Dock"><i data-icon="grid"></i></button>
+            <button class="view-btn" data-view="list" title="Vista Lista"><i data-icon="menu"></i></button>
+          </div>
+          <button class="view-btn view-retro-btn" data-view="retro" title="Consolas Retro"><i data-icon="gamepad" class="icon-lg"></i> <span>RETRO</span></button>
         </div>
-        <button class="view-btn view-retro-btn" data-view="retro" title="Consolas Retro"><i data-icon="gamepad" class="icon-lg"></i> <span>RETRO</span></button>
-        <button class="view-btn view-achievements-btn" data-view="achievements" title="Logros (RetroAchievements)"><i data-icon="trophy" class="icon-lg"></i></button>
-        <button class="view-btn view-deals-btn" data-view="deals" title="Ofertas">
-          <span class="deals-icon-wrap"><i data-icon="tag" class="icon-lg"></i><span id="deals-badge" class="deals-badge" hidden></span></span>
-        </button>
-        <button class="view-btn view-profile-btn" data-view="profile" title="Perfil (estadísticas)"><i data-icon="chart" class="icon-lg"></i></button>
+        <span class="view-divider" aria-hidden="true"></span>
+        <!-- El nombre de cada botón se muestra en #mini-tooltip (un único
+             tooltip flotante con position:fixed manejado en app.js, ver
+             initMiniTooltips()) en vez de un <span> hijo o el title nativo:
+             un tooltip anidado adentro de #topbar quedaba recortado por el
+             overflow del header no importa la posición, porque su
+             "containing block" seguía siendo un ancestro con overflow
+             recortado. position:fixed en el body lo saca de ese problema
+             para siempre, sin importar cómo cambie el layout de la topbar. -->
+        <div class="view-secondary">
+          <button class="view-btn topbar-mini-btn view-home-btn" data-view="home" data-tooltip="Inicio">
+            <i data-icon="home"></i>
+          </button>
+          <button class="view-btn topbar-mini-btn view-achievements-btn" data-view="achievements" data-tooltip="Logros (RetroAchievements)">
+            <i data-icon="trophy"></i>
+          </button>
+          <button class="view-btn topbar-mini-btn view-deals-btn" data-view="deals" data-tooltip="Ofertas">
+            <span class="deals-icon-wrap"><i data-icon="tag"></i><span id="deals-badge" class="deals-badge" hidden></span></span>
+          </button>
+          <button class="view-btn topbar-mini-btn view-profile-btn" data-view="profile" data-tooltip="Perfil (estadísticas)">
+            <i data-icon="chart"></i>
+          </button>
+          <button class="topbar-mini-btn" id="settings-open" data-tooltip="Ajustes">
+            <i data-icon="settings"></i>
+          </button>
+        </div>
       </div>
-      <button class="icon-btn" id="settings-open" title="Ajustes"><i data-icon="settings"></i></button>
-      <span id="gamepad-status"><i data-icon="plug"></i> <span id="gamepad-status-label">sin mando</span></span>
     </header>
 
     <!-- Inicio: dashboard de aterrizaje (ver initHomeView() en app.js). Reusa
@@ -275,6 +306,13 @@
          oculta sola si no hay datos para mostrarla (ver renderHome()), en vez
          de mostrar una franja vacía. -->
     <main id="home-wrap" hidden>
+      <!-- "Qué jugar hoy" (auditoría UX, apartado "qué vale la pena sumar"):
+           cruza horas jugadas + biblioteca para sugerir algo concreto, con
+           datos que MegaHUB ya calculaba por separado. -->
+      <section id="home-pick" class="home-section" hidden>
+        <h2 class="home-section-title">Qué jugar hoy</h2>
+        <div id="home-pick-card"></div>
+      </section>
       <section id="home-continue" class="home-section" hidden>
         <h2 class="home-section-title">Seguir jugando</h2>
         <div id="home-continue-grid" class="home-hero-grid"></div>
@@ -498,12 +536,20 @@
       <div id="profile-empty" hidden>Todavía no hay horas registradas — jugá algo desde MegaHUB para ver tus estadísticas acá.</div>
     </main>
 
+    <!-- Antes esta barra ocupaba espacio vertical siempre, tuvieras o no un
+         mando conectado (ver auditoría UX) — la mayoría de las líneas sirven
+         igual para teclado, así que solo se ocultan los fragmentos que son
+         puramente de gamepad (pollGamepad en app.js le agrega/saca la clase
+         "pad-active" a #controls según haya un pad detectado). -->
     <footer id="controls">
-      <span><b>←→↑↓</b>/stick — navegar</span>
-      <span><b>Enter</b>/<b>A</b> — jugar · instalar</span>
-      <span><b>Q·E</b>/<b>LB·RB</b> — plataforma</span>
-      <span><b>LT·RT</b> — cambiar de vista</span>
-      <span><b>/</b> — buscar</span>
+      <span id="gamepad-status"><i data-icon="plug"></i> <span id="gamepad-status-label">sin mando</span></span>
+      <div id="controls-hints">
+        <span><b>←→↑↓</b><span class="pad-only">/stick</span> — navegar</span>
+        <span><b>Enter</b><span class="pad-only">/<b>A</b></span> — jugar · instalar</span>
+        <span><b>Q·E</b><span class="pad-only">/<b>LB·RB</b></span> — plataforma</span>
+        <span class="pad-only"><b>LT·RT</b> — cambiar de vista</span>
+        <span><b>/</b> — buscar</span>
+      </div>
     </footer>
   </div>
 
@@ -724,6 +770,7 @@
   </div>
 
   <div id="toast-container"></div>
+  <div id="mini-tooltip" role="tooltip" hidden></div>
 
   <script src="app.js"></script>
 </body>

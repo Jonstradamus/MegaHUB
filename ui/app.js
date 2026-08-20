@@ -249,6 +249,7 @@ const list = document.getElementById('list');
 const countEl = document.getElementById('count');
 const padStatus = document.getElementById('gamepad-status');
 const padStatusLabel = document.getElementById('gamepad-status-label');
+const controlsFooter = document.getElementById('controls');
 const searchInput = document.getElementById('search');
 const sgdbInput = document.getElementById('sgdb-key');
 const sgdbSaveBtn = document.getElementById('sgdb-save');
@@ -438,14 +439,22 @@ function showToast(message, type = 'info', duration = 4200) {
 function showAchievementToast(a) {
   const el = document.createElement('div');
   el.className = 'toast achievement';
+  // Antes "de qué juego/qué significa" solo vivía en el atributo title
+  // (tooltip nativo al pasar el mouse) — un toast que desaparece solo en
+  // unos segundos nunca llega a mostrar un hover, así que esa info nunca se
+  // veía de verdad. gameTitle solo viene para logros por-juego (steamgame/
+  // retrogame) — los globales (rachas, etc.) no tienen uno y esa línea se omite.
   el.innerHTML = `
     ${icon('trophy')}
     <span class="toast-ach-body">
       <span class="toast-ach-eyebrow">Logro desbloqueado</span>
+      ${a.gameTitle ? `<span class="toast-ach-game"></span>` : ''}
       <span class="toast-msg"></span>
+      ${a.description ? `<span class="toast-ach-desc"></span>` : ''}
     </span>`;
   el.querySelector('.toast-msg').textContent = a.title;
-  el.title = a.description || '';
+  if (a.gameTitle) el.querySelector('.toast-ach-game').textContent = a.gameTitle;
+  if (a.description) el.querySelector('.toast-ach-desc').textContent = a.description;
   toastContainer.appendChild(el);
   const remove = () => {
     el.classList.add('leaving');
@@ -572,6 +581,24 @@ function updateDockIcon(wrap, game) {
   const label = wrap.querySelector('.icon-label');
   if (label) label.innerHTML = highlightMatch(game.title, filters.search);
   syncCoverSlot(wrap.querySelector('.icon-face'), game);
+  syncPlaytimeBadge(wrap, game);
+}
+
+// Badge de horas jugadas en la esquina del tile — SOLO Steam (único dato de
+// playtime real y preciso que MegaHUB tiene, ver comentario del handler
+// get-steam-playtime-map). No inventa un número para el resto de launchers.
+function syncPlaytimeBadge(wrap, game) {
+  let badge = wrap.querySelector('.icon-playtime');
+  if (game.platform !== 'steam') { if (badge) badge.remove(); return; }
+  const appid = String(game.id).replace(/^steam-/, '');
+  const info = steamPlaytimeMap[appid];
+  if (!info || !info.playtimeMinutes) { if (badge) badge.remove(); return; }
+  if (!badge) {
+    badge = document.createElement('span');
+    badge.className = 'icon-playtime';
+    wrap.querySelector('.icon-face').appendChild(badge);
+  }
+  badge.textContent = formatHours(info.playtimeMinutes);
 }
 
 /* ---- Modo Lista ---- */
@@ -616,6 +643,10 @@ function updateListRow(row, game) {
   // Rockstar) — nunca se dispara el cálculo bajo demanda (GOG/Xbox) acá, para
   // no recorrer carpetas de decenas de juegos con cada render de la lista.
   if (game.installSizeBytes != null) bits.push(`<span class="row-badge">${formatBytes(game.installSizeBytes)}</span>`);
+  if (game.platform === 'steam') {
+    const info = steamPlaytimeMap[String(game.id).replace(/^steam-/, '')];
+    if (info && info.playtimeMinutes) bits.push(`<span class="row-badge row-badge-playtime">${formatHours(info.playtimeMinutes)}</span>`);
+  }
   row.querySelector('.row-meta').innerHTML = bits.join('');
 
   const state = row.querySelector('.row-state');
@@ -785,6 +816,42 @@ function updateSearchContext() {
 document.getElementById('sidebar-toggle').addEventListener('click', () => {
   document.body.classList.toggle('sidebar-collapsed');
 });
+
+/* ---- Tooltip de la navegación secundaria (Inicio/Logros/Ofertas/Perfil/
+   Ajustes) ---- position:fixed a propósito: un tooltip position:absolute
+   anidado dentro de #topbar queda recortado por el overflow del header sin
+   importar el lado hacia el que se abra (ver comentario en #mini-tooltip,
+   app.css). Con fixed lo posicionamos nosotros mismos con
+   getBoundingClientRect(), así nunca depende del overflow de ningún
+   ancestro. */
+(function initMiniTooltips() {
+  const tooltip = document.getElementById('mini-tooltip');
+  let activeBtn = null;
+  function place(btn) {
+    const r = btn.getBoundingClientRect();
+    tooltip.hidden = false;
+    tooltip.textContent = btn.dataset.tooltip;
+    const tw = tooltip.offsetWidth;
+    let left = r.left + r.width / 2 - tw / 2;
+    left = Math.max(6, Math.min(left, window.innerWidth - tw - 6));
+    tooltip.style.left = left + 'px';
+    tooltip.style.top = (r.bottom + 8) + 'px';
+    requestAnimationFrame(() => tooltip.classList.add('show'));
+  }
+  function hide() {
+    activeBtn = null;
+    tooltip.classList.remove('show');
+    tooltip.hidden = true;
+  }
+  document.querySelectorAll('.topbar-mini-btn[data-tooltip]').forEach(btn => {
+    btn.addEventListener('mouseenter', () => { activeBtn = btn; place(btn); });
+    btn.addEventListener('focus', () => { activeBtn = btn; place(btn); });
+    btn.addEventListener('mouseleave', hide);
+    btn.addEventListener('blur', hide);
+    btn.addEventListener('click', hide);
+  });
+  window.addEventListener('scroll', () => { if (activeBtn) place(activeBtn); }, true);
+})();
 
 /* ---- Titlebar propia (frame:false en main.js) ---- */
 (function initTitlebar() {
@@ -3595,6 +3662,7 @@ function pollGamepad() {
   const pad = [...pads].find(p => p && p.connected);
   padStatusLabel.textContent = pad ? pad.id.slice(0, 22) : 'sin mando';
   padStatus.classList.toggle('on', !!pad);
+  controlsFooter.classList.toggle('pad-active', !!pad);
   if (pad) {
     const now = performance.now();
     const ax = pad.axes[0] || 0, ay = pad.axes[1] || 0;
@@ -4618,6 +4686,59 @@ function renderHomeWeek(weeklyActivity) {
   return true;
 }
 
+// "Qué jugar hoy" — cruza datos que MegaHUB ya calculaba por separado
+// (biblioteca instalada + horas reales de Steam) en vez de elegir al azar.
+// Prioridad: nunca lo probaste > hace mucho que no lo tocás > lo jugaste
+// hace poco pero no tanto > cualquier instalado, como último recurso.
+function computeTodayPick() {
+  const installed = allGames.filter(g => g.installed);
+  if (!installed.length) return null;
+  const now = Date.now();
+  let best = null, bestReason = null, bestScore = -1;
+  for (const g of installed) {
+    let score = 0, reason = null;
+    if (g.platform === 'steam') {
+      const info = steamPlaytimeMap[String(g.id).replace(/^steam-/, '')];
+      const minutes = info?.playtimeMinutes || 0;
+      if (minutes === 0) { score = 3; reason = 'Nunca lo probaste'; }
+      else if (info?.lastPlayed) {
+        const days = Math.floor((now - info.lastPlayed) / 86400000);
+        if (days >= 21) { score = 2.5; reason = `Hace ${days} días que no lo tocás`; }
+        else if (days >= 7) { score = 1.5; reason = `Hace ${days} días que no lo tocás`; }
+      }
+    }
+    if (score > bestScore) { bestScore = score; best = g; bestReason = reason; }
+  }
+  if (!best) {
+    // Nada calificó por horas (biblioteca sin datos de Steam, o todo jugado
+    // recién) — mejor un pick al azar entre lo instalado que no mostrar nada.
+    best = installed[Math.floor(Math.random() * installed.length)];
+    bestReason = 'Elegido para vos';
+  }
+  return { game: best, reason: bestReason };
+}
+
+function renderHomePick() {
+  const section = document.getElementById('home-pick');
+  const card = document.getElementById('home-pick-card');
+  const pick = computeTodayPick();
+  if (!pick) { section.hidden = true; card.innerHTML = ''; return; }
+  section.hidden = false;
+  card.innerHTML = '';
+  card.appendChild(buildHomeTile(pick.game));
+  const info = document.createElement('div');
+  info.className = 'home-pick-info';
+  info.innerHTML = `<span class="home-pick-reason"></span><span class="home-pick-title"></span>`;
+  info.querySelector('.home-pick-reason').textContent = pick.reason;
+  info.querySelector('.home-pick-title').textContent = pick.game.title;
+  card.appendChild(info);
+  const btn = document.createElement('button');
+  btn.className = 'home-pick-btn';
+  btn.textContent = 'Jugar';
+  btn.addEventListener('click', () => launchGame(pick.game));
+  card.appendChild(btn);
+}
+
 let homeLoaded = false;
 async function initHomeView() {
   const [recentlyPlayed, weeklyActivity] = await Promise.all([
@@ -4625,6 +4746,7 @@ async function initHomeView() {
     window.megahub.companionGetWeeklyActivity().catch(() => []),
   ]);
   homeLoaded = true;
+  renderHomePick();
   const hasContinue = renderHomeContinue(recentlyPlayed);
   const hasRecent = renderHomeRecent();
   const hasWeek = renderHomeWeek(weeklyActivity);
@@ -4719,12 +4841,21 @@ async function initProfileView() {
 
 /* ================= Init ================= */
 
+// Horas reales de Steam por appid — se pide una sola vez por rescan, no por
+// tile (evita 1 IPC por juego). Ver auditoría UX: antes ningún .dock-icon
+// mostraba playtime, había que abrir el panel de detalle para saberlo.
+let steamPlaytimeMap = {};
+
+let lastScanAt = 0;
+
 async function rescan() {
   const { games, accounts } = await window.megahub.scanGames();
+  lastScanAt = Date.now();
   allGames = games;
   updateFirstSeenMap(allGames);
   if (accounts.gog) markConnected('gog');
   if (accounts.epic) markConnected('epic');
+  try { steamPlaytimeMap = await window.megahub.getSteamPlaytimeMap() || {}; } catch { steamPlaytimeMap = {}; }
   buildPlatformChips();
   rebuildGenreChips();
   render();
@@ -4735,11 +4866,49 @@ async function rescan() {
   document.dispatchEvent(new Event('megahub:games-updated'));
 }
 
+// Reescaneo en segundo plano al recuperar el foco de la ventana — antes la
+// biblioteca solo se actualizaba con el botón "Escanear" a mano, así que
+// instalar/desinstalar algo desde Steam mientras MegaHUB estaba minimizado
+// podía dejarla desactualizada sin ningún aviso (ver auditoría UX). No
+// interrumpe nada: rescan() reemplaza allGames y vuelve a renderizar, mismo
+// camino que un escaneo manual.
+const RESCAN_STALE_MS = 20 * 60 * 1000; // 20 min
+window.addEventListener('focus', () => {
+  if (lastScanAt && Date.now() - lastScanAt > RESCAN_STALE_MS) rescan().catch(() => {});
+});
+
 // Aviso asíncrono desde main.js cuando un emulador lanzado se cierra casi
 // enseguida (crash) — la respuesta de retroLaunchRom ya volvió {ok:true} en
 // ese momento (el proceso sí arrancó), así que sin esto un crash instantáneo
 // no dejaba ningún rastro visible.
 window.megahub.onRetroLaunchIssue(({ message }) => showToast(message, 'error', 9000));
+window.megahub.onAutostartIssue(({ message }) => showToast(message, 'error', 9000));
+// Resumen de sesión al cerrar un juego — antes este dato (minutos jugados,
+// total de la semana) solo se veía entrando a Perfil, nunca en el momento en
+// que más importa (ver auditoría UX).
+// Buscador rápido global (Ctrl+Shift+M, ver main.js) — mismo comportamiento
+// que ya tiene el atajo "/" adentro de la app, solo que también funciona con
+// la ventana minimizada o sin foco (main.js la restaura antes de mandar esto).
+window.megahub.onFocusQuickSearch(() => { searchInput.select(); searchInput.focus(); });
+window.megahub.onGameSessionEnded(({ title, minutes, weeklyMinutes }) => {
+  const same = weeklyMinutes <= minutes; // primera sesión de la semana con este juego
+  const msg = same
+    ? `Jugaste ${formatHours(minutes)} a ${title}`
+    : `Jugaste ${formatHours(minutes)} a ${title} · van ${formatHours(weeklyMinutes)} esta semana`;
+  showToast(msg, 'success', 6000);
+  setNowPlaying(null);
+});
+
+// "Jugando ahora" en el widget (chip expandido / anillo retraído, ver CSS) —
+// solo Steam/Battle.net/Riot/Xbox/Rockstar/Ubisoft/EA (vía processWatcher) y
+// Retro (proceso propio) avisan inicio de sesión; Epic/GOG no tienen forma de
+// saber si siguen corriendo, así que simplemente nunca disparan esto.
+function setNowPlaying(title) {
+  document.body.classList.toggle('now-playing', !!title);
+  const label = document.getElementById('widget-now-playing-text');
+  if (label) label.textContent = title || '';
+}
+window.megahub.onGameSessionStarted(({ title }) => setNowPlaying(title));
 
 /* ================= Onboarding de primer uso (Fase 7) =================
    3 pasos cortos: conectar el primer launcher opcional, elegir skin, y un

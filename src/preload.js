@@ -2,7 +2,12 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('megahub', {
   onRetroLaunchIssue: (callback) => ipcRenderer.on('retro-launch-issue', (_ev, data) => callback(data)),
+  onAutostartIssue: (callback) => ipcRenderer.on('autostart-issue', (_ev, data) => callback(data)),
+  onGameSessionEnded: (callback) => ipcRenderer.on('game-session-ended', (_ev, data) => callback(data)),
+  onFocusQuickSearch: (callback) => ipcRenderer.on('focus-quick-search', () => callback()),
+  onGameSessionStarted: (callback) => ipcRenderer.on('game-session-started', (_ev, data) => callback(data)),
   scanGames: () => ipcRenderer.invoke('scan-games'),
+  getSteamPlaytimeMap: () => ipcRenderer.invoke('get-steam-playtime-map'),
   launchGame: (game) => ipcRenderer.invoke('launch-game', game),
   installGame: (game) => ipcRenderer.invoke('install-game', game),
   connectAccount: (platform) => ipcRenderer.invoke('connect-account', platform),

@@ -10,6 +10,23 @@
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
+/* Antes prefers-reduced-motion solo estaba atado a 4 animaciones puntuales
+   (glow de íconos retro, botón rgb, swatches de tema) — el resto (toasts,
+   sweep de cambio de modo, pulso de logro, shimmer de carga) igual animaba
+   sin importar la preferencia del sistema. Esta regla global cubre TODO de
+   una sola vez, dejando la duración casi en cero en vez de "animation: none"
+   — así animationend sigue disparando (el toast de logro, por ejemplo,
+   depende de ese evento para removerse del DOM) y nada queda pegado en
+   pantalla por no completar su animación. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
 :root {
   --bg: #0b0d12;
   --panel: #12151d;
@@ -538,6 +555,20 @@ body.widget-retracted #widget-peek::before {
   -webkit-app-region: drag;
 }
 #widget-bar #widget-drag { flex: 1 1 auto; min-width: 6px; align-self: stretch; }
+
+.wg-now-playing {
+  display: none; align-items: center; gap: 5px; flex-shrink: 0;
+  padding: 3px 9px; border-radius: 999px; -webkit-app-region: no-drag;
+  background: color-mix(in srgb, var(--ok) 16%, transparent); border: 1px solid color-mix(in srgb, var(--ok) 35%, transparent);
+  font-size: 10.5px; font-weight: 700; color: var(--text); max-width: 150px;
+}
+.wg-now-playing #widget-now-playing-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.now-playing .wg-now-playing { display: flex; }
+.wg-now-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); flex-shrink: 0; animation: wg-now-pulse 1.6s ease-in-out infinite; }
+@keyframes wg-now-pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+/* Retraído no hay espacio ni para el chip — un anillo pulsando alrededor de
+   la franja de color alcanza para decir "hay algo corriendo" sin texto. */
+body.now-playing.widget-retracted #widget-peek { box-shadow: inset 0 0 0 3px var(--ok); animation: wg-now-pulse 1.6s ease-in-out infinite; }
 
 /* PC / RETRO y las 4 formas dejaron de ser botones sueltos flotando en la
    barra — ahora cada grupo vive en su propia "pastilla de herramienta"
@@ -1455,7 +1486,16 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 /* Grupo "PC" (dock/lista) claramente separado del botón "RETRO" — antes eran
    tres iconos idénticos sin etiqueta y era imposible distinguir a qué modo
    pertenecía cada uno. */
-#view-switch { display: flex; align-items: center; gap: 10px; margin-left: auto; flex-shrink: 0; }
+#view-switch { display: flex; align-items: center; gap: 12px; margin-left: auto; flex-shrink: 0; }
+.view-divider { width: 1px; height: 22px; background: var(--border); flex-shrink: 0; margin: 0 2px; }
+/* Izquierda: PC + RETRO, los únicos botones que de verdad importan al elegir
+   qué jugar — se agrupan aparte para poder subirles contraste/brillo sin
+   afectar el tamaño de Inicio/Logros/Ofertas/Perfil/Ajustes. */
+.view-primary { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+/* Derecha: navegación secundaria ("dónde reviso cosas"), agrupada, chica y
+   con el nombre debajo de cada ícono en vez de solo tooltip — antes eran
+   iconos sueltos del mismo tamaño que PC/RETRO y competían por atención. */
+.view-secondary { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
 
 /* ---------- Ofertas (vista a pantalla completa) ---------- */
 .deals-icon-wrap { position: relative; display: inline-flex; }
@@ -1570,7 +1610,7 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 
 .view-group {
   display: flex; align-items: center; gap: 6px; height: 44px; box-sizing: border-box;
-  background: var(--panel); border: 1px solid var(--border);
+  background: var(--panel2); border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
   border-radius: 11px; padding: 0 10px 0 14px;
 }
 .view-group-label {
@@ -1596,12 +1636,13 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
    sprite en vez de un blur normal, para reforzar el aspecto "retro gaming". */
 .view-retro-btn {
   width: auto; height: 44px; box-sizing: border-box; gap: 10px;
-  background: linear-gradient(135deg, rgba(251,146,60,0.18), rgba(244,114,182,0.18));
-  border: 2px solid rgba(251,146,60,0.55);
+  background: linear-gradient(135deg, rgba(251,146,60,0.28), rgba(244,114,182,0.26));
+  border: 2px solid rgba(251,146,60,0.75);
   color: #fdba74;
   border-radius: 10px;
   padding: 0 20px;
   font-size: 14px; font-weight: 800; letter-spacing: 0.03em;
+  box-shadow: 0 0 14px -2px rgba(251,146,60,0.35);
 }
 .view-retro-btn .icon { width: 21px; height: 21px; }
 .view-retro-btn span {
@@ -1622,106 +1663,74 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 }
 .view-retro-btn.active span { text-shadow: 2px 2px 0 rgba(0,0,0,0.25); }
 
-/* Botón LOGROS: solo el trofeo, en dorado — deliberadamente distinto del
-   RETRO (naranja/rosa) y del grupo PC (violeta) para que los tres modos se
-   distingan de un vistazo en la topbar. */
-.view-achievements-btn {
-  width: 44px; height: 44px; box-sizing: border-box; flex-shrink: 0;
-  background: linear-gradient(135deg, rgba(251,191,36,0.18), rgba(255,215,0,0.14));
-  border: 2px solid rgba(251,191,36,0.55);
-  color: var(--warn);
-  border-radius: 10px;
+/* Navegación secundaria (Inicio/Logros/Ofertas/Perfil/Ajustes): solo el
+   ícono, chico y sin color de fondo permanente — el nombre aparece en
+   #mini-tooltip (compartido, position:fixed, manejado en app.js) recién al
+   pasar el cursor, para no gastar espacio de la topbar todo el tiempo. Cada
+   uno conserva su acento (dorado/verde/violeta/cian) solo para hover/active,
+   así no le quitan protagonismo a PC/RETRO a la izquierda. */
+.topbar-mini-btn {
+  display: flex; align-items: center; justify-content: center;
+  width: 36px; height: 36px; box-sizing: border-box; flex-shrink: 0;
+  background: transparent; border: 1px solid transparent; border-radius: 9px;
+  color: var(--dim); cursor: pointer;
+  transition: color 0.15s var(--ease), border-color 0.15s var(--ease), background 0.15s var(--ease), transform 0.15s var(--ease);
 }
-.view-achievements-btn .icon { width: 19px; height: 19px; }
-.view-achievements-btn:hover {
-  border-color: var(--warn);
-  box-shadow: 0 0 0 3px rgba(251,191,36,0.2);
-  transform: translateY(-1px);
+.topbar-mini-btn .icon { width: 17px; height: 17px; }
+.topbar-mini-btn:hover, .topbar-mini-btn:focus-visible {
+  color: var(--text); background: var(--panel); border-color: var(--border);
 }
+
+/* Tooltip único y compartido para toda la navegación secundaria — con
+   position:fixed en vez de absolute adentro de cada botón, porque #topbar
+   tiene overflow-x/y no-visible (necesario para que la topbar pueda
+   encogerse en el layout flex de #main-col, ver comentario ahí) y cualquier
+   tooltip position:absolute anidado quedaba recortado por ese overflow sin
+   importar hacia qué lado se abriera. Se posiciona con JS en
+   initMiniTooltips() (app.js) usando getBoundingClientRect() del botón. */
+#mini-tooltip {
+  position: fixed; z-index: 2000;
+  padding: 4px 8px; border-radius: 6px;
+  background: var(--panel2); border: 1px solid var(--border); color: var(--text);
+  font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em; white-space: nowrap;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.35);
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.12s var(--ease);
+}
+#mini-tooltip.show { opacity: 1; }
+#mini-tooltip[hidden] { display: none; }
+
+.view-achievements-btn:hover { color: var(--warn); border-color: rgba(251,191,36,0.5); }
 .view-achievements-btn.active {
-  background: linear-gradient(135deg, var(--warn), #fde68a);
-  color: #241a00; border-color: transparent;
-  box-shadow: 0 0 18px rgba(251,191,36,0.5);
+  color: var(--warn); background: rgba(251,191,36,0.14); border-color: rgba(251,191,36,0.55);
 }
 
-/* Botón OFERTAS: mismo tamaño/forma cuadrada que LOGROS (44x44, borde 2px,
-   flex-shrink:0) — tiene que ir DESPUÉS de .view-btn en el archivo: con la
-   misma especificidad (una sola clase), gana la regla que aparece último, y
-   antes este bloque estaba antes de .view-btn, así que .view-btn (38x38) lo
-   pisaba entero y quedaba angosto/aplastado al lado de RETRO y LOGROS. */
-.view-deals-btn {
-  width: 44px; height: 44px; box-sizing: border-box; flex-shrink: 0;
-  background: linear-gradient(135deg, rgba(74,222,128,0.18), rgba(45,212,191,0.14));
-  border: 2px solid rgba(74,222,128,0.5);
-  color: var(--ok);
-  border-radius: 10px;
-  transition: border-color 0.15s var(--ease), box-shadow 0.2s var(--ease), transform 0.15s var(--ease);
-}
-.view-deals-btn .icon { width: 19px; height: 19px; }
-.view-deals-btn:hover {
-  border-color: var(--ok);
-  box-shadow: 0 0 0 3px rgba(74,222,128,0.2);
-  transform: translateY(-1px);
-}
+.view-deals-btn:hover { color: var(--ok); border-color: rgba(74,222,128,0.5); }
 .view-deals-btn.active {
-  background: linear-gradient(135deg, var(--ok), #6ee7b7);
-  color: #04170c; border-color: transparent;
-  box-shadow: 0 0 18px rgba(74,222,128,0.5);
+  color: var(--ok); background: rgba(74,222,128,0.14); border-color: rgba(74,222,128,0.5);
 }
 
-/* Botón INICIO: mismo tamaño/forma que LOGROS/OFERTAS, pero con el acento
-   propio del skin activo (no un color fijo) — es la puerta de entrada, tiene
-   que sentirse "de la casa" en las 10 skins, no una cuarta identidad más
-   sumada a dorado/verde/naranja. */
-.view-home-btn {
-  width: 44px; height: 44px; box-sizing: border-box; flex-shrink: 0;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 22%, transparent), color-mix(in srgb, var(--accent2) 16%, transparent));
-  border: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
-  color: var(--accent);
-  border-radius: 10px;
-  transition: border-color 0.15s var(--ease), box-shadow 0.2s var(--ease), transform 0.15s var(--ease);
-}
-.view-home-btn .icon { width: 19px; height: 19px; }
-.view-home-btn:hover {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent);
-  transform: translateY(-1px);
-}
+.view-home-btn:hover { color: var(--accent); border-color: color-mix(in srgb, var(--accent) 50%, transparent); }
 .view-home-btn.active {
-  background: linear-gradient(135deg, var(--accent), var(--accent2));
-  color: var(--accent-text, #fff); border-color: transparent;
-  box-shadow: 0 0 18px color-mix(in srgb, var(--accent) 50%, transparent);
+  color: var(--accent); background: var(--accent-soft);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
 }
 
-/* Botón PERFIL: mismo tamaño/forma que LOGROS/OFERTAS/INICIO, con --great
-   (el mismo cian semántico que ya usa el verdict "excelente" de requisitos)
-   — cuarto color distinto para que las 4 vistas a ancho completo se
-   distingan de un vistazo entre sí. */
-.view-profile-btn {
-  width: 44px; height: 44px; box-sizing: border-box; flex-shrink: 0;
-  background: linear-gradient(135deg, color-mix(in srgb, var(--great) 20%, transparent), color-mix(in srgb, var(--great) 12%, transparent));
-  border: 2px solid color-mix(in srgb, var(--great) 55%, transparent);
-  color: var(--great);
-  border-radius: 10px;
-  transition: border-color 0.15s var(--ease), box-shadow 0.2s var(--ease), transform 0.15s var(--ease);
-}
-.view-profile-btn .icon { width: 19px; height: 19px; }
-.view-profile-btn:hover {
-  border-color: var(--great);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--great) 20%, transparent);
-  transform: translateY(-1px);
-}
+.view-profile-btn:hover { color: var(--great); border-color: color-mix(in srgb, var(--great) 50%, transparent); }
 .view-profile-btn.active {
-  background: linear-gradient(135deg, var(--great), color-mix(in srgb, var(--great) 60%, #fff 40%));
-  color: #04191c; border-color: transparent;
-  box-shadow: 0 0 18px color-mix(in srgb, var(--great) 50%, transparent);
+  color: var(--great); background: color-mix(in srgb, var(--great) 14%, transparent);
+  border-color: color-mix(in srgb, var(--great) 55%, transparent);
 }
 
+/* El estado del mando vive en el footer (#controls), a la izquierda de los
+   comandos de navegación — antes estaba en la topbar compitiendo por espacio
+   con la búsqueda y las vistas; el footer tiene sitio de sobra y es donde
+   más sentido tiene (al lado de los atajos de teclado/mando). */
 #gamepad-status {
   display: flex; align-items: center; gap: 6px; flex-shrink: 0;
   color: var(--dim); font-size: 13px; font-weight: 600;
   background: var(--panel); border: 1px solid var(--border);
-  border-radius: 999px; padding: 8px 14px;
+  border-radius: 999px; padding: 6px 12px;
 }
 #gamepad-status.on { color: var(--ok); border-color: rgba(74,222,128,0.4); }
 
@@ -1729,12 +1738,13 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
    angostas (el mínimo de la app son 980px, ver setMinimumSize en main.js) ya
    no entraba todo en una fila y aparecía scroll horizontal (ver overflow-x:
    auto de respaldo en #topbar más arriba). Acá se apaga primero lo menos
-   esencial —el conteo de juegos y la etiqueta de texto del estado de
-   mando— antes de llegar a necesitar ese scroll. */
+   esencial (el conteo de juegos) antes de llegar a necesitar ese scroll. */
 @media (max-width: 1280px) {
   #count { display: none; }
+}
+@media (max-width: 720px) {
   #gamepad-status-label { display: none; }
-  #gamepad-status { padding: 8px 10px; }
+  #gamepad-status { padding: 6px 8px; }
 }
 /* Todavía más angosto (cerca del mínimo de la ventana, 980px): la etiqueta
    "PC" del grupo dock/lista es la última pieza puramente decorativa que
@@ -1801,6 +1811,17 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 .dock-icon .icon-face img {
   width: 100%; height: 100%; object-fit: cover; display: block; background: #05060a;
   filter: var(--cover-filter);
+}
+/* Horas jugadas — solo aparece cuando hay dato real de Steam (ver
+   syncPlaytimeBadge en app.js), nunca un número inventado para el resto de
+   launchers. Esquina inferior-derecha para no tapar la carátula ni chocar
+   con el badge de "no instalado" (::after de .dock-icon.not-installed). */
+.icon-playtime {
+  position: absolute; right: 5px; bottom: 5px; z-index: 2;
+  font-size: 10px; font-weight: 800; font-variant-numeric: tabular-nums;
+  color: var(--text); background: rgba(0,0,0,0.62); backdrop-filter: blur(2px);
+  padding: 2px 6px; border-radius: 6px; letter-spacing: 0.01em;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.4);
 }
 .dock-icon .icon-face .placeholder { width: 100%; height: 100%; }
 .dock-icon .icon-face .placeholder .plat-abbr { font-size: 18px; }
@@ -1889,12 +1910,19 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 .list-row .row-state.installed { color: var(--ok); }
 .list-row .row-state.not-installed { color: var(--warn); }
 
+/* El estado del mando (#gamepad-status) va fijo a la izquierda; los atajos
+   de navegación quedan centrados en el espacio restante mediante flex:1 en
+   #controls-hints, para que sigan viéndose centrados como antes en vez de
+   correrse hacia la derecha por el ancho que ocupa el estado del mando. */
 #controls {
-  display: flex; gap: 22px; justify-content: center;
-  padding: 10px; font-size: 12.5px; color: var(--dim);
+  display: flex; align-items: center; gap: 16px;
+  padding: 10px 16px; font-size: 12.5px; color: var(--dim);
   border-top: 1px solid var(--border);
 }
+#controls-hints { display: flex; flex: 1; gap: 22px; justify-content: center; }
 #controls b { color: var(--text); }
+#controls .pad-only { display: none; }
+#controls.pad-active .pad-only { display: inline; }
 
 /* ---------- Panel de detalles ---------- */
 #details {
@@ -2382,6 +2410,28 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .home-week-hours { flex-shrink: 0; font-size: 13px; font-weight: 800; color: var(--accent2); }
+
+/* "Qué jugar hoy" — un solo pick grande con el motivo explícito, para que se
+   entienda POR QUÉ se sugirió y no se sienta un juego elegido al azar. */
+#home-pick-card {
+  display: flex; align-items: center; gap: 18px; padding: 16px;
+  border-radius: 16px; background: var(--panel); border: 1px solid var(--border);
+}
+#home-pick-card .dock-icon { width: 92px; pointer-events: none; }
+#home-pick-card .dock-icon .icon-face { width: 92px; height: 92px; }
+#home-pick-card .dock-icon .icon-label { display: none; }
+.home-pick-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.home-pick-reason {
+  font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: var(--accent2);
+}
+.home-pick-title { font-size: 17px; font-weight: 800; color: var(--text); }
+.home-pick-btn {
+  flex-shrink: 0; padding: 10px 20px; border-radius: 10px; border: none; cursor: pointer;
+  background: var(--accent); color: var(--accent-text); font-weight: 800; font-size: 13px;
+  transition: filter 0.15s var(--ease), transform 0.15s var(--ease);
+}
+.home-pick-btn:hover { filter: brightness(1.1); }
+.home-pick-btn:active { transform: scale(0.96); }
 
 #home-empty {
   flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
@@ -2940,12 +2990,23 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
   box-shadow: 0 10px 30px rgba(0,0,0,0.45), 0 0 0 1px color-mix(in srgb, var(--warn) 35%, transparent), 0 0 24px -6px color-mix(in srgb, var(--warn) 55%, transparent);
   animation: toast-ach-in 0.4s cubic-bezier(.2,1.4,.4,1);
 }
+/* Bug real: .toast.achievement y .toast.leaving tenían la MISMA especificidad
+   (2 clases c/u) — al agregar "leaving" para el fade-out, ganaba la regla que
+   aparece más abajo en el archivo (.toast.achievement), así que la animación
+   de salida nunca se aplicaba y el toast de logro quedaba congelado en
+   pantalla para siempre. Esta regla de 3 clases desempata a favor de salir. */
+.toast.achievement.leaving { animation: toast-out 0.22s var(--ease) forwards; }
 .toast.achievement .icon { width: 22px; height: 22px; color: var(--warn); }
 .toast-ach-body { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
 .toast-ach-eyebrow {
   font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.06em; color: var(--warn);
 }
 .toast.achievement .toast-msg { font-size: 13.5px; font-weight: 800; color: var(--text); }
+.toast-ach-game {
+  font-size: 11px; font-weight: 700; color: color-mix(in srgb, var(--warn) 70%, var(--text));
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 260px;
+}
+.toast-ach-desc { font-size: 11px; font-weight: 500; color: var(--dim); line-height: 1.35; }
 @keyframes toast-ach-in {
   0% { opacity: 0; transform: translateX(30px) scale(0.9); }
   60% { opacity: 1; transform: translateX(-4px) scale(1.03); }

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, dialog, screen } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, dialog, screen, globalShortcut } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -418,6 +418,30 @@ ipcMain.handle('scan-games', async () => {
   };
 });
 
+// Horas reales por juego para el badge del grid (Fase UX, auditoría) — solo
+// Steam tiene un dato de playtime real y preciso (localconfig.vdf); el resto
+// de launchers solo sabe CUÁNDO se lanzó, nunca cuánto se jugó (ver
+// achievementEngine.js), así que mostrar un badge ahí sería inventar un
+// número. { [appid]: { playtimeMinutes, lastPlayed } }.
+ipcMain.handle('get-steam-playtime-map', () => {
+  try { return steamPlaytimeSvc.getAllPlaytimes(); }
+  catch { return {}; }
+});
+
+// Resumen de sesión al cerrar un juego (auditoría UX, "qué vale la pena
+// sumar") — antes esta info (minutos jugados, total de la semana) se
+// trackeaba igual pero solo se veía entrando a Perfil; nunca se mostraba en
+// el momento en que más importa, justo al cerrar. Sesiones muy cortas (<1
+// min, alguien que abrió y cerró enseguida) no generan aviso — no aportan
+// nada y sería ruido.
+function notifySessionEnded({ platform, title, minutes }) {
+  if (!mainWindow || minutes < 1) return;
+  const weekly = activityLog.getWeeklyActivity().find(a => a.platform === platform && a.title === title);
+  mainWindow.webContents.send('game-session-ended', {
+    title, minutes: Math.round(minutes), weeklyMinutes: weekly ? Math.round(weekly.minutes) : Math.round(minutes),
+  });
+}
+
 function getSteamPathSafe() {
   try {
     const fs = require('fs');
@@ -629,12 +653,14 @@ ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulato
         title, platform: 'retro', consoleId, coverUrl: null,
         startedAt: new Date().toISOString(), source: 'retro',
       });
+      if (mainWindow) mainWindow.webContents.send('game-session-started', { platform: 'retro', title });
       child.on('exit', () => {
         achievementEngine.endRetroSession(session);
         const minutes = (Date.now() - session.startedAt) / 60000;
         activityLog.logSession({ platform: 'retro', title: session.title, minutes });
         derivaBridge.setLastSession({ platform: 'retro', title: session.title, minutes });
         derivaBridge.setNowPlaying(null);
+        notifySessionEnded({ platform: 'retro', title: session.title, minutes });
       });
     };
 
@@ -1166,13 +1192,27 @@ app.whenReady().then(() => {
   // libremente desde el menú del tray, sin que un reinicio de MegaHUB se lo
   // vuelva a pisar.
   const autostartDefault = store.load('autostart-default-applied', { applied: false });
+  // Antes un fallo acá quedaba en silencio (catch vacío) — el usuario nunca
+  // se enteraba y podía pensar que "Iniciar con Windows" estaba activado
+  // cuando en realidad nunca se registró (ver auditoría UX). mainWindow
+  // todavía no existe en este punto, así que el aviso se dispara recién
+  // después de createWindow() más abajo.
+  let autostartFailed = false;
   if (!autostartDefault.applied) {
-    try { app.setLoginItemSettings({ openAtLogin: true }); } catch { /* no soportado */ }
+    try { app.setLoginItemSettings({ openAtLogin: true }); }
+    catch { autostartFailed = true; }
     store.save('autostart-default-applied', { applied: true });
   }
 
   createWindow();
   buildTray();
+  if (autostartFailed) {
+    mainWindow.webContents.once('did-finish-load', () => {
+      mainWindow.webContents.send('autostart-issue', {
+        message: 'No se pudo activar "Iniciar con Windows" automáticamente — podés activarlo a mano desde el ícono de MegaHUB en la bandeja del sistema.',
+      });
+    });
+  }
   // Si Windows lanzó MegaHUB al iniciar sesión, se queda en segundo plano en
   // la bandeja en vez de abrir la ventana de golpe — igual que el gato.
   if (app.getLoginItemSettings().wasOpenedAtLogin) mainWindow.hide();
@@ -1184,7 +1224,26 @@ app.whenReady().then(() => {
   // arranca ya con lo que haya en disco; setWatchTargets() se completa recién
   // con el primer scan-games.
   activityLog.recordSteamSnapshotsIfNeeded();
+  processWatcher.onSessionEnd(notifySessionEnded);
+  processWatcher.onSessionStart(({ platform, title }) => {
+    if (mainWindow) mainWindow.webContents.send('game-session-started', { platform, title });
+  });
   processWatcher.start();
+
+  // Buscador rápido global (auditoría UX, "qué vale la pena sumar") — ya
+  // existe el buscador que cruza biblioteca+logros+ofertas dentro de la app
+  // (ver buildSearchResultGroups en app.js), esto solo lo hace alcanzable
+  // sin tener la ventana en foco, como cualquier launcher tipo Spotlight.
+  // Ctrl+Shift+M en vez de Alt+Space (PowerToys Run/Wox ya lo usan) o
+  // Win+Space (cambio de idioma de Windows) para no pisar atajos comunes.
+  globalShortcut.register('Control+Shift+M', () => {
+    if (!mainWindow) return;
+    if (mainWindow.isMinimized()) mainWindow.restore();
+    if (!mainWindow.isVisible()) mainWindow.show();
+    mainWindow.focus();
+    mainWindow.webContents.send('focus-quick-search');
+  });
 });
 app.on('window-all-closed', () => { /* vive en el tray */ });
 app.on('before-quit', () => { isQuitting = true; });
+app.on('will-quit', () => { globalShortcut.unregisterAll(); });
