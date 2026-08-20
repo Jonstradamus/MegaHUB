@@ -1255,8 +1255,8 @@ function ownedGamesForConsole(consoleInfo) {
 }
 
 // Playlists de RetroArch (ya cotejadas, con título) + archivos sueltos en
-// roms/<consola>/ (sin cotejar todavía, pero cuentan igual como "tenés algo
-// acá") — las dos fuentes reales de "obtenido" a nivel grilla.
+// roms/<consola>/ (sin cotejar todavía, pero cuentan igual como "tienes algo
+// ahí") — las dos fuentes reales de "obtenido" a nivel grilla.
 function combinedOwnedCount(consoleInfo) {
   return ownedGamesForConsole(consoleInfo).length + (localRomCounts[consoleInfo.id] || 0);
 }
@@ -4688,7 +4688,7 @@ function renderHomeWeek(weeklyActivity) {
 
 // "Qué jugar hoy" — cruza datos que MegaHUB ya calculaba por separado
 // (biblioteca instalada + horas reales de Steam) en vez de elegir al azar.
-// Prioridad: nunca lo probaste > hace mucho que no lo tocás > lo jugaste
+// Prioridad: nunca lo probaste > hace mucho que no lo juegas > lo jugaste
 // hace poco pero no tanto > cualquier instalado, como último recurso.
 function computeTodayPick() {
   const installed = allGames.filter(g => g.installed);
@@ -4703,8 +4703,8 @@ function computeTodayPick() {
       if (minutes === 0) { score = 3; reason = 'Nunca lo probaste'; }
       else if (info?.lastPlayed) {
         const days = Math.floor((now - info.lastPlayed) / 86400000);
-        if (days >= 21) { score = 2.5; reason = `Hace ${days} días que no lo tocás`; }
-        else if (days >= 7) { score = 1.5; reason = `Hace ${days} días que no lo tocás`; }
+        if (days >= 21) { score = 2.5; reason = `Hace ${days} días que no lo juegas`; }
+        else if (days >= 7) { score = 1.5; reason = `Hace ${days} días que no lo juegas`; }
       }
     }
     if (score > bestScore) { bestScore = score; best = g; bestReason = reason; }
@@ -4713,7 +4713,7 @@ function computeTodayPick() {
     // Nada calificó por horas (biblioteca sin datos de Steam, o todo jugado
     // recién) — mejor un pick al azar entre lo instalado que no mostrar nada.
     best = installed[Math.floor(Math.random() * installed.length)];
-    bestReason = 'Elegido para vos';
+    bestReason = 'Elegido para ti';
   }
   return { game: best, reason: bestReason };
 }
