@@ -50,8 +50,17 @@ module.exports = async function scanBattlenet() {
       if (!/UninstallString\s+REG_SZ\s+.*Battle\.net/i.test(block)) continue;
       const name = (block.match(/DisplayName\s+REG_SZ\s+(.+)/) || [])[1];
       if (!name || /^battle\.net$/i.test(name.trim())) continue;
-      const title = name.trim();
-      const code = (PRODUCT_CODES.find(([re]) => re.test(title)) || [])[1] || null;
+      const rawTitle = name.trim();
+      const code = (PRODUCT_CODES.find(([re]) => re.test(rawTitle)) || [])[1] || null;
+      // Battle.net registra builds de PTR/Beta como productos de desinstalación
+      // aparte ("World of Warcraft Public Test 3", "... Beta", etc.) — el
+      // DisplayName crudo de cada uno es distinto aunque sea el mismo juego,
+      // así que sin normalizar aparecían como entradas separadas en DERIVA.
+      // Se usa el mismo `code` que ya decide cómo lanzar el juego (distingue
+      // retail de Classic) para elegir un título canónico.
+      const title = code === 'wow_classic' ? 'World of Warcraft Classic'
+        : code === 'WoW'                  ? 'World of Warcraft'
+        : rawTitle;
       const id = `bnet-${title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
       if (games.some(g => g.id === id)) continue;
       const sizeMatch = block.match(/EstimatedSize\s+REG_DWORD\s+0x([0-9a-fA-F]+)/);
