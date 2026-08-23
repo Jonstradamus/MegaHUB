@@ -1,5 +1,6 @@
 const fs = require('fs');
-const { execFileSync, spawn } = require('child_process');
+const { spawn } = require('child_process');
+const { regQuery } = require('../util/regQuery');
 
 // Mapa nombre de juego → código de producto de Battle.net (para lanzar)
 const PRODUCT_CODES = [
@@ -19,14 +20,6 @@ const PRODUCT_CODES = [
   [/crash bandicoot 4/i, 'WLBY'],
 ];
 
-function regQuery(key) {
-  try {
-    return execFileSync('reg', ['query', key, '/s'], {
-      encoding: 'utf8', maxBuffer: 30 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'],
-    });
-  } catch { return ''; }
-}
-
 function findBnetExe() {
   for (const p of [
     'C:\\Program Files (x86)\\Battle.net\\Battle.net Launcher.exe',
@@ -44,7 +37,7 @@ module.exports = async function scanBattlenet() {
     'HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
     'HKLM\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
   ]) {
-    const out = regQuery(hive);
+    const out = await regQuery(hive);
     if (!out) continue;
     for (const block of out.split(/(?=HKEY_LOCAL_MACHINE\\)/)) {
       if (!/UninstallString\s+REG_SZ\s+.*Battle\.net/i.test(block)) continue;

@@ -265,6 +265,18 @@ function createWindow() {
   mainWindow.on('maximize', notifyMaximized);
   mainWindow.on('unmaximize', notifyMaximized);
 
+  // Mitigación de un bug conocido de Chromium/Electron en Windows con
+  // ventanas frameless: al restaurar desde minimizado (o al ocultarse/
+  // mostrarse por el tray), el compositor a veces no repinta y la ventana
+  // queda en blanco hasta el próximo repaint espontáneo. Forzar un
+  // invalidate() tras restore/show evita quedarse pegado en blanco. Antes,
+  // esto se agravaba porque el proceso principal solía estar bloqueado por
+  // los `reg query` síncronos de los scanners justo en ese momento (ver
+  // fix de src/util/regQuery.js) — ahora es solo una red de seguridad.
+  const forceRepaint = () => { try { mainWindow.webContents.invalidate(); } catch {} };
+  mainWindow.on('restore', forceRepaint);
+  mainWindow.on('show', forceRepaint);
+
   // Detecta cuando el usuario suelta el widget cerca de un borde de la
   // pantalla y lo deja pegado ahí (ver bloque "Auto-ocultar" más arriba).
   // 'moved' (no 'move') dispara una sola vez al terminar el arrastre, no en
@@ -396,8 +408,9 @@ ipcMain.handle('scan-games', async () => {
   const installedIds = new Set(installed.map(g => g.id));
 
   // Biblioteca (no instalados): Steam local + GOG/Epic si hay sesión conectada
+  const steamPath = await scanSteam.getSteamPath();
   const ownedResults = await Promise.allSettled([
-    steamOwned(getSteamPathSafe(), installedIds),
+    steamOwned(steamPath, installedIds),
     gogAccount.ownedGames(),
     epicAccount.ownedGames(),
   ]);
@@ -412,10 +425,19 @@ ipcMain.handle('scan-games', async () => {
   // Companion) necesita saber a qué .exe prestarle atención ahora.
   processWatcher.setWatchTargets(installed);
   activityLog.recordSteamSnapshotsIfNeeded();
-  return {
+  const result = {
     games,
     accounts: { gog: gogAccount.isConnected(), epic: epicAccount.isConnected() },
   };
+  // Se guarda para que el próximo arranque pueda mostrar la biblioteca al
+  // instante (ver 'get-cached-games') mientras el escaneo real corre en
+  // segundo plano, en vez de dejar la ventana vacía hasta que termine.
+  try { store.save('games-cache', result); } catch {}
+  return result;
+});
+
+ipcMain.handle('get-cached-games', () => {
+  try { return store.load('games-cache', null); } catch { return null; }
 });
 
 // Horas reales por juego para el badge del grid (Fase UX, auditoría) — solo
@@ -440,19 +462,6 @@ function notifySessionEnded({ platform, title, minutes }) {
   mainWindow.webContents.send('game-session-ended', {
     title, minutes: Math.round(minutes), weeklyMinutes: weekly ? Math.round(weekly.minutes) : Math.round(minutes),
   });
-}
-
-function getSteamPathSafe() {
-  try {
-    const fs = require('fs');
-    const { execFileSync } = require('child_process');
-    const out = execFileSync('reg', ['query', 'HKCU\\Software\\Valve\\Steam', '/v', 'SteamPath'],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] });
-    const m = out.match(/SteamPath\s+REG_SZ\s+(.+)/);
-    if (m) return m[1].trim().replace(/\//g, '\\');
-    const fb = 'C:\\Program Files (x86)\\Steam';
-    return fs.existsSync(fb) ? fb : null;
-  } catch { return null; }
 }
 
 /* ---------- Lanzar / Instalar ---------- */

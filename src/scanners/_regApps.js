@@ -1,6 +1,6 @@
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { regQuery } = require('../util/regQuery');
 
 const UNINSTALL_KEYS = [
   'HKLM\\SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
@@ -8,16 +8,25 @@ const UNINSTALL_KEYS = [
   'HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Uninstall',
 ];
 
-function regQueryAll(keys) {
+async function regQueryAll(keys) {
   let out = '';
-  for (const key of keys) {
-    try {
-      out += execFileSync('reg', ['query', key, '/s'], {
-        encoding: 'utf8', maxBuffer: 30 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'],
-      });
-    } catch {}
-  }
+  for (const key of keys) out += await regQuery(key);
   return out;
+}
+
+// ubisoft.js, ea.js y rockstar.js llaman a scanByPublisher() cada uno por su
+// cuenta — sin este caché, cada scan-games disparaba el mismo dump completo
+// de las 3 claves de Uninstall TRES veces seguidas (uno por publisher), el
+// triple del trabajo necesario. TTL corto: solo cubre un mismo ciclo de
+// escaneo, nunca sirve datos viejos entre escaneos reales.
+let cachedDump = null;
+let cachedAt = 0;
+const CACHE_MS = 5000;
+async function getUninstallDump() {
+  if (cachedDump !== null && Date.now() - cachedAt < CACHE_MS) return cachedDump;
+  cachedDump = await regQueryAll(UNINSTALL_KEYS);
+  cachedAt = Date.now();
+  return cachedDump;
 }
 
 function parseUninstallBlocks(out) {
@@ -54,8 +63,8 @@ function resolveExe(block) {
 
 // Escanea el registro de programas instalados y filtra por publisher/nombre.
 // No invasivo: solo lectura del registro estándar de Windows.
-function scanByPublisher(publisherRe, excludeNameRe) {
-  const out = regQueryAll(UNINSTALL_KEYS);
+async function scanByPublisher(publisherRe, excludeNameRe) {
+  const out = await getUninstallDump();
   const games = [];
   const seen = new Set();
   for (const block of parseUninstallBlocks(out)) {

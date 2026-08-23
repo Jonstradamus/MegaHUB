@@ -1,14 +1,6 @@
-const { execFileSync } = require('child_process');
 const path = require('path');
 const store = require('../util/store');
-
-function regQuery(key) {
-  try {
-    return execFileSync('reg', ['query', key, '/s'], { encoding: 'utf8', maxBuffer: 10 * 1024 * 1024, stdio: ['ignore', 'pipe', 'ignore'] });
-  } catch {
-    return '';
-  }
-}
+const { regQuery } = require('../util/regQuery');
 
 function getCoverCache() {
   return store.load('gog-cover-cache', {});
@@ -52,7 +44,7 @@ async function fetchGogCover(productId, title) {
 }
 
 module.exports = async function scanGog() {
-  const out = regQuery('HKLM\\SOFTWARE\\WOW6432Node\\GOG.com\\Games') || regQuery('HKLM\\SOFTWARE\\GOG.com\\Games');
+  const out = (await regQuery('HKLM\\SOFTWARE\\WOW6432Node\\GOG.com\\Games')) || (await regQuery('HKLM\\SOFTWARE\\GOG.com\\Games'));
   if (!out) return [];
   const games = [];
   // Bloques por subclave: HKEY...\Games\<productId> seguido de sus valores

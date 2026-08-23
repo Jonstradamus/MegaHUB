@@ -804,7 +804,7 @@ function updateSearchContext() {
   } else if (viewMode === 'deals') {
     searchInput.placeholder = 'Ofertas — sin buscador, revisa las secciones';
   } else if (viewMode === 'home') {
-    searchInput.placeholder = 'Inicio — buscá desde PC o Retro  ( / )';
+    searchInput.placeholder = 'Inicio — busca desde PC o Retro  ( / )';
   } else if (viewMode === 'profile') {
     searchInput.placeholder = 'Perfil — sin buscador, revisa las secciones';
   } else {
@@ -4950,6 +4950,25 @@ document.getElementById('onboarding-retro-btn').addEventListener('click', () => 
 });
 
 (async () => {
+  // Mostrar la biblioteca de la sesión anterior al instante (si hay caché en
+  // disco) mientras el escaneo real corre — antes la ventana quedaba vacía
+  // hasta que rescan() terminaba de escanear los 10 launchers/registro, que
+  // en máquinas con muchos programas instalados podía tardar varios segundos.
+  // rescan() de abajo igual reemplaza esto en cuanto el escaneo real termina.
+  try {
+    const cached = await window.megahub.getCachedGames();
+    if (cached?.games?.length) {
+      allGames = cached.games;
+      updateFirstSeenMap(allGames);
+      if (cached.accounts?.gog) markConnected('gog');
+      if (cached.accounts?.epic) markConnected('epic');
+      buildPlatformChips();
+      rebuildGenreChips();
+      render();
+      document.dispatchEvent(new Event('megahub:games-updated'));
+    }
+  } catch {}
+
   await rescan();
   loadSpecs();
   initSgdb();

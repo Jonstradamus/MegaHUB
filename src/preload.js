@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('megahub', {
   onFocusQuickSearch: (callback) => ipcRenderer.on('focus-quick-search', () => callback()),
   onGameSessionStarted: (callback) => ipcRenderer.on('game-session-started', (_ev, data) => callback(data)),
   scanGames: () => ipcRenderer.invoke('scan-games'),
+  getCachedGames: () => ipcRenderer.invoke('get-cached-games'),
   getSteamPlaytimeMap: () => ipcRenderer.invoke('get-steam-playtime-map'),
   launchGame: (game) => ipcRenderer.invoke('launch-game', game),
   installGame: (game) => ipcRenderer.invoke('install-game', game),

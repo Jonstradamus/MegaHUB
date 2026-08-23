@@ -17,7 +17,10 @@ const CANDIDATE_EXES = [
 
 // Además de las rutas típicas, RetroArch registra un acceso directo del menú
 // inicio con el instalador oficial — lo resolvemos por si el usuario lo puso
-// en una carpeta personalizada.
+// en una carpeta personalizada. Sigue siendo sync (execFileSync): findRetroArch
+// lo llaman 10+ sitios de forma síncrona (main.js, services/*) y solo entra a
+// esta rama si ninguna CANDIDATE_EXES existe, así que no es parte del hot path
+// que se repite en cada escaneo.
 function findViaStartMenuShortcut() {
   const dirs = [
     'C:\\ProgramData\\Microsoft\\Windows\\Start Menu\\Programs\\RetroArch\\RetroArch.lnk',

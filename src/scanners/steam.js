@@ -1,14 +1,12 @@
 const fs = require('fs');
 const path = require('path');
-const { execFileSync } = require('child_process');
+const { regQuery } = require('../util/regQuery');
 const { NON_GAME_APPIDS } = require('../services/steamKnownApps');
 
-function getSteamPath() {
-  try {
-    const out = execFileSync('reg', ['query', 'HKCU\\Software\\Valve\\Steam', '/v', 'SteamPath'], { encoding: 'utf8' });
-    const m = out.match(/SteamPath\s+REG_SZ\s+(.+)/);
-    if (m) return m[1].trim().replace(/\//g, '\\');
-  } catch {}
+async function getSteamPath() {
+  const out = await regQuery('HKCU\\Software\\Valve\\Steam', ['/v', 'SteamPath']);
+  const m = out.match(/SteamPath\s+REG_SZ\s+(.+)/);
+  if (m) return m[1].trim().replace(/\//g, '\\');
   const fallback = 'C:\\Program Files (x86)\\Steam';
   return fs.existsSync(fallback) ? fallback : null;
 }
@@ -26,7 +24,7 @@ function getLibraryFolders(steamPath) {
 }
 
 module.exports = async function scanSteam() {
-  const steamPath = getSteamPath();
+  const steamPath = await getSteamPath();
   if (!steamPath) return [];
   const games = [];
   const seen = new Set();
