@@ -253,7 +253,7 @@ async function tick() {
       // cuando el snapshot diario "alcance" el nuevo total de Steam.
       if (target.platform === 'steam') {
         const appid = target.key.replace(/^steam-/, '');
-        activityLog.refreshSteamSnapshot(appid);
+        activityLog.refreshSteamSnapshot(appid).catch(() => {});
       }
     }
   }

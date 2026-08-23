@@ -304,7 +304,7 @@ async function getRecommendations({ force = false } = {}) {
   const cache = getDealsCache();
   if (!force && cache.reco && Date.now() - cache.reco.at < CACHE_TTL) return cache.reco.value;
 
-  const playtimes = steamPlaytimeSvc.getAllPlaytimes();
+  const playtimes = await steamPlaytimeSvc.getAllPlaytimes();
   const ownedAppids = new Set(Object.keys(playtimes).map(String));
   const metaCache = store.load('steam-meta', {});
 

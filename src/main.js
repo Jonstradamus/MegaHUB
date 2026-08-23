@@ -424,7 +424,7 @@ ipcMain.handle('scan-games', async () => {
   // escaneos — el watcher de procesos (historial semanal del pill de
   // Companion) necesita saber a qué .exe prestarle atención ahora.
   processWatcher.setWatchTargets(installed);
-  activityLog.recordSteamSnapshotsIfNeeded();
+  await activityLog.recordSteamSnapshotsIfNeeded();
   const result = {
     games,
     accounts: { gog: gogAccount.isConnected(), epic: epicAccount.isConnected() },
@@ -445,8 +445,8 @@ ipcMain.handle('get-cached-games', () => {
 // de launchers solo sabe CUÁNDO se lanzó, nunca cuánto se jugó (ver
 // achievementEngine.js), así que mostrar un badge ahí sería inventar un
 // número. { [appid]: { playtimeMinutes, lastPlayed } }.
-ipcMain.handle('get-steam-playtime-map', () => {
-  try { return steamPlaytimeSvc.getAllPlaytimes(); }
+ipcMain.handle('get-steam-playtime-map', async () => {
+  try { return await steamPlaytimeSvc.getAllPlaytimes(); }
   catch { return {}; }
 });
 
@@ -863,7 +863,7 @@ ipcMain.handle('mh-ach-get-progress', async (_ev, { libraryGamesCount, consoleNa
     // Título + ícono + género de cada juego de Steam con horas reales — la
     // metadata normalmente ya está cacheada (MegaHUB la pide igual para la
     // biblioteca de PC), así que esto casi nunca golpea la red de verdad.
-    const steamTimes = steamPlaytimeSvc.getAllPlaytimes();
+    const steamTimes = await steamPlaytimeSvc.getAllPlaytimes();
     const steamAppids = Object.keys(steamTimes);
     const titles = {};
     const icons = {};
@@ -893,7 +893,7 @@ ipcMain.handle('mh-ach-get-progress', async (_ev, { libraryGamesCount, consoleNa
       }
     }
 
-    const achievements = achievementEngine.evaluate({ libraryGamesCount, consoleNames, genreCounts, retroLibrary });
+    const achievements = await achievementEngine.evaluate({ libraryGamesCount, consoleNames, genreCounts, retroLibrary });
     const enriched = achievements.map(a => a.scope === 'steamgame'
       ? { ...a, gameTitle: titles[a.appid], gameIcon: icons[a.appid] }
       : a);
@@ -938,7 +938,7 @@ ipcMain.handle('mh-ach-get-progress', async (_ev, { libraryGamesCount, consoleNa
 // CONSOLE_REGISTRY.
 ipcMain.handle('get-profile-stats', async (_ev, { consoleNames = {} } = {}) => {
   try {
-    const steamTimes = steamPlaytimeSvc.getAllPlaytimes(); // { appid: { playtimeMinutes, lastPlayed } }
+    const steamTimes = await steamPlaytimeSvc.getAllPlaytimes(); // { appid: { playtimeMinutes, lastPlayed } }
     const steamTitles = {};
     for (const appid of Object.keys(steamTimes)) {
       const meta = await getSteamMeta(appid);
@@ -1232,7 +1232,7 @@ app.whenReady().then(() => {
   // Historial semanal del pill de Companion (ver activityLog.js/processWatcher.js) —
   // arranca ya con lo que haya en disco; setWatchTargets() se completa recién
   // con el primer scan-games.
-  activityLog.recordSteamSnapshotsIfNeeded();
+  activityLog.recordSteamSnapshotsIfNeeded().catch(() => {});
   processWatcher.onSessionEnd(notifySessionEnded);
   processWatcher.onSessionStart(({ platform, title }) => {
     if (mainWindow) mainWindow.webContents.send('game-session-started', { platform, title });

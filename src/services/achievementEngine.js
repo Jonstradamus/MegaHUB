@@ -168,11 +168,11 @@ function relevantTiers(hours) {
 // retroLibrary: { [consoleId]: [{ key, title }] } — TODAS las ROMs que el
 // usuario tiene en la carpeta de esa consola (jugadas o no), para que
 // "Por juego (Retro)" liste también los juegos que todavía no ha estrenado.
-function evaluate({ libraryGamesCount = 0, consoleNames = {}, genreCounts = {}, retroLibrary = {} } = {}) {
+async function evaluate({ libraryGamesCount = 0, consoleNames = {}, genreCounts = {}, retroLibrary = {} } = {}) {
   const unlocked = getUnlocked();
   const retro = getRetroStats();
   const generic = getGenericActivity();
-  const steamTimes = steamPlaytime.getAllPlaytimes();
+  const steamTimes = await steamPlaytime.getAllPlaytimes();
 
   const list = [];
   const push = (id, def) => {

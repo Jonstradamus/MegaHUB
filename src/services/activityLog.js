@@ -65,8 +65,8 @@ function saveSteamSnapshots(data) {
 // setLastSession), igual que cualquier otra plataforma. Si el monitor de
 // procesos SÍ la vio y ya avanzó el snapshot (refreshSteamSnapshot), acá no
 // hay diferencia que contar — sin doble conteo.
-function recordSteamSnapshotsIfNeeded() {
-  const totals = steamPlaytimeSvc.getAllPlaytimes(); // { [appid]: { playtimeMinutes, lastPlayed } }
+async function recordSteamSnapshotsIfNeeded() {
+  const totals = await steamPlaytimeSvc.getAllPlaytimes(); // { [appid]: { playtimeMinutes, lastPlayed } }
   const snapshots = loadSteamSnapshots();
   const steamMetaCache = store.load('steam-meta', {});
   const today = todayKey();
@@ -119,8 +119,8 @@ function recordSteamSnapshotsIfNeeded() {
 // minutos se contarían DOS VECES: una por la sesión que acaba de loguear el
 // watcher, y otra más adelante cuando el diff de snapshots "alcance" el nuevo
 // total. Adelantar el snapshot de HOY al valor fresco evita el doble conteo.
-function refreshSteamSnapshot(appid) {
-  const totals = steamPlaytimeSvc.getAllPlaytimes();
+async function refreshSteamSnapshot(appid) {
+  const totals = await steamPlaytimeSvc.getAllPlaytimes();
   const info = totals[appid];
   if (!info) return;
   const snapshots = loadSteamSnapshots();

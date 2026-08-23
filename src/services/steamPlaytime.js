@@ -43,8 +43,8 @@ function splitAppBlocks(appsBlock) {
 // { [appid]: { playtimeMinutes, lastPlayed(ms) } } — combinando todas las
 // cuentas locales de Steam en este PC, quedándose con el valor más alto por
 // juego (si varias han jugado el mismo título).
-function getAllPlaytimes() {
-  const steamPath = scanSteam.getSteamPath();
+async function getAllPlaytimes() {
+  const steamPath = await scanSteam.getSteamPath();
   if (!steamPath) return {};
   const userdata = path.join(steamPath, 'userdata');
   let accounts;
