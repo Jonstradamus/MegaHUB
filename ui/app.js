@@ -1236,6 +1236,12 @@ function findCoverForActivity(a) {
       };
       pill.addEventListener('mouseenter', onOpen);
       pill.addEventListener('focusin', onOpen);
+      // Si el panel ya está abierto cuando terminan de llegar portadas nuevas
+      // (ver enrichCoversSafe), re-pintar con los mismos datos en vez de
+      // esperar a que el usuario lo cierre y lo vuelva a abrir.
+      document.addEventListener('megahub:covers-updated', () => {
+        if (activityCache && pill.matches(':hover, :focus-within')) renderActivity(activityList);
+      });
       window.addEventListener('resize', () => { if (pill.matches(':hover, :focus-within')) scheduleReposition(); });
     }
   }
@@ -4664,10 +4670,15 @@ function renderHomeRecent() {
   return true;
 }
 
+// Se guarda la última lista para poder re-pintar cuando lleguen portadas
+// nuevas (ver 'megahub:covers-updated') sin tener que re-pedir la actividad.
+let lastWeeklyActivity = null;
+
 function renderHomeWeek(weeklyActivity) {
   const section = document.getElementById('home-week');
   const list = document.getElementById('home-week-list');
-  const items = (weeklyActivity || []).slice(0, 6);
+  if (weeklyActivity) lastWeeklyActivity = weeklyActivity;
+  const items = (lastWeeklyActivity || []).slice(0, 6);
   if (!items.length) { section.hidden = true; list.innerHTML = ''; return false; }
   section.hidden = false;
   list.innerHTML = items.map(a => {
@@ -4685,6 +4696,7 @@ function renderHomeWeek(weeklyActivity) {
   }).join('');
   return true;
 }
+document.addEventListener('megahub:covers-updated', () => { if (lastWeeklyActivity) renderHomeWeek(); });
 
 // "Qué jugar hoy" — cruza datos que MegaHUB ya calculaba por separado
 // (biblioteca instalada + horas reales de Steam) en vez de elegir al azar.
@@ -4848,6 +4860,30 @@ let steamPlaytimeMap = {};
 
 let lastScanAt = 0;
 
+// enrichCovers() busca portada externa (SGDB/Wikipedia) para Battle.net/
+// Riot/Xbox/Ubisoft/EA/Rockstar, que nunca traen una URL de fábrica. Se
+// llama una vez al terminar CADA rescan (no solo el del arranque) — antes
+// solo corría en el boot inicial, así que en cuanto `rescan()` reemplazaba
+// `allGames` (reescaneo al recuperar foco tras 20 min, o "Escanear" a mano),
+// esas portadas ya conseguidas se perdían para siempre y nada las volvía a
+// pedir: el panel "Esta semana" (Inicio y la pill de Companion) se quedaba
+// sin carátula en cuanto la sesión llevaba un rato abierta. El guard evita
+// dos pasadas superpuestas si un rescan dispara antes de que la anterior
+// termine.
+let enrichingCovers = false;
+async function enrichCoversSafe() {
+  if (enrichingCovers) return;
+  enrichingCovers = true;
+  try { await enrichCovers(); }
+  finally {
+    enrichingCovers = false;
+    // Los covers recién resueltos pueden ser justo los que "Esta semana"
+    // necesitaba — sin esto, el panel se queda con el placeholder hasta el
+    // próximo render por otro motivo (cambiar de pestaña, etc).
+    document.dispatchEvent(new Event('megahub:covers-updated'));
+  }
+}
+
 async function rescan() {
   const { games, accounts } = await window.megahub.scanGames();
   lastScanAt = Date.now();
@@ -4859,6 +4895,7 @@ async function rescan() {
   buildPlatformChips();
   rebuildGenreChips();
   render();
+  enrichCoversSafe();
   // El modo widget (ver initWidgetMode) mantiene su propia lista aparte —
   // si el usuario lo activó ANTES de que este scan inicial terminara, se
   // quedaba mostrando "sin juegos" para siempre porque nada lo avisaba
@@ -4975,7 +5012,8 @@ document.getElementById('onboarding-retro-btn').addEventListener('click', () => 
   initTgdb();
   if (viewMode === 'retro') refreshConsoleOwnedCounts();
   enrichMetadata();
-  enrichCovers();
+  // enrichCovers() ya la dispara rescan() de arriba — no duplicarla acá para
+  // no correr dos pasadas superpuestas sobre los mismos juegos.
   loadDeals({ silent: true }).catch(() => {});
   // En segundo plano, sin bloquear nada: si algo se desbloqueó fuera de esta
   // sesión (ej. Steam sumó horas mientras MegaHUB estaba cerrado) y todavía
