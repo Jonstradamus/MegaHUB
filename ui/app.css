@@ -60,6 +60,11 @@
      identidad de marca, no color de interfaz. */
   --deriva-violet: #8b5cf6;
   --deriva-cyan: #22d3ee;
+  /* Marca propia de MegaHUB (naranja) — el ícono del sidebar vive en este
+     color por defecto y solo toma el violeta→cian de DERIVA al hacer hover,
+     para que quede claro que MegaHUB es su propia app dentro del ecosistema. */
+  --megahub-orange: #ffb020;
+  --megahub-orange2: #ff5a1f;
   --titlebar-h: 38px;
 }
 
@@ -478,24 +483,25 @@ body {
 #titlebar-title .brand-tag { margin-left: 8px; }
 
 /* ---------- Wordmark compartido (titlebar + logo del sidebar) ---------- */
-/* Mismo tratamiento "stencil" en los dos sitios: mayúsculas, peso 900, tracking
-   apretado, ámbar sólido (mismo tono que el botón RETRO) con un resplandor en
-   capas para que el borde de cada letra parezca iluminado, no solo coloreado. */
+/* Rebranding "Píldora + Puntos": "MEGA" queda en un blanco neutro (como la
+   variante oscura del arte de referencia), y solo "HUB" lleva el color de
+   marca — mismo degradado de 2 paradas que el ícono, para que ambos lean
+   como una sola unidad en vez de un texto plano al lado de un ícono. */
 .brand-word {
   font-family: var(--font-display, inherit);
   font-weight: 900;
   text-transform: uppercase;
   letter-spacing: -0.01em;
   line-height: 1;
-  color: var(--retro-accent);
-  text-shadow:
-    0 0 2px rgba(255, 214, 170, 0.9),
-    0 0 8px rgba(251, 146, 60, 0.75),
-    0 0 18px rgba(251, 146, 60, 0.5),
-    0 0 34px rgba(251, 146, 60, 0.3);
+  color: var(--text);
 }
-/* "GAME" y "VAULT" comparten el mismo ámbar — sin split de color */
-.brand-word .accent { color: var(--retro-accent); }
+/* "HUB" — degradado naranja por defecto, mismas paradas que #logo-mark;
+   pasa a violeta→cian junto con el ícono en #logo:hover (ver más abajo). */
+.brand-word .accent {
+  background: linear-gradient(90deg, var(--megahub-orange), var(--megahub-orange2));
+  -webkit-background-clip: text; background-clip: text; color: transparent;
+  transition: background-image 0.25s var(--ease);
+}
 /* "by DERIVA" — acreditación, no fusión: "by" en un tono neutral legible
    (blanco apagado, no gris oscuro), "DERIVA" en degradado */
 .brand-tag {
@@ -971,7 +977,27 @@ body.sidebar-collapsed #sidebar-slot { border-right: none; opacity: 0; pointer-e
 }
 #logo-mark {
   width: 34px; height: 34px; flex-shrink: 0;
-  filter: drop-shadow(0 0 10px rgba(139,92,246,0.45));
+  filter: drop-shadow(0 0 10px rgba(255,138,32,0.45));
+  transition: filter 0.25s var(--ease);
+}
+/* Ícono corto de MegaHUB ("Píldora + Puntos"): el trazo de la píldora es
+   naranja por defecto y cambia a violeta→cian (marca DERIVA) al pasar el
+   mouse por #logo — mismo contraste que ya usa el filo de la titlebar y el
+   scrollbar en hover. Los dos puntos internos NO participan del hover: son
+   color fijo (violeta + magenta) directo en el SVG, son la "marca" del
+   ícono en sí, no un acento que cambie con el tema. */
+#logo-mark .lm-stop1 { stop-color: var(--megahub-orange); transition: stop-color 0.25s var(--ease); }
+#logo-mark .lm-stop2 { stop-color: var(--megahub-orange2); transition: stop-color 0.25s var(--ease); }
+#logo:hover #logo-mark .lm-stop1 { stop-color: var(--deriva-violet); }
+#logo:hover #logo-mark .lm-stop2 { stop-color: var(--deriva-cyan); }
+#logo:hover #logo-mark {
+  filter: drop-shadow(0 0 10px rgba(139,92,246,0.5));
+}
+/* Solo "HUB" cambia junto con el ícono al hacer hover — "MEGA" se queda
+   neutro, mismo criterio que el arte de referencia (el acento vive en la
+   segunda mitad de la palabra, no en toda ella). */
+#logo:hover .brand-word .accent {
+  background: linear-gradient(90deg, var(--deriva-violet), var(--deriva-cyan));
 }
 #logo-text {
   display: flex;

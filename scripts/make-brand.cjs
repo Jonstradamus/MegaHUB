@@ -1,9 +1,15 @@
-// ─── Genera el ícono "Mando Contorno" de GameVault (solo trazo) ─────────────
-// Reemplaza el ícono prestado de DERIVA (deriva-icon-*.png) por una marca
-// propia de la app, dibujada a pixel con funciones de distancia con signo
-// (mismo enfoque que companion-desktop/tools/make-icon.cjs) — sin
-// dependencias de imagen externas. Genera:
-//   ui/brand/gamevault-icon-<size>.png   (16..512, fondo transparente)
+// ─── Genera el ícono "Píldora + Puntos" de MegaHUB (rebranding naranja) ─────
+// Reemplaza el ícono "Rombo + Capas" por la marca corta actual: una píldora
+// (cápsula) con dos puntos adentro, dentro de un cuadro redondeado — mismo
+// trazo que el ícono del sidebar (ver #logo-mark en ui/index.html/app.css).
+// El trazo de la píldora es naranja fijo acá: el hover a violeta→cian solo
+// existe en la UI en vivo (SVG + CSS), un .ico/.png estático no puede tener
+// estado. Los dos puntos SÍ tienen color fijo siempre (violeta + magenta,
+// no participan del hover ni en la UI en vivo — son la "marca" del ícono en
+// sí). Dibujado a pixel con funciones de distancia con signo (mismo enfoque
+// que companion-desktop/tools/make-icon.cjs) — sin dependencias de imagen
+// externas. Genera:
+//   ui/brand/megahub-icon-<size>.png     (16..512, fondo transparente)
 //   build/icon.ico                        (16..256, empaquetado)
 // Uso:  node scripts/make-brand.cjs   (desde megahub/)
 const fs = require('fs');
@@ -33,11 +39,13 @@ function encodePNG(w, h, rgba) {
   return Buffer.concat([sig, chunk('IHDR', ihdr), chunk('IDAT', zlib.deflateSync(raw, { level: 9 })), chunk('IEND', Buffer.alloc(0))]);
 }
 
-// ── Paleta (mismos tokens que ui/app.css) ──
-const VIOLET = [139, 92, 246];
-const CYAN = [34, 211, 238];
-const WHITE = [255, 255, 255];
-const WELL = [14, 10, 24]; // hueco tallado en los botones/D-pad, casi --void
+// ── Paleta (mismos tokens que ui/app.css: --megahub-orange / --megahub-orange2) ──
+const ORANGE1 = [255, 176, 32];
+const ORANGE2 = [255, 90, 31];
+// Puntos internos — color fijo, tomado directo del arte de referencia (no
+// son un token de tema, ver comentario de cabecera).
+const DOT_VIOLET = [95, 42, 199];
+const DOT_MAGENTA = [204, 14, 104];
 
 const mix = (a, b, t) => { t = Math.max(0, Math.min(1, t)); return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t]; };
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
@@ -67,34 +75,48 @@ function over(topColor, topA, botColor, botA) {
 function render(size) {
   const buf = Buffer.alloc(size * size * 4);
   const aa = 1.4 / size;
-  const strokeHalf = 0.017;
 
-  // ── Geometría del mando (coordenadas normalizadas 0..1, origen arriba-izq) ──
-  // Diseño "Mando Contorno": la misma silueta pill + dos humps de Orbit Pad,
-  // pero solo el trazo — sin relleno, sin D-pad/botones, sin arco ni destello.
-  const bodyRect = { cx: 0.5, cy: 0.52, hw: 0.34, hh: 0.135, r: 0.10 };
-  const humpL = { cx: 0.305, cy: 0.435, r: 0.185 };
-  const humpR = { cx: 0.695, cy: 0.435, r: 0.185 };
+  // ── Geometría "Píldora + Puntos" (coordenadas normalizadas 0..1, origen
+  // arriba-izq) — mismo trazado que el SVG #logo-mark del sidebar
+  // (ui/index.html), reescalado de un viewBox de 200 a 0..1 (÷200). Medido
+  // pixel a pixel sobre el arte de referencia (píldora tipo "stadium", radio
+  // = mitad de su alto; dos puntos internos cerca del extremo derecho). ──
+  const border = { cx: 0.5, cy: 0.5, hw: 0.406, hh: 0.406, r: 0.12, strokeHalf: 0.02 };
+  const pill = { cx: 0.5, cy: 0.5, hw: 0.35, hh: 0.165, r: 0.165, strokeHalf: 0.0175 };
+  const dot1 = { cx: 0.56, cy: 0.5, r: 0.0575 };
+  const dot2 = { cx: 0.715, cy: 0.5, r: 0.0575 };
 
   for (let py8 = 0; py8 < size; py8++) {
     for (let px8 = 0; px8 < size; px8++) {
       const px = (px8 + 0.5) / size, py = (py8 + 0.5) / size;
       const i = (py8 * size + px8) * 4;
 
-      // -- Contorno: distancia a la unión pill + dos humps, solo el anillo del trazo --
-      const distBody = Math.min(
-        sdRoundedRect(px, py, bodyRect.cx, bodyRect.cy, bodyRect.hw, bodyRect.hh, bodyRect.r),
-        sdCircle(px, py, humpL.cx, humpL.cy, humpL.r),
-        sdCircle(px, py, humpR.cx, humpR.cy, humpR.r),
-      );
-      const strokeA = edgeAlpha(Math.abs(distBody) - strokeHalf, aa);
-      // Degradado diagonal violeta→cian, igual dirección que el resto de la marca DERIVA
-      const strokeColor = mix(VIOLET, CYAN, px * 0.55 + py * 0.45);
+      // Degradado diagonal naranja, misma dirección que el linearGradient
+      // (x1,y1)=(0,0) a (x2,y2)=(1,1) del SVG en vivo.
+      const gradColor = mix(ORANGE1, ORANGE2, px * 0.55 + py * 0.45);
 
-      buf[i] = Math.round(strokeColor[0]);
-      buf[i + 1] = Math.round(strokeColor[1]);
-      buf[i + 2] = Math.round(strokeColor[2]);
-      buf[i + 3] = Math.round(clamp01(strokeA) * 255);
+      let col = [0, 0, 0], a = 0;
+
+      // -- Cuadro redondeado (solo el anillo del trazo) --
+      const distBorder = sdRoundedRect(px, py, border.cx, border.cy, border.hw, border.hh, border.r);
+      const borderA = edgeAlpha(Math.abs(distBorder) - border.strokeHalf, aa);
+      ({ color: col, a } = over(gradColor, clamp01(borderA), col, a));
+
+      // -- Píldora (solo el anillo del trazo, radio = mitad del alto) --
+      const distPill = sdRoundedRect(px, py, pill.cx, pill.cy, pill.hw, pill.hh, pill.r);
+      const pillA = edgeAlpha(Math.abs(distPill) - pill.strokeHalf, aa);
+      ({ color: col, a } = over(gradColor, clamp01(pillA), col, a));
+
+      // -- Dos puntos rellenos, color fijo (no siguen el degradado naranja) --
+      const dot1A = edgeAlpha(sdCircle(px, py, dot1.cx, dot1.cy, dot1.r), aa);
+      ({ color: col, a } = over(DOT_VIOLET, clamp01(dot1A), col, a));
+      const dot2A = edgeAlpha(sdCircle(px, py, dot2.cx, dot2.cy, dot2.r), aa);
+      ({ color: col, a } = over(DOT_MAGENTA, clamp01(dot2A), col, a));
+
+      buf[i] = Math.round(col[0]);
+      buf[i + 1] = Math.round(col[1]);
+      buf[i + 2] = Math.round(col[2]);
+      buf[i + 3] = Math.round(clamp01(a) * 255);
     }
   }
   return buf;
@@ -110,14 +132,14 @@ const pngs = {};
 for (const size of SIZES) {
   const png = encodePNG(size, size, render(size));
   pngs[size] = png;
-  fs.writeFileSync(path.join(BRAND_DIR, `gamevault-icon-${size}.png`), png);
-  console.log(`ui/brand/gamevault-icon-${size}.png (${png.length} bytes)`);
+  fs.writeFileSync(path.join(BRAND_DIR, `megahub-icon-${size}.png`), png);
+  console.log(`ui/brand/megahub-icon-${size}.png (${png.length} bytes)`);
 }
 
-// Íconos DERIVA que ya no se usan como marca propia de la app — se borran en
-// vez de dejarlos huérfanos en el repo (GameVault tiene su propia identidad).
+// Íconos de marcas/nombres viejos que ya no se usan — se borran en vez de
+// dejarlos huérfanos en el repo (rebranding "Rombo + Capas" naranja).
 for (const stale of fs.readdirSync(BRAND_DIR)) {
-  if (stale.startsWith('deriva-')) fs.unlinkSync(path.join(BRAND_DIR, stale));
+  if (stale.startsWith('deriva-') || stale.startsWith('gamevault-icon-')) fs.unlinkSync(path.join(BRAND_DIR, stale));
 }
 
 // ── .ico (hasta 256px, el máximo que soporta bien el formato) ──
