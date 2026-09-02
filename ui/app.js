@@ -372,12 +372,20 @@ function render() {
   refreshSelection();
 }
 
+// Cuando un juego no tiene carátula (ni propia ni de respaldo), en vez de un
+// cuadro casi vacío con la abreviatura de plataforma se muestra un placeholder
+// de marca: mando + "MEGAHUB". Igual que el que usa DERIVA web para los juegos
+// vistos vía MegaHUB sin arte.
 function makePlaceholder(game) {
   const div = document.createElement('div');
   div.className = 'placeholder';
-  const abbr = game.placeholderAbbr || PLAT_ABBR[game.platform] || '??';
+  const abbr = game.placeholderAbbr || PLAT_ABBR[game.platform] || '';
   if (game.placeholderAbbr) div.classList.add('placeholder-retro');
-  div.innerHTML = `<span class="plat-abbr">${escapeHtml(abbr)}</span><span class="plat-title">${escapeHtml(game.title)}</span>`;
+  div.innerHTML =
+    `<span class="ph-mark">${icon('gamepad')}</span>` +
+    `<span class="ph-brand">MEGA<b>HUB</b></span>` +
+    (abbr ? `<span class="plat-abbr">${escapeHtml(abbr)}</span>` : '') +
+    `<span class="plat-title">${escapeHtml(game.title)}</span>`;
   return div;
 }
 function escapeHtml(s) {
