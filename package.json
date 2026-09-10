@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "7zip-min": "^3.0.1",
+    "adm-zip": "^0.5.18",
     "node-unrar-js": "^2.0.2"
   },
   "build": {
