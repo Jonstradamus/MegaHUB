@@ -910,7 +910,7 @@ let widgetRefreshTile = null;
   function tileInnerHtml(g) {
     return `
       ${g.coverUrl
-        ? `<img src="${g.coverUrl}" alt="" loading="lazy" />`
+        ? `<img src="${escapeHtml(g.coverUrl)}" alt="" loading="lazy" />`
         : `<span class="wg-fallback">${initialLetter(g.title)}</span>`}
       <span class="wg-title">${g.title}</span>
     `;
@@ -937,7 +937,7 @@ let widgetRefreshTile = null;
     const tile = findTileEl(game.id);
     if (tile && !tile.querySelector('img')) tile.innerHTML = tileInnerHtml(game);
     if (selectedGame && selectedGame.id === game.id && !detailCover.querySelector('img')) {
-      detailCover.innerHTML = `<img src="${game.coverUrl}" alt="" />`;
+      detailCover.innerHTML = `<img src="${escapeHtml(game.coverUrl)}" alt="" />`;
     }
   }
   widgetRefreshTile = refreshTile;
@@ -1038,7 +1038,7 @@ let widgetRefreshTile = null;
     detailEl.hidden = false;
     detailTitle.textContent = game.title;
     detailCover.innerHTML = game.coverUrl
-      ? `<img src="${game.coverUrl}" alt="" />`
+      ? `<img src="${escapeHtml(game.coverUrl)}" alt="" />`
       : `<span class="wg-fallback">${initialLetter(game.title)}</span>`;
   }
 
@@ -2532,7 +2532,7 @@ async function toggleModPanel(btn, entry, consoleId) {
       row.className = 'mod-row';
       const categoryLabel = mod.category || 'Sin categoría';
       row.innerHTML = `
-        ${mod.thumbUrl ? `<img class="mod-row-thumb" src="${mod.thumbUrl}" alt="">` : ''}
+        ${mod.thumbUrl ? `<img class="mod-row-thumb" src="${escapeHtml(mod.thumbUrl)}" alt="">` : ''}
         <div class="mod-row-info">
           <div class="mod-row-name">${escapeHtml(mod.name)}</div>
           <div class="mod-row-meta">
@@ -2704,7 +2704,7 @@ async function renderDetails(game) {
     // El gameplay solo se muestra en modo Lista Y si el usuario clicó de verdad
     // el juego (no al navegarlo con flechas) — así no se carga video de más.
     if (viewMode === 'list' && videoAllowedFor === game.id && meta.trailerUrl) {
-      videoBox.innerHTML = `<video src="${meta.trailerUrl}" ${meta.trailerPoster ? `poster="${meta.trailerPoster}"` : ''} controls muted loop></video>`;
+      videoBox.innerHTML = `<video src="${escapeHtml(meta.trailerUrl)}" ${meta.trailerPoster ? `poster="${escapeHtml(meta.trailerPoster)}"` : ''} controls muted loop></video>`;
       videoBox.hidden = false;
     }
   } else if (game.genre) {
@@ -3318,7 +3318,7 @@ async function renderSkinsList() {
       <div class="skin-card-body">
         <div class="skin-card-title">${escapeHtml(skin.name)} <span class="skin-card-driver">${MENU_DRIVER_LABEL[skin.menuDriver] || skin.menuDriver}</span></div>
         <div class="skin-card-desc">${escapeHtml(skin.description)}</div>
-        <div class="skin-card-credit">Por <a href="${skin.creatorUrl}" target="_blank" rel="noopener">${escapeHtml(skin.creator)}</a> · <a href="${skin.sourceUrl}" target="_blank" rel="noopener">código fuente</a> · ~${skin.sizeMb} MB</div>
+        <div class="skin-card-credit">Por <a href="${escapeHtml(skin.creatorUrl)}" target="_blank" rel="noopener">${escapeHtml(skin.creator)}</a> · <a href="${escapeHtml(skin.sourceUrl)}" target="_blank" rel="noopener">código fuente</a> · ~${skin.sizeMb} MB</div>
       </div>
       <div class="skin-card-actions">
         ${skin.installed
@@ -3907,7 +3907,7 @@ function renderMhGameList(panel, items) {
     return `
       <div class="ach-game-row">
         <button class="ach-game-row-head" data-key="${escapeHtml(String(key))}">
-          ${gameIconUrl ? `<img class="ach-game-icon" src="${gameIconUrl}">` : `<div class="ach-game-icon ach-game-icon-mono" style="background:linear-gradient(155deg, hsl(${hueFromString(monogramSeed)} 50% 28%), hsl(${(hueFromString(monogramSeed) + 35) % 360} 50% 16%));">${escapeHtml(consoleMonogram(gameTitle))}</div>`}
+          ${gameIconUrl ? `<img class="ach-game-icon" src="${escapeHtml(gameIconUrl)}">` : `<div class="ach-game-icon ach-game-icon-mono" style="background:linear-gradient(155deg, hsl(${hueFromString(monogramSeed)} 50% 28%), hsl(${(hueFromString(monogramSeed) + 35) % 360} 50% 16%));">${escapeHtml(consoleMonogram(gameTitle))}</div>`}
           <div class="ach-game-row-info">
             <div class="ach-game-row-title">${escapeHtml(gameTitle)}${sub ? ` <span class="ach-sub">— ${escapeHtml(sub)}</span>` : ''}</div>
             <div class="ra-progress-bar${earnedCount === achs.length ? ' mastered' : ''}"><div style="width:${pct}%"></div></div>
@@ -4105,7 +4105,7 @@ function renderRaGames() {
     const mastered = g.highestAwardKind === 'mastered' || g.highestAwardKind === 'completed';
     return `
       <div class="ra-game-card" data-game-id="${g.gameId}">
-        ${g.icon ? `<img class="ra-icon" src="${g.icon}">` : '<div class="ra-icon"></div>'}
+        ${g.icon ? `<img class="ra-icon" src="${escapeHtml(g.icon)}">` : '<div class="ra-icon"></div>'}
         <div class="ra-game-info">
           <div class="ra-game-title">${escapeHtml(g.title)} ${mastered ? `<span class="ra-mastery-badge">${icon('trophy')}${escapeHtml(g.highestAwardKind)}</span>` : ''}</div>
           <div class="ra-game-console">${escapeHtml(g.consoleName || '')}</div>
@@ -4133,7 +4133,7 @@ async function renderRaHistory() {
   }
   panel.innerHTML = history.map(h => `
     <div class="ra-history-item">
-      ${h.badgeUrl ? `<img src="${h.badgeUrl}">` : ''}
+      ${h.badgeUrl ? `<img src="${escapeHtml(h.badgeUrl)}">` : ''}
       <div class="ra-hist-main">
         <div class="ra-hist-title">${escapeHtml(h.title)} — <span style="color:var(--dim);font-weight:500;">${escapeHtml(h.gameTitle || '')}</span></div>
         <div class="ra-hist-meta">${escapeHtml(h.description || '')} · ${new Date(h.date).toLocaleString()}${h.hardcore ? ' · Hardcore' : ''}</div>
@@ -4160,10 +4160,10 @@ async function openRaGameDetail(gameId) {
     return;
   }
   document.getElementById('ra-game-detail-header').innerHTML = `
-    ${game.icon ? `<img src="${game.icon}">` : ''}
+    ${game.icon ? `<img src="${escapeHtml(game.icon)}">` : ''}
     <div>
       <h2>${escapeHtml(game.title)}</h2>
-      <div class="side-note">${escapeHtml(game.consoleName || '')} · ${game.achievements.filter(a => a.earned).length}/${game.numAchievements} logros${game.userCompletion ? ` · ${game.userCompletion}` : ''}</div>
+      <div class="side-note">${escapeHtml(game.consoleName || '')} · ${game.achievements.filter(a => a.earned).length}/${game.numAchievements} logros${game.userCompletion ? ` · ${escapeHtml(game.userCompletion)}` : ''}</div>
     </div>
   `;
   document.getElementById('ra-game-detail-grid').innerHTML = game.achievements.map(a => {
@@ -4171,7 +4171,7 @@ async function openRaGameDetail(gameId) {
     return `
     <div class="ra-ach-card${a.earned ? '' : ' locked'}${recent ? ' recent' : ''}">
       ${recent ? '<span class="ach-new-ribbon">Nuevo</span>' : ''}
-      ${a.badgeUrl ? `<img src="${a.badgeUrl}">` : ''}
+      ${a.badgeUrl ? `<img src="${escapeHtml(a.badgeUrl)}">` : ''}
       <div>
         <div class="ra-ach-title">${escapeHtml(a.title)}</div>
         <div class="ra-ach-desc">${escapeHtml(a.description || '')}</div>
@@ -4269,7 +4269,7 @@ function renderConsolasGames() {
     const pct = g.unknownStatus ? 0 : (g.totalCount ? Math.round((g.earnedCount / g.totalCount) * 100) : 0);
     return `
       <div class="ra-game-card" data-key="${escapeHtml(g.key)}">
-        ${g.iconDataUrl ? `<img class="ra-icon" src="${g.iconDataUrl}">` : '<div class="ra-icon"></div>'}
+        ${g.iconDataUrl ? `<img class="ra-icon" src="${escapeHtml(g.iconDataUrl)}">` : '<div class="ra-icon"></div>'}
         <div class="ra-game-info">
           <div class="ra-game-title">${escapeHtml(g.title)} <span class="ra-mastery-badge">${g.source === 'xenia' ? 'Xenia · Xbox 360' : 'RPCS3 · PS3'}</span></div>
           ${g.unknownStatus
@@ -4291,7 +4291,7 @@ function openConsolasGameDetail(key) {
   document.getElementById('consolas-dashboard').hidden = true;
   document.getElementById('consolas-game-detail').hidden = false;
   document.getElementById('consolas-game-detail-header').innerHTML = `
-    ${g.iconDataUrl ? `<img src="${g.iconDataUrl}">` : ''}
+    ${g.iconDataUrl ? `<img src="${escapeHtml(g.iconDataUrl)}">` : ''}
     <div>
       <h2>${escapeHtml(g.title)}</h2>
       <div class="side-note">${g.source === 'xenia' ? 'Xenia · Xbox 360' : 'RPCS3 · PS3'} · ${g.unknownStatus ? `${g.totalCount} trofeos` : `${g.earnedCount}/${g.totalCount} logros`}</div>
@@ -4299,7 +4299,7 @@ function openConsolasGameDetail(key) {
   `;
   document.getElementById('consolas-game-detail-grid').innerHTML = g.items.map(a => `
     <div class="ra-ach-card${a.earned ? '' : ' locked'}">
-      ${a.iconDataUrl ? `<img src="${a.iconDataUrl}">` : ''}
+      ${a.iconDataUrl ? `<img src="${escapeHtml(a.iconDataUrl)}">` : ''}
       <div>
         <div class="ra-ach-title">${escapeHtml(a.name)}</div>
         <div class="ra-ach-desc">${escapeHtml(a.description || '')}</div>
