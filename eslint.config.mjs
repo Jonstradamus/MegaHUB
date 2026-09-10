@@ -33,8 +33,8 @@ export default [
   js.configs.recommended,
   {
     // Proceso Electron/Node (CommonJS): main, preload, scanners, services, library,
-    // util, los scripts de tooling .js/.cjs y el retroFolders.js suelto del root.
-    files: ['src/**/*.js', 'scripts/**/*.{js,cjs}', 'retroFolders.js'],
+    // util y los scripts de tooling .js/.cjs.
+    files: ['src/**/*.js', 'scripts/**/*.{js,cjs}'],
     languageOptions: {
       ecmaVersion: 2022,
       sourceType: 'commonjs',
