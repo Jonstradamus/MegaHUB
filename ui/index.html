@@ -2,6 +2,11 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
+  <!-- CSP (M11c): bloquea scripts inline/remotos y eval (el vector de XSS). No
+       restringe img/style/connect/font — las carátulas remotas de juegos, el CSS
+       propio y la fuente local siguen cargando. app.js entra por <script src>,
+       no hay <script> inline ni handlers on* en este HTML. -->
+  <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none'; base-uri 'self'" />
   <title>MegaHUB</title>
   <link rel="icon" href="brand/megahub-icon-64.png" />
   <link rel="stylesheet" href="app.css" />
