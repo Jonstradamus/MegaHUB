@@ -6,14 +6,20 @@
   "main": "src/main.js",
   "scripts": {
     "start": "electron .",
-    "dist": "electron-builder --win"
+    "dist": "electron-builder --win",
+    "lint": "eslint .",
+    "lint:ci": "node scripts/lint-ci.mjs"
   },
   "devDependencies": {
-    "electron": "^33.0.0",
-    "electron-builder": "^24.13.3"
+    "@eslint/js": "^9.39.5",
+    "electron": "^44.3.0",
+    "electron-builder": "^26.15.3",
+    "eslint": "^9.39.5",
+    "globals": "^17.12.0"
   },
   "dependencies": {
     "7zip-min": "^3.0.1",
+    "adm-zip": "^0.6.0",
     "node-unrar-js": "^2.0.2"
   },
   "build": {

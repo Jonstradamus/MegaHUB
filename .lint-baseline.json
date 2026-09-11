@@ -1,0 +1,6 @@
+{
+  "problems": 8,
+  "errors": 0,
+  "_comment": "Deuda de ESLint heredada de MegaHUB. scripts/lint-ci.mjs falla en CI si estos numeros SUBEN. Solo pueden bajar: cuando arregles problemas, actualiza aqui a los nuevos totales.",
+  "_medido": "2026-09-09, M7 (Bloque B — primer ESLint de megahub). Los 8 son `no-unused-vars` PRE-EXISTENTES, 0 errores: src/services/retroSkins.js:63 (5 args sin usar), src/services/dealsEngine.js:230 (`e` de catch), scripts/make-brand.cjs:62 (`ellipseBlob`), ui/app.js:236 (`saveHiddenGames`). M7 solo FIJA la deuda, no arregla nada."
+}

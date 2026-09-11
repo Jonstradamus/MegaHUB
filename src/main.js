@@ -239,10 +239,18 @@ function createWindow() {
   });
   // Los enlaces <a target="_blank"> (descarga de emulador, alta en SteamGridDB/
   // TheGamesDB) sin esto quedan bloqueados por Electron en vez de abrir el
-  // navegador real del usuario.
+  // navegador real del usuario. M11b: se valida el scheme — solo http(s) pasa a
+  // shell.openExternal (antes pasaba cualquier cosa sin filtrar); en todos los
+  // casos NO se abre una ventana Electron.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
+    if (/^https?:\/\//i.test(url)) shell.openExternal(url);
     return { action: 'deny' };
+  });
+  // M11a: la ventana solo debe quedarse en su propio file://. Un intento de
+  // navegar a http(s) (link, redirect de un script inyectado en app.js) se abre
+  // en el navegador del sistema, nunca dentro de Electron.
+  mainWindow.webContents.on('will-navigate', (e, url) => {
+    if (!url.startsWith('file://')) { e.preventDefault(); shell.openExternal(url); }
   });
   mainWindow.loadFile(path.join(__dirname, '..', 'ui', 'index.html'));
 
