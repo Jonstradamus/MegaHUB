@@ -1,6 +1,7 @@
 {
-  "problems": 8,
+  "problems": 24,
   "errors": 0,
   "_comment": "Deuda de ESLint heredada de MegaHUB. scripts/lint-ci.mjs falla en CI si estos numeros SUBEN. Solo pueden bajar: cuando arregles problemas, actualiza aqui a los nuevos totales.",
-  "_medido": "2026-09-09, M7 (Bloque B — primer ESLint de megahub). Los 8 son `no-unused-vars` PRE-EXISTENTES, 0 errores: src/services/retroSkins.js:63 (5 args sin usar), src/services/dealsEngine.js:230 (`e` de catch), scripts/make-brand.cjs:62 (`ellipseBlob`), ui/app.js:236 (`saveHiddenGames`). M7 solo FIJA la deuda, no arregla nada."
+  "_medido": "2026-09-09, M7 (Bloque B — primer ESLint de megahub). Los 8 originales son `no-unused-vars` PRE-EXISTENTES, 0 errores: src/services/retroSkins.js:63 (5 args sin usar), src/services/dealsEngine.js:230 (`e` de catch), scripts/make-brand.cjs:62 (`ellipseBlob`), ui/app.js:236 (`saveHiddenGames`). M7 solo FIJA la deuda, no arregla nada.",
+  "_actualizado": "2026-09-11, Bloque G parte 2 (split de ui/app.js en 21 archivos bajo ui/app/). 8 -> 24, 0 errores en ambos casos. Los 16 nuevos son todos `no-unused-vars`: al dividir un archivo de scope global plano en varios <script> encadenados, ESLint analiza cada archivo por separado y ya no puede ver que una función/variable definida en el archivo A la usa (lee o solo ESCRIBE) el archivo B — se anotó `/* exported */`/`/* global */` en cada archivo para la inmensa mayoría de los ~136 nombres compartidos (ver docs/dev-notes/app-js-split.md), pero un puñado de casos de \"se ESCRIBE en el archivo A y se LEE en el archivo B\" no tiene un equivalente a `/* exported */` para nombres declarados `/* global */` — ESLint los ve como \"asignados pero nunca leídos\" DENTRO de ese archivo, aunque sí se leen en otro. Cero comportamiento nuevo: es puro ruido de análisis estático por archivo, no bugs reales."
 }
