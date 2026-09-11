@@ -4,8 +4,8 @@
   <meta charset="UTF-8" />
   <!-- CSP (M11c): bloquea scripts inline/remotos y eval (el vector de XSS). No
        restringe img/style/connect/font — las carátulas remotas de juegos, el CSS
-       propio y la fuente local siguen cargando. app.js entra por <script src>,
-       no hay <script> inline ni handlers on* en este HTML. -->
+       propio y la fuente local siguen cargando. El código de ui/app/ entra
+       por <script src>, no hay <script> inline ni handlers on* en este HTML. -->
   <meta http-equiv="Content-Security-Policy" content="script-src 'self'; object-src 'none'; base-uri 'self'" />
   <title>MegaHUB</title>
   <link rel="icon" href="brand/megahub-icon-64.png" />
@@ -801,6 +801,30 @@
   <div id="toast-container"></div>
   <div id="mini-tooltip" role="tooltip" hidden></div>
 
-  <script src="app.js"></script>
+  <!-- app.js (5033 L) se dividió en ui/app/ por sección — ver
+       docs/dev-notes/app-js-split.md. El ORDEN importa: son <script> clásicos
+       (sin type="module"), todos comparten un único scope global, tal como
+       hacía el archivo original de una pieza. -->
+  <script src="app/01-icons.js"></script>
+  <script src="app/02-filters.js"></script>
+  <script src="app/03-render.js"></script>
+  <script src="app/04-toasts.js"></script>
+  <script src="app/05-view-mode.js"></script>
+  <script src="app/06-retro.js"></script>
+  <script src="app/07-details-panel.js"></script>
+  <script src="app/08-actions.js"></script>
+  <script src="app/09-sidebar.js"></script>
+  <script src="app/10-search.js"></script>
+  <script src="app/11-settings.js"></script>
+  <script src="app/12-specs.js"></script>
+  <script src="app/13-keyboard-nav.js"></script>
+  <script src="app/14-gamepad.js"></script>
+  <script src="app/15-background-enrichment.js"></script>
+  <script src="app/16-achievements.js"></script>
+  <script src="app/17-deals.js"></script>
+  <script src="app/18-home.js"></script>
+  <script src="app/19-profile.js"></script>
+  <script src="app/20-init.js"></script>
+  <script src="app/21-onboarding.js"></script>
 </body>
 </html>
