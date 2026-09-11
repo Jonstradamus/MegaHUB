@@ -8,14 +8,17 @@
     "start": "electron .",
     "dist": "electron-builder --win",
     "lint": "eslint .",
-    "lint:ci": "node scripts/lint-ci.mjs"
+    "lint:ci": "node scripts/lint-ci.mjs",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
     "electron": "^44.3.0",
     "electron-builder": "^26.15.3",
     "eslint": "^9.39.5",
-    "globals": "^17.12.0"
+    "globals": "^17.12.0",
+    "vitest": "^3.2.4"
   },
   "dependencies": {
     "7zip-min": "^3.0.1",
