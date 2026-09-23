@@ -51,8 +51,8 @@ function setAchievementsSummary(summary) {
 // `title+endedAt` (ver megahubBridge.js del lado de Companion) y solo
 // reenvía la más nueva, no un historial completo — DERIVA no pretende
 // conocer todas las sesiones de MegaHUB, solo la actividad reciente.
-function setLastSession({ title, platform, minutes }) {
-  writeBridge({ lastSession: { title, platform, minutes: Math.round(minutes), endedAt: new Date().toISOString() } });
+function setLastSession({ title, platform, minutes, coverUrl }) {
+  writeBridge({ lastSession: { title, platform, minutes: Math.round(minutes), coverUrl: coverUrl || null, endedAt: new Date().toISOString() } });
 }
 
 // Se llama una sola vez al arrancar (ver main.js) — así el botón "Abrir

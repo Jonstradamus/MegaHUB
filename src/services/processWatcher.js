@@ -182,7 +182,16 @@ const leagueSessionModes = new Map(); // key -> 'CLASSIC' | 'TFT' | ...
 function setWatchTargets(games) {
   const raw = games
     .filter(g => ['battlenet', 'riot', 'xbox', 'rockstar', 'ubisoft', 'ea', 'steam'].includes(g.platform))
-    .map(g => ({ key: g.id, title: g.title, platform: g.platform, names: candidateNamesFor(g) }))
+    .map(g => ({
+      key: g.id, title: g.title, platform: g.platform, names: candidateNamesFor(g),
+      // Portada real (Steam/Xbox ya la traen desde su propio scanner) — viaja
+      // con el target para poder mandarla al bridge de DERIVA en setNowPlaying/
+      // setLastSession (ver tick() más abajo). Sin esto, los nodos del mapa de
+      // DERIVA que vienen SOLO de este monitor de procesos (Battle.net/Riot/
+      // Xbox/Rockstar/Ubisoft/EA, y Steam detectado en vivo) nunca tenían forma
+      // de mostrar una imagen real, aunque MegaHub la conociera de sobra.
+      coverUrl: g.coverUrl || g.heroUrl || null,
+    }))
     .filter(t => t.names.length);
   watchTargets = dedupeByProcessOverlap(raw);
 }
@@ -207,6 +216,7 @@ function dedupeByProcessOverlap(targets) {
     if (!overlap) { merged.push({ ...t, names: [...t.names] }); continue; }
     for (const n of t.names) if (!overlap.names.includes(n)) overlap.names.push(n);
     if (t.title.length < overlap.title.length) overlap.title = t.title;
+    if (!overlap.coverUrl && t.coverUrl) overlap.coverUrl = t.coverUrl;
   }
   return merged;
 }
@@ -233,6 +243,20 @@ async function tick() {
       activeSessions.set(target.key, now);
       if (target.title === 'League of Legends') leagueSessionModes.delete(target.key);
       for (const fn of sessionStartListeners) { try { fn({ platform: target.platform, title: target.title }); } catch {} }
+      // Puente Deriva MegaHUB: hasta ahora SOLO "se lanzó desde MegaHUB" (launch-game,
+      // main.js) y Retro marcaban setNowPlaying — un juego detectado por este monitor
+      // de procesos (Battle.net/Riot/Xbox/Rockstar/Ubisoft/EA, y Steam abierto por
+      // fuera de MegaHUB) nunca lo hacía, así que nunca generaba el evento 'game' que
+      // alimenta el mapa de DERIVA (ConstellationMapV2.jsx solo arma nodos MegaHub a
+      // partir de esos eventos 'game', no de 'game_session' — ver
+      // src/services/companion/megahubService.js del lado de DERIVA). Reportado real:
+      // Valheim (Steam) y Hearthstone (Battle.net), jugados normalmente desde su
+      // propio launcher y no desde el botón "Jugar" de MegaHub, nunca aparecían en el
+      // mapa pese a que sí se medían sus horas.
+      derivaBridge.setNowPlaying({
+        title: target.title, platform: target.platform, coverUrl: target.coverUrl || null,
+        startedAt: new Date(now).toISOString(), source: 'launch',
+      });
     } else if (isRunning && session && target.title === 'League of Legends') {
       // Mientras la sesión sigue abierta: preguntarle al cliente qué cola es
       // ahora mismo. No se espera esta consulta (no bloquea el resto del
@@ -246,7 +270,11 @@ async function tick() {
       const title = finalTitleFor(target, target.key);
       leagueSessionModes.delete(target.key);
       activityLog.logSession({ platform: target.platform, title, minutes });
-      derivaBridge.setLastSession({ platform: target.platform, title, minutes });
+      derivaBridge.setLastSession({ platform: target.platform, title, minutes, coverUrl: target.coverUrl || null });
+      // Cierra la sesión "en vivo" abierta arriba en isRunning && !session — sin esto
+      // quedaba pegada hasta que el respaldo de caducidad del lado de Companion
+      // (LAUNCH_STALE_MS, 6h) la limpiara sola.
+      derivaBridge.setNowPlaying(null);
       for (const fn of sessionEndListeners) { try { fn({ platform: target.platform, title, minutes }); } catch {} }
       // Evita el doble conteo con el diffing de snapshots de Steam (ver
       // activityLog.js) — sin esto, estos mismos minutos se sumarían otra vez
