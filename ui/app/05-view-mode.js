@@ -82,11 +82,13 @@ document.querySelectorAll('.view-btn').forEach(btn => {
   });
 });
 applyViewMode();
-if (viewMode === 'retro') initRetroView();
-if (viewMode === 'achievements') initAchievementsView();
-if (viewMode === 'deals') initDealsView();
-if (viewMode === 'home') initHomeView();
-if (viewMode === 'profile') initProfileView();
+// Restaurar la vista con la que se cerró la app (si no era 'dock'/'list', que
+// no necesitan init propio) se hace en 20-init.js, NO acá: initRetroView/
+// initAchievementsView/initDealsView/initHomeView/initProfileView viven en
+// archivos que este <script> clásico todavía no cargó en este punto — llamarlas
+// acá tiraba un ReferenceError que cortaba en seco el resto de ESTE archivo
+// (initWidgetMode() más abajo nunca llegaba a registrar sus listeners, así el
+// botón de modo widget quedaba muerto sin ningún aviso visible).
 
 // Biblioteca y modo retro son secciones separadas dentro del mismo hub: la barra
 // lateral y el buscador cambian de contexto según dónde estés, en vez de ser

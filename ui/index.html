@@ -499,6 +499,15 @@
         <button id="deals-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span>Actualizar</span></button>
       </div>
 
+      <!-- Juegos temporalmente gratis (Epic semanal + freebies puntuales de
+           Steam/GOG/otras) — ver services/dealsEngine.js getFreeGames() y
+           checkFreeGamesAndNotify() en main.js (notificación nativa de
+           Windows aunque la ventana esté cerrada). -->
+      <section id="deals-free-section" hidden>
+        <h3 class="deals-section-title"><i data-icon="gift"></i> Gratis ahora</h3>
+        <div class="deals-grid" id="deals-free-grid"></div>
+      </section>
+
       <section id="deals-reco-section" hidden>
         <h3 class="deals-section-title"></h3>
         <div class="deals-grid" id="deals-reco-grid"></div>

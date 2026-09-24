@@ -1,6 +1,21 @@
 /* exported steamPlaytimeMap */
-/* global allGames:writable, buildPlatformChips, enrichCovers, formatHours, markConnected, rebuildGenreChips, render, searchInput, showToast, updateFirstSeenMap */
+/* global allGames:writable, buildPlatformChips, enrichCovers, formatHours, initAchievementsView, initDealsView, initHomeView, initProfileView, initRetroView, loadDeals, markConnected, rebuildGenreChips, render, searchInput, showToast, updateFirstSeenMap, viewMode */
 /* ================= Init ================= */
+
+// Restaura la vista con la que se cerró la app la última vez, si no es
+// 'dock'/'list' (esas no necesitan init propio). Tiene que ir en ESTE
+// archivo (el último <script> clásico que carga) y no en 05-view-mode.js
+// (donde se detecta viewMode al arrancar): initRetroView/initAchievementsView/
+// initDealsView/initHomeView/initProfileView viven en archivos que cargan
+// DESPUÉS de 05-view-mode.js, así que llamarlas ahí tiraba un ReferenceError
+// que cortaba en seco el resto de ese archivo — initWidgetMode(), definida más
+// abajo en el mismo archivo, nunca llegaba a registrar sus listeners, y el
+// botón de modo widget quedaba muerto sin ningún aviso visible.
+if (viewMode === 'retro') initRetroView();
+else if (viewMode === 'achievements') initAchievementsView();
+else if (viewMode === 'deals') initDealsView();
+else if (viewMode === 'home') initHomeView();
+else if (viewMode === 'profile') initProfileView();
 
 // Horas reales de Steam por appid — se pide una sola vez por rescan, no por
 // tile (evita 1 IPC por juego). Ver auditoría UX: antes ningún .dock-icon
@@ -76,6 +91,12 @@ window.megahub.onAutostartIssue(({ message }) => showToast(message, 'error', 900
 // que ya tiene el atajo "/" adentro de la app, solo que también funciona con
 // la ventana minimizada o sin foco (main.js la restaura antes de mandar esto).
 window.megahub.onFocusQuickSearch(() => { searchInput.select(); searchInput.focus(); });
+// Aviso silencioso de main.js cuando el chequeo periódico de juegos gratis
+// (checkFreeGamesAndNotify, corre en segundo plano cada 2h) encuentra algo
+// nuevo — refresca el estado de Ofertas ya en memoria (silent:true, sin
+// mostrar skeletons) para que la campanita/sección se actualicen sin esperar
+// a que el usuario reabra la vista.
+window.megahub.onDealsFreeUpdated(() => { loadDeals({ silent: true }).catch(() => {}); });
 window.megahub.onGameSessionEnded(({ title, minutes, weeklyMinutes }) => {
   const same = weeklyMinutes <= minutes; // primera sesión de la semana con este juego
   const msg = same

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, dialog, screen, globalShortcut } = require('electron');
+const { app, BrowserWindow, Tray, Menu, nativeImage, ipcMain, shell, dialog, screen, globalShortcut, Notification } = require('electron');
 const path = require('path');
 const fs = require('fs');
 const os = require('os');
@@ -228,7 +228,11 @@ function createWindow() {
     // Sin marco nativo: la barra de título (icono + wordmark DERIVA MegaHUB +
     // botones min/max/cerrar) la dibuja ui/index.html — ver #titlebar en
     // app.css. Sin esto, la ventana quedaba con el marco gris de Windows y el
-    // icono por defecto de Electron en vez de la identidad DERIVA.
+    // icono por defecto de Electron en vez de la identidad DERIVA. Además,
+    // el modo widget necesita achicar la ventana a un pixel de ancho al
+    // retraerse en un borde (ver setMinimumSize(1,1) más abajo) — un marco
+    // nativo no puede achicarse tanto, así que frame:false es obligatorio
+    // para esa animación de plegado/despliegue, no solo estético.
     frame: false,
     icon: path.join(__dirname, '..', 'build', 'icon.ico'),
     webPreferences: {
@@ -862,6 +866,42 @@ ipcMain.handle('deals-get-recommendation', async (_ev, force) => {
   try { return { recommendation: await dealsEngine.getRecommendations({ force }) }; }
   catch (e) { return { error: String(e.message || e) }; }
 });
+ipcMain.handle('deals-get-free', async (_ev, force) => {
+  try { return { games: await dealsEngine.getFreeGames({ force }) }; }
+  catch (e) { return { error: String(e.message || e), games: [] }; }
+});
+
+// Chequeo periódico de juegos gratis (Epic semanal + freebies puntuales de
+// Steam/GOG/otras, ver dealsEngine.getFreeGames) con notificación nativa de
+// Windows — corre en segundo plano igual que processWatcher, así que avisa
+// aunque la ventana esté cerrada/minimizada a la bandeja. Se guarda en disco
+// qué juegos ya se notificaron (deals-free-notified) para no repetir el aviso
+// en cada chequeo mientras la promo siga activa.
+const FREE_GAMES_CHECK_MS = 2 * 60 * 60 * 1000; // igual a FREE_CACHE_TTL de dealsEngine — no tiene sentido chequear más seguido que lo que dura la caché
+async function checkFreeGamesAndNotify() {
+  if (!Notification.isSupported()) return;
+  let games;
+  try { games = await dealsEngine.getFreeGames(); } catch { return; }
+  if (!games || !games.length) return;
+
+  const notified = new Set(store.load('deals-free-notified', []));
+  const fresh = games.filter(g => !notified.has(g.dealID || g.title));
+  if (fresh.length) {
+    // Como mucho 3 notificaciones de una — si hay más, no vale la pena
+    // inundar al usuario de toasts apenas arranca MegaHUB.
+    for (const g of fresh.slice(0, 3)) {
+      const n = new Notification({
+        title: `Gratis en ${g.storeName}: ${g.title}`,
+        body: `Normalmente cuesta ${g.normalPrice.toFixed(2)} dólares — click para ir a reclamarlo.`,
+      });
+      n.on('click', () => shell.openExternal(g.dealLink));
+      n.show();
+    }
+    const merged = [...notified, ...games.map(g => g.dealID || g.title)].slice(-500);
+    store.save('deals-free-notified', merged);
+  }
+  if (mainWindow) mainWindow.webContents.send('deals-free-updated');
+}
 
 // Motor de logros propio de MegaHUB (ver achievementEngine.js): global +
 // por-juego de Steam (horas reales) + por-juego/por-consola de Retro
@@ -1246,6 +1286,11 @@ app.whenReady().then(() => {
     if (mainWindow) mainWindow.webContents.send('game-session-started', { platform, title });
   });
   processWatcher.start();
+
+  // Primer chequeo de juegos gratis demorado 15s (no compite con el arranque:
+  // scan de juegos, tray, etc.) y después uno cada FREE_GAMES_CHECK_MS.
+  setTimeout(() => checkFreeGamesAndNotify().catch(() => {}), 15_000);
+  setInterval(() => checkFreeGamesAndNotify().catch(() => {}), FREE_GAMES_CHECK_MS);
 
   // Buscador rápido global (auditoría UX, "qué vale la pena sumar") — ya
   // existe el buscador que cruza biblioteca+logros+ofertas dentro de la app

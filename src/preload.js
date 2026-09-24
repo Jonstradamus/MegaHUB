@@ -90,4 +90,6 @@ contextBridge.exposeInMainWorld('megahub', {
   onWidgetRetractChange: (callback) => ipcRenderer.on('widget-retract-change', (_ev, retracted, edge) => callback(retracted, edge)),
   dealsGetTop: (force) => ipcRenderer.invoke('deals-get-top', force),
   dealsGetRecommendation: (force) => ipcRenderer.invoke('deals-get-recommendation', force),
+  dealsGetFree: (force) => ipcRenderer.invoke('deals-get-free', force),
+  onDealsFreeUpdated: (callback) => ipcRenderer.on('deals-free-updated', () => callback()),
 });

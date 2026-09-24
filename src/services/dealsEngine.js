@@ -28,6 +28,7 @@ const MAIN_STORE_IDS = { steam: 1, gog: 7, epic: 25 };
 const OTHER_STORE_IDS = [11, 15, 3, 21, 23, 27, 28, 30, 35, 2, 13];
 
 const CACHE_TTL = 6 * 60 * 60 * 1000; // 6h — ofertas no cambian tan seguido
+const FREE_CACHE_TTL = 2 * 60 * 60 * 1000; // 2h — las promos gratis (Epic semanal, freebies puntuales) duran poco y conviene enterarse rápido
 
 // appid de Steam -> microgénero curado a mano.
 const GAME_TAGS = {
@@ -252,6 +253,86 @@ async function getTopDeals({ force = false } = {}) {
   return value;
 }
 
+// Como fetchStoreDeals pero sin filtrar por ahorro mínimo — acá interesa
+// exactamente lo contrario: solo el 100% de descuento (precio final $0). Esto
+// SÍ atrapa freebies puntuales de Steam/GOG/otras cuando existen, pero NO el
+// freebie semanal de Epic — comprobado en vivo: CheapShark no trackea las
+// promos de Epic como "deals" (0 resultados incluso durante una semana con
+// varios juegos gratis activos), así que Epic se resuelve aparte, con su
+// propia API oficial (ver fetchEpicOfficialFreebies). El filtro normalPrice>0
+// descarta lo que YA es free-to-play de por vida (Fortnite, Warframe...), que
+// CheapShark también lista con salePrice 0 pero no es una promo real.
+async function fetchFreeFromStore(storeID) {
+  const raw = await fetchJson(`${CHEAPSHARK}/deals?storeID=${storeID}&onSale=1&sortBy=Recent&pageSize=60`);
+  return raw.map(mapDeal).filter(d => d.salePrice === 0 && d.normalPrice > 0);
+}
+
+const EPIC_FREE_GAMES_API = 'https://store-site-backend-static.ak.epicgames.com/freeGamesPromotions?locale=en-US&country=US&allowCountries=US';
+
+// Freebie semanal de Epic (y cualquier otra promo "gratis por tiempo
+// limitado" que publiquen) directo de su propia API pública, sin clave —
+// la misma que usan los bots de Discord/Twitter que avisan de esto. Un
+// elemento cuenta como gratis AHORA si tiene un promotionalOffers activo
+// (fecha actual entre start/end) con 0% de descuento restante, es decir
+// discountPercentage:0 (Epic lo modela "al revés": 0 = queda 0% del precio
+// original = gratis). upcomingPromotionalOffers (el "próxima semana...") se
+// ignora a propósito, todavía no se puede reclamar.
+async function fetchEpicOfficialFreebies() {
+  const json = await fetchJson(EPIC_FREE_GAMES_API);
+  const elements = (json && json.data && json.data.Catalog && json.data.Catalog.searchStore && json.data.Catalog.searchStore.elements) || [];
+  const now = Date.now();
+  const games = [];
+  for (const e of elements) {
+    const offers = (e.promotions && e.promotions.promotionalOffers) || [];
+    const isFreeNow = offers.some(group => (group.promotionalOffers || []).some(p =>
+      p.discountSetting && p.discountSetting.discountPercentage === 0 &&
+      new Date(p.startDate).getTime() <= now && now <= new Date(p.endDate).getTime()
+    ));
+    if (!isFreeNow) continue;
+    const pageSlug = (e.offerMappings && e.offerMappings[0] && e.offerMappings[0].pageSlug)
+      || (e.catalogNs && e.catalogNs.mappings && e.catalogNs.mappings[0] && e.catalogNs.mappings[0].pageSlug)
+      || e.productSlug || e.urlSlug;
+    const thumb = (e.keyImages || []).find(i => i.type === 'OfferImageWide' || i.type === 'Thumbnail');
+    games.push({
+      dealID: `epic-${e.id}`,
+      title: e.title,
+      storeID: MAIN_STORE_IDS.epic,
+      storeName: 'Epic Games',
+      salePrice: 0,
+      normalPrice: e.price && e.price.totalPrice ? e.price.totalPrice.originalPrice / 100 : null,
+      savings: 100,
+      thumb: thumb ? thumb.url : null,
+      steamAppID: null,
+      dealLink: pageSlug ? `https://store.epicgames.com/en-US/p/${pageSlug}` : 'https://store.epicgames.com/en-US/free-games',
+      releaseYear: null,
+      metacriticScore: null,
+      steamRatingPercent: null,
+      dealRating: 10,
+    });
+  }
+  return games;
+}
+
+// Juegos temporalmente regalados: freebie semanal de Epic (fuente oficial) +
+// lo que CheapShark encuentre gratis en Steam/GOG/otras (best-effort, suele
+// estar vacío — ver fetchFreeFromStore). Caché de solo 2h (ver FREE_CACHE_TTL)
+// porque estas ventanas suelen durar 24-72h y conviene enterarse rápido — a
+// diferencia de getTopDeals, que puede permitirse 6h de caché.
+async function getFreeGames({ force = false } = {}) {
+  const cache = getDealsCache();
+  if (!force && cache.free && Date.now() - cache.free.at < FREE_CACHE_TTL) return cache.free.value;
+
+  const cheapSharkIds = [MAIN_STORE_IDS.steam, MAIN_STORE_IDS.gog, ...OTHER_STORE_IDS];
+  const [epic, ...perStore] = await Promise.all([
+    fetchEpicOfficialFreebies().catch(() => []),
+    ...cheapSharkIds.map(id => fetchFreeFromStore(id).catch(() => [])),
+  ]);
+  const value = dedupeByTitle([...epic, ...perStore.flat()]);
+  cache.free = { at: Date.now(), value };
+  saveDealsCache(cache);
+  return value;
+}
+
 // Precio/estado actual (oferta o no) de un juego puntual de Steam, vía su appid.
 // OJO: /games?steamAppID=X devuelve un ARRAY tipo búsqueda (solo el precio más
 // barato, sin desglose por tienda) — para el detalle con precio por tienda hay
@@ -354,4 +435,4 @@ async function getRecommendations({ force = false } = {}) {
   return value;
 }
 
-module.exports = { getTopDeals, getRecommendations };
+module.exports = { getTopDeals, getRecommendations, getFreeGames };

@@ -1,4 +1,4 @@
-/* exported dealKeyOf, dealsIndex, selectDeal, selectedDealKey */
+/* exported dealKeyOf, dealsIndex, loadDeals, selectDeal, selectedDealKey */
 /* global applyStaticIcons, buildDerivaSearchButton, escapeHtml, icon:writable, skeletonLinesHtml */
 /* ================= Ofertas (Steam/GOG/Epic/otras + recomendado) ================= */
 // Vista a pantalla completa (mismo patrón que Logros): una sección por tienda
@@ -12,6 +12,7 @@ const DEALS_NOTABLE_SAVINGS = 40; // a partir de acá una oferta cuenta como "gr
 let dealsLoaded = false;
 let dealsData = { steam: [], gog: [], epic: [], other: [], errors: [] };
 let dealsReco = null;
+let dealsFree = [];
 const dealsExpanded = { steam: false, gog: false, epic: false, other: false };
 
 // "Nuevas desde la última vez que abriste Ofertas" — se guarda el dealID de
@@ -22,7 +23,7 @@ function getSeenDealIds() {
   catch { return new Set(); }
 }
 function markDealsSeen() {
-  const ids = [...dealsData.steam, ...dealsData.gog, ...dealsData.epic, ...dealsData.other]
+  const ids = [...dealsData.steam, ...dealsData.gog, ...dealsData.epic, ...dealsData.other, ...dealsFree]
     .map(d => d.dealID).filter(Boolean);
   const merged = [...new Set([...getSeenDealIds(), ...ids])].slice(-500);
   localStorage.setItem('megahub-deals-seen', JSON.stringify(merged));
@@ -44,7 +45,9 @@ function dealKeyOf(d) { return String(d.dealID || d.steamAppID || d.title); }
 function dealCardHtml(d, { showStore = false, isNew = false } = {}) {
   const key = dealKeyOf(d);
   dealsIndex.set(key, d);
-  const priceHtml = d.salePrice != null
+  const priceHtml = d.salePrice === 0
+    ? `<div class="deal-card-price"><span class="old">${money(d.normalPrice)}</span><span class="new deal-card-free">GRATIS</span></div>`
+    : d.salePrice != null
     ? `<div class="deal-card-price"><span class="old">${money(d.normalPrice)}</span><span class="new">${money(d.salePrice)}</span></div>${d.savings > 0 ? `<div class="deal-card-savings">-${d.savings}%</div>` : ''}`
     : `<div class="deal-card-price"><span class="new">Ver precio</span></div>`;
   return `
@@ -110,6 +113,9 @@ function priceBlockHtml(d) {
   if (d.salePrice == null) {
     return `<div class="deal-price-block"><span class="deal-price-new">${money(d.normalPrice)}</span></div>`;
   }
+  if (d.salePrice === 0) {
+    return `<div class="deal-price-block"><span class="deal-price-old">${money(d.normalPrice)}</span><span class="deal-price-new deal-card-free">GRATIS</span></div>`;
+  }
   return `
     <div class="deal-price-block">
       <span class="deal-price-old">${money(d.normalPrice)}</span>
@@ -162,6 +168,20 @@ document.getElementById('deals-wrap').addEventListener('keydown', (e) => {
   if (card) { e.preventDefault(); selectDeal(card.dataset.dealKey); }
 });
 
+// "Gratis ahora" (Epic semanal + freebies puntuales de Steam/GOG/otras, ver
+// dealsEngine.getFreeGames): va primero, antes de "Recomendado para ti" —
+// es la sección con vencimiento (24-72h típico), así que gana prioridad
+// visual sobre el resto, que no se vence.
+function renderDealsFree() {
+  const section = document.getElementById('deals-free-section');
+  if (!dealsFree.length) { section.hidden = true; return; }
+  const seen = getSeenDealIds();
+  document.getElementById('deals-free-grid').innerHTML = dealsFree
+    .map(d => dealCardHtml(d, { showStore: true, isNew: !seen.has(d.dealID) }))
+    .join('');
+  section.hidden = false;
+}
+
 function renderDealsReco() {
   const section = document.getElementById('deals-reco-section');
   if (!dealsReco || !dealsReco.games || !dealsReco.games.length) { section.hidden = true; return; }
@@ -198,6 +218,7 @@ function renderDealsSection(key) {
 }
 
 function renderDealsAll() {
+  renderDealsFree();
   renderDealsReco();
   ['steam', 'gog', 'epic', 'other'].forEach(renderDealsSection);
 }
@@ -216,12 +237,14 @@ function dealsSkeletonHtml() {
 
 async function loadDeals({ silent = false, force = false } = {}) {
   if (!silent) {
+    document.getElementById('deals-free-grid').innerHTML = dealsSkeletonHtml();
     document.getElementById('deals-reco-grid').innerHTML = dealsSkeletonHtml();
     document.querySelectorAll('.deals-store-section .deals-grid').forEach(g => { g.innerHTML = dealsSkeletonHtml(); });
   }
-  const [topRes, recoRes] = await Promise.all([
+  const [topRes, recoRes, freeRes] = await Promise.all([
     window.megahub.dealsGetTop(force),
     window.megahub.dealsGetRecommendation(force),
+    window.megahub.dealsGetFree(force),
   ]);
   dealsData = {
     steam: (topRes && topRes.steam) || [],
@@ -231,6 +254,7 @@ async function loadDeals({ silent = false, force = false } = {}) {
     errors: (topRes && topRes.errors) || [],
   };
   dealsReco = (recoRes && recoRes.recommendation) || null;
+  dealsFree = (freeRes && freeRes.games) || [];
   dealsLoaded = true;
   updateDealsBadge();
   if (!silent) renderDealsAll();
@@ -245,7 +269,8 @@ function updateDealsBadge() {
   const btn = document.querySelector('.view-deals-btn');
   const all = [...dealsData.steam, ...dealsData.gog, ...dealsData.epic, ...dealsData.other];
   const seen = getSeenDealIds();
-  const hasNew = all.some(d => d.savings >= DEALS_NOTABLE_SAVINGS && !seen.has(d.dealID));
+  const hasNew = all.some(d => d.savings >= DEALS_NOTABLE_SAVINGS && !seen.has(d.dealID))
+    || dealsFree.some(d => !seen.has(d.dealID)); // un juego gratis nuevo siempre cuenta como notable, sin importar el umbral de ahorro
   badge.hidden = !hasNew;
   btn.classList.toggle('deals-has-new', hasNew);
 }

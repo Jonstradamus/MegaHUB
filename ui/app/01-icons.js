@@ -36,6 +36,7 @@ const ICON_PATHS = {
   tag: '<path d="M12.7 3.5H5.8A2.3 2.3 0 0 0 3.5 5.8v6.9c0 .6.24 1.19.67 1.62l8.4 8.4a2.3 2.3 0 0 0 3.26 0l5.03-5.03a2.3 2.3 0 0 0 0-3.26l-8.4-8.4A2.3 2.3 0 0 0 12.7 3.5z"/><circle cx="8.6" cy="8.6" r="1.6" fill="currentColor" stroke="none"/>',
   home: '<path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9.5h12V10"/><path d="M10 19.5v-6h4v6"/>',
   chart: '<path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M3 20h18"/>',
+  gift: '<rect x="4" y="9.5" width="16" height="11" rx="1.5"/><path d="M4 9.5h16v4H4z"/><line x1="12" y1="9.5" x2="12" y2="20.5"/><path d="M12 9.5c0-2.4-1.8-4-3.4-4S6 6.6 6 7.9s1.4 1.6 2.9 1.6H12z"/><path d="M12 9.5c0-2.4 1.8-4 3.4-4S18 6.6 18 7.9s-1.4 1.6-2.9 1.6H12z"/>',
 };
 function icon(name, cls) {
   const body = ICON_PATHS[name];
