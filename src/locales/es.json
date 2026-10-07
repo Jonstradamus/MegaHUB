@@ -93,6 +93,9 @@
     "session": {
       "playedToday": "Jugaste ${hours} a ${title}",
       "playedTodayWeekly": "Jugaste ${hours} a ${title} · van ${weeklyHours} esta semana"
+    },
+    "specs": {
+      "notDetected": "No se pudo detectar"
     }
   }
 }
