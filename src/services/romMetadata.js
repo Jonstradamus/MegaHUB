@@ -18,6 +18,7 @@
 // título en su formato, solo se podría reconocer por hash contra una base
 // de datos tipo No-Intro.
 const fs = require('fs');
+const path = require('path');
 
 const SECTOR = 2048;
 
@@ -199,7 +200,7 @@ function detectTitle(consoleId, romPath) {
     const isDir = fs.statSync(romPath).isDirectory();
 
     if (consoleId === 'ps3') {
-      const sfoPath = isDir ? `${romPath}\\PARAM.SFO` : romPath.replace(/[^\\/]+$/, 'PS3_GAME\\PARAM.SFO');
+      const sfoPath = isDir ? path.join(romPath, 'PARAM.SFO') : path.join(path.dirname(romPath), 'PS3_GAME', 'PARAM.SFO');
       if (!fs.existsSync(sfoPath)) return null;
       const sfo = parseParamSfo(fs.readFileSync(sfoPath));
       return (sfo && sfo.TITLE) || null;
@@ -207,8 +208,8 @@ function detectTitle(consoleId, romPath) {
 
     if (consoleId === 'psp') {
       if (isDir) {
-        for (const rel of ['PARAM.SFO', 'PSP_GAME\\PARAM.SFO']) {
-          const p = `${romPath}\\${rel}`;
+        for (const rel of ['PARAM.SFO', path.join('PSP_GAME', 'PARAM.SFO')]) {
+          const p = path.join(romPath, rel);
           if (fs.existsSync(p)) {
             const sfo = parseParamSfo(fs.readFileSync(p));
             if (sfo && sfo.TITLE) return sfo.TITLE;
