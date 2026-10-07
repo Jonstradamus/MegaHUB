@@ -48,6 +48,51 @@
     },
     "actions": {
       "openingRom": "Abriendo \"${title}\"…"
+    },
+    "viewMode": {
+      "home": "Inicio",
+      "pc": "PC",
+      "retro": "Modo Retro",
+      "achievements": "Logros",
+      "deals": "Ofertas",
+      "profile": "Perfil"
+    },
+    "search": {
+      "placeholderRetroCatalog": "Buscar en el catálogo…  ( / )",
+      "placeholderRetroConsole": "Buscar consola…  ( / )",
+      "placeholderAchievements": "Logros — usa las pestañas de abajo",
+      "placeholderDeals": "Ofertas — sin buscador, revisa las secciones",
+      "placeholderHome": "Inicio — busca desde PC o Retro  ( / )",
+      "placeholderProfile": "Perfil — sin buscador, revisa las secciones",
+      "placeholderDefault": "Buscar juego…  ( / )"
+    },
+    "titlebar": {
+      "restore": "Restaurar",
+      "maximize": "Maximizar"
+    },
+    "widget": {
+      "launchError": "No se pudo lanzar el juego",
+      "emptyPc": "Sin juegos de PC instalados todavía.",
+      "emptyRetro": "Sin ROMs de RetroArch detectadas todavía."
+    },
+    "companionPill": {
+      "disconnected": "DERIVA Companion · desconectado",
+      "connected": "DERIVA Companion · conectado",
+      "noActivity": "Todavía sin actividad esta semana."
+    },
+    "gamepad": {
+      "noController": "sin mando"
+    },
+    "onboarding": {
+      "start": "Empezar",
+      "next": "Siguiente"
+    },
+    "profile": {
+      "untrackedPlatforms": "También jugaste en: ${names} — sin datos de horas disponibles para estos launchers."
+    },
+    "session": {
+      "playedToday": "Jugaste ${hours} a ${title}",
+      "playedTodayWeekly": "Jugaste ${hours} a ${title} · van ${weeklyHours} esta semana"
     }
   }
 }

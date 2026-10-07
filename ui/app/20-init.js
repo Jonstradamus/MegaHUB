@@ -1,5 +1,5 @@
 /* exported steamPlaytimeMap */
-/* global allGames:writable, buildPlatformChips, enrichCovers, formatHours, initAchievementsView, initDealsView, initHomeView, initProfileView, initRetroView, loadDeals, markConnected, rebuildGenreChips, render, searchInput, showToast, updateFirstSeenMap, viewMode */
+/* global allGames:writable, buildPlatformChips, enrichCovers, formatHours, initAchievementsView, initDealsView, initHomeView, initProfileView, initRetroView, loadDeals, markConnected, rebuildGenreChips, render, searchInput, showToast, tr, updateFirstSeenMap, viewMode */
 /* ================= Init ================= */
 
 // Restaura la vista con la que se cerró la app la última vez, si no es
@@ -100,8 +100,8 @@ window.megahub.onDealsFreeUpdated(() => { loadDeals({ silent: true }).catch(() =
 window.megahub.onGameSessionEnded(({ title, minutes, weeklyMinutes }) => {
   const same = weeklyMinutes <= minutes; // primera sesión de la semana con este juego
   const msg = same
-    ? `Jugaste ${formatHours(minutes)} a ${title}`
-    : `Jugaste ${formatHours(minutes)} a ${title} · van ${formatHours(weeklyMinutes)} esta semana`;
+    ? tr('megahub.session.playedToday', { hours: formatHours(minutes), title })
+    : tr('megahub.session.playedTodayWeekly', { hours: formatHours(minutes), title, weeklyHours: formatHours(weeklyMinutes) });
   showToast(msg, 'success', 6000);
   setNowPlaying(null);
 });

@@ -1,4 +1,4 @@
-/* global CONSOLE_REGISTRY, PLAT_LABEL, allGames, buildHomeTile, escapeHtml, formatHours */
+/* global CONSOLE_REGISTRY, PLAT_LABEL, allGames, buildHomeTile, escapeHtml, formatHours, tr */
 /* ================= Perfil (estadísticas unificadas) =================
    Cruza SOLO las 2 fuentes con horas reales de por vida (Steam + Retro, ver
    el handler get-profile-stats en main.js) — el resto de launchers se listan
@@ -64,7 +64,7 @@ function renderProfile(stats) {
   if (stats.untrackedPlatforms && stats.untrackedPlatforms.length) {
     untrackedEl.hidden = false;
     const names = stats.untrackedPlatforms.map(p => PLAT_LABEL[p] || p).join(', ');
-    untrackedEl.textContent = `También jugaste en: ${names} — sin datos de horas disponibles para estos launchers.`;
+    untrackedEl.textContent = tr('megahub.profile.untrackedPlatforms', { names });
   } else {
     untrackedEl.hidden = true;
   }

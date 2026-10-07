@@ -1,11 +1,11 @@
-/* global controlsFooter, cyclePlatform, gpActivate, gpCycleAchSourceTab, gpCycleSettingsTab, gpCycleView, gpMove, move, moveRetro, openSettings, padStatus, padStatusLabel, primaryAction, retroPrimaryAction, viewMode */
+/* global controlsFooter, cyclePlatform, gpActivate, gpCycleAchSourceTab, gpCycleSettingsTab, gpCycleView, gpMove, move, moveRetro, openSettings, padStatus, padStatusLabel, primaryAction, retroPrimaryAction, tr, viewMode */
 /* ================= Gamepad ================= */
 
 const padState = { lastMove: 0, buttons: {} };
 function pollGamepad() {
   const pads = navigator.getGamepads ? navigator.getGamepads() : [];
   const pad = [...pads].find(p => p && p.connected);
-  padStatusLabel.textContent = pad ? pad.id.slice(0, 22) : 'sin mando';
+  padStatusLabel.textContent = pad ? pad.id.slice(0, 22) : tr('megahub.gamepad.noController');
   padStatus.classList.toggle('on', !!pad);
   controlsFooter.classList.toggle('pad-active', !!pad);
   if (pad) {

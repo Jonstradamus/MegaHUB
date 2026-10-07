@@ -1,5 +1,5 @@
 /* exported findCoverForActivity, formatHours, switchViewMode, updateSearchContext, updateSidebarMode, widgetRefreshTile */
-/* global CONSOLE_REGISTRY, PLAT_LABEL, achievementsWrap, allGames, currentConsole, dealsWrap, dockWrap, escapeHtml, homeWrap, icon, initAchievementsView, initDealsView, initHomeView, initProfileView, initRetroView, list, profileWrap, refreshSelection, renderDetails, retroWrap, searchInput, selectedDealKey:writable, showToast, skeletonLinesHtml, viewMode:writable, widgetAutoHide */
+/* global CONSOLE_REGISTRY, PLAT_LABEL, achievementsWrap, allGames, currentConsole, dealsWrap, dockWrap, escapeHtml, homeWrap, icon, initAchievementsView, initDealsView, initHomeView, initProfileView, initRetroView, list, profileWrap, refreshSelection, renderDetails, retroWrap, searchInput, selectedDealKey:writable, showToast, skeletonLinesHtml, tr, viewMode:writable, widgetAutoHide */
 /* ================= Modo de vista ================= */
 
 function applyViewMode() {
@@ -23,13 +23,13 @@ const modeTransitionOverlay = document.getElementById('mode-transition-overlay')
 const modeTransitionLabel = document.getElementById('mode-transition-label');
 const modeTransitionIcon = document.getElementById('mode-transition-icon');
 const MODE_TRANSITION_META = {
-  home: { label: 'Inicio', color: 'var(--accent)', icon: 'home' },
-  dock: { label: 'PC', color: 'var(--accent)', icon: 'grid' },
-  list: { label: 'PC', color: 'var(--accent)', icon: 'grid' },
-  retro: { label: 'Modo Retro', color: 'var(--retro-accent)', icon: 'gamepad' },
-  achievements: { label: 'Logros', color: 'var(--warn)', icon: 'trophy' },
-  deals: { label: 'Ofertas', color: 'var(--ok)', icon: 'tag' },
-  profile: { label: 'Perfil', color: 'var(--great)', icon: 'chart' },
+  home: { label: tr('megahub.viewMode.home'), color: 'var(--accent)', icon: 'home' },
+  dock: { label: tr('megahub.viewMode.pc'), color: 'var(--accent)', icon: 'grid' },
+  list: { label: tr('megahub.viewMode.pc'), color: 'var(--accent)', icon: 'grid' },
+  retro: { label: tr('megahub.viewMode.retro'), color: 'var(--retro-accent)', icon: 'gamepad' },
+  achievements: { label: tr('megahub.viewMode.achievements'), color: 'var(--warn)', icon: 'trophy' },
+  deals: { label: tr('megahub.viewMode.deals'), color: 'var(--ok)', icon: 'tag' },
+  profile: { label: tr('megahub.viewMode.profile'), color: 'var(--great)', icon: 'chart' },
 };
 function switchViewMode(nextMode) {
   if (nextMode === viewMode) return;
@@ -118,17 +118,17 @@ function updateSidebarMode() {
 
 function updateSearchContext() {
   if (viewMode === 'retro') {
-    searchInput.placeholder = currentConsole ? 'Buscar en el catálogo…  ( / )' : 'Buscar consola…  ( / )';
+    searchInput.placeholder = currentConsole ? tr('megahub.search.placeholderRetroCatalog') : tr('megahub.search.placeholderRetroConsole');
   } else if (viewMode === 'achievements') {
-    searchInput.placeholder = 'Logros — usa las pestañas de abajo';
+    searchInput.placeholder = tr('megahub.search.placeholderAchievements');
   } else if (viewMode === 'deals') {
-    searchInput.placeholder = 'Ofertas — sin buscador, revisa las secciones';
+    searchInput.placeholder = tr('megahub.search.placeholderDeals');
   } else if (viewMode === 'home') {
-    searchInput.placeholder = 'Inicio — busca desde PC o Retro  ( / )';
+    searchInput.placeholder = tr('megahub.search.placeholderHome');
   } else if (viewMode === 'profile') {
-    searchInput.placeholder = 'Perfil — sin buscador, revisa las secciones';
+    searchInput.placeholder = tr('megahub.search.placeholderProfile');
   } else {
-    searchInput.placeholder = 'Buscar juego…  ( / )';
+    searchInput.placeholder = tr('megahub.search.placeholderDefault');
   }
 }
 
@@ -178,7 +178,7 @@ document.getElementById('sidebar-toggle').addEventListener('click', () => {
   const maxBtn = document.getElementById('tb-max');
   function setMaximizedIcon(isMaximized) {
     maxBtn.innerHTML = icon(isMaximized ? 'winRestore' : 'winMax');
-    maxBtn.title = isMaximized ? 'Restaurar' : 'Maximizar';
+    maxBtn.title = isMaximized ? tr('megahub.titlebar.restore') : tr('megahub.titlebar.maximize');
   }
   document.getElementById('tb-min').addEventListener('click', () => window.megahub.winMinimize());
   maxBtn.addEventListener('click', async () => setMaximizedIcon(await window.megahub.winMaximizeToggle()));
@@ -257,7 +257,7 @@ let widgetRefreshTile = null;
   // Juegos instalados de PC (todo lo que no sea una ROM de RetroArch).
   function pcGames() {
     return allGames.filter(g => g.installed && g.platform !== 'retroarch')
-      .sort((a, b) => a.title.localeCompare(b.title, 'es'));
+      .sort((a, b) => a.title.localeCompare(b.title, window.megahub.getLanguage()));
   }
 
   // ROMs de RetroArch agrupadas por consola (system = repo de libretro-thumbnails,
@@ -274,9 +274,9 @@ let widgetRefreshTile = null;
     const groups = [...bySystem.entries()].map(([system, list]) => ({
       system,
       name: CONSOLE_REGISTRY.find(c => c.repo === system)?.name || system.replace(/_/g, ' '),
-      games: list.sort((a, b) => a.title.localeCompare(b.title, 'es')),
+      games: list.sort((a, b) => a.title.localeCompare(b.title, window.megahub.getLanguage())),
     }));
-    groups.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    groups.sort((a, b) => a.name.localeCompare(b.name, window.megahub.getLanguage()));
     return groups;
   }
 
@@ -286,7 +286,7 @@ let widgetRefreshTile = null;
 
   async function launchDirect(game) {
     const res = await window.megahub.launchGame(game);
-    if (!res?.ok) showToast(res?.error || 'No se pudo lanzar el juego', 'error');
+    if (!res?.ok) showToast(res?.error || tr('megahub.widget.launchError'), 'error');
   }
 
   function renderList() {
@@ -298,13 +298,13 @@ let widgetRefreshTile = null;
     if (tab === 'pc') {
       const games = pcGames();
       isEmpty = games.length === 0;
-      if (isEmpty) emptyEl.textContent = 'Sin juegos de PC instalados todavía.';
+      if (isEmpty) emptyEl.textContent = tr('megahub.widget.emptyPc');
       else listEl.innerHTML = games.map(tileHtml).join('');
     } else {
       const groups = retroGroups();
       isEmpty = groups.length === 0;
       if (isEmpty) {
-        emptyEl.textContent = 'Sin ROMs de RetroArch detectadas todavía.';
+        emptyEl.textContent = tr('megahub.widget.emptyRetro');
       } else {
         // Un título con el nombre de la consola y abajo sus iconos, nada
         // más (sin contadores ni iconitos extra) — en cuadro/vertical el
@@ -362,7 +362,7 @@ let widgetRefreshTile = null;
   async function playSelected() {
     if (!selectedGame) return;
     const res = await window.megahub.launchGame(selectedGame);
-    if (!res?.ok) showToast(res?.error || 'No se pudo lanzar el juego', 'error');
+    if (!res?.ok) showToast(res?.error || tr('megahub.widget.launchError'), 'error');
   }
 
   async function enter() {
@@ -473,13 +473,13 @@ function findCoverForActivity(a) {
       // que se vio conectado una vez en esta sesión, se muestra "desconectado"
       // en vez de desaparecer, para que no parezca un parpadeo raro de la UI.
       for (const pill of pills) {
-        if (pill.dataset.everConnected === '1') paint(pill, 'off', 'DERIVA Companion · desconectado');
+        if (pill.dataset.everConnected === '1') paint(pill, 'off', tr('megahub.companionPill.disconnected'));
       }
       return;
     }
     for (const pill of pills) {
       pill.dataset.everConnected = '1';
-      paint(pill, 'connected', 'DERIVA Companion · conectado');
+      paint(pill, 'connected', tr('megahub.companionPill.connected'));
     }
   }
 
@@ -492,7 +492,7 @@ function findCoverForActivity(a) {
   }
   function renderActivity(list) {
     if (!activityCache || !activityCache.length) {
-      list.innerHTML = '<div class="cpx-activity-empty">Todavía sin actividad esta semana.</div>';
+      list.innerHTML = `<div class="cpx-activity-empty">${tr('megahub.companionPill.noActivity')}</div>`;
       return;
     }
     list.innerHTML = activityCache.slice(0, 6).map(a => {

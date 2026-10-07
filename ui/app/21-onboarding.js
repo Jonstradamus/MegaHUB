@@ -1,4 +1,4 @@
-/* global allGames:writable, buildPlatformChips, enrichMetadata, fetchMhAchievements, initSgdb, initTgdb, loadDeals, loadSpecs, markConnected, rebuildGenreChips, refreshConsoleOwnedCounts, render, renderThemeGrid, rescan, switchViewMode, updateFirstSeenMap, viewMode */
+/* global allGames:writable, buildPlatformChips, enrichMetadata, fetchMhAchievements, initSgdb, initTgdb, loadDeals, loadSpecs, markConnected, rebuildGenreChips, refreshConsoleOwnedCounts, render, renderThemeGrid, rescan, switchViewMode, tr, updateFirstSeenMap, viewMode */
 /* ================= Onboarding de primer uso (Fase 7) =================
    3 pasos cortos: conectar el primer launcher opcional, elegir skin, y un
    atajo a Retro si aplica — "Omitir" siempre visible en las tres, orienta,
@@ -13,7 +13,7 @@ function showOnboardingStep(n) {
   document.querySelectorAll('.onboarding-step').forEach((el) => { el.hidden = Number(el.dataset.step) !== n; });
   document.querySelectorAll('.onboarding-dot').forEach((el) => { el.classList.toggle('active', Number(el.dataset.dot) === n); });
   document.getElementById('onboarding-back').hidden = n === 1;
-  document.getElementById('onboarding-next').textContent = n === ONBOARDING_STEPS ? 'Empezar' : 'Siguiente';
+  document.getElementById('onboarding-next').textContent = n === ONBOARDING_STEPS ? tr('megahub.onboarding.start') : tr('megahub.onboarding.next');
 }
 function closeOnboarding() {
   document.getElementById('onboarding-overlay').hidden = true;
