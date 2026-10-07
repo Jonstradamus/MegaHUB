@@ -1,6 +1,11 @@
 const { contextBridge, ipcRenderer } = require('electron');
+const store = require('./util/store');
+const i18n = require('./lib/i18n');
 
 contextBridge.exposeInMainWorld('megahub', {
+  t:           (key, params) => i18n.t(store.load('language', 'es'), key, params),
+  getLanguage: () => store.load('language', 'es'),
+  setLanguage: (lang) => store.save('language', lang),
   onRetroLaunchIssue: (callback) => ipcRenderer.on('retro-launch-issue', (_ev, data) => callback(data)),
   onAutostartIssue: (callback) => ipcRenderer.on('autostart-issue', (_ev, data) => callback(data)),
   onGameSessionEnded: (callback) => ipcRenderer.on('game-session-ended', (_ev, data) => callback(data)),

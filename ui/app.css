@@ -337,13 +337,17 @@ body[data-theme="plaza"] .list-row .thumb { border-radius: 12px; }
    queda con esquinas más cuadradas que el marco pastilla del contenedor
    (999px, fijo) y se ve "salido" del marco en vez de encajar. */
 body[data-theme="arcade"] .wg-tab, body[data-theme="arcade"] .wg-shape,
-body[data-theme="arcade"] #widget-tabs, body[data-theme="arcade"] #widget-shapes { border-radius: 0; }
+body[data-theme="arcade"] #widget-tabs, body[data-theme="arcade"] #widget-shapes,
+body[data-theme="arcade"] .lang-btn, body[data-theme="arcade"] .lang-toggle { border-radius: 0; }
 body[data-theme="xbox"] .wg-tab, body[data-theme="xbox"] .wg-shape,
-body[data-theme="xbox"] #widget-tabs, body[data-theme="xbox"] #widget-shapes { border-radius: 3px; }
+body[data-theme="xbox"] #widget-tabs, body[data-theme="xbox"] #widget-shapes,
+body[data-theme="xbox"] .lang-btn, body[data-theme="xbox"] .lang-toggle { border-radius: 3px; }
 body[data-theme="steam"] .wg-tab, body[data-theme="steam"] .wg-shape,
-body[data-theme="steam"] #widget-tabs, body[data-theme="steam"] #widget-shapes { border-radius: 2px; }
+body[data-theme="steam"] #widget-tabs, body[data-theme="steam"] #widget-shapes,
+body[data-theme="steam"] .lang-btn, body[data-theme="steam"] .lang-toggle { border-radius: 2px; }
 body[data-theme="arcadepremium"] .wg-tab, body[data-theme="arcadepremium"] .wg-shape,
-body[data-theme="arcadepremium"] #widget-tabs, body[data-theme="arcadepremium"] #widget-shapes { border-radius: 2px; }
+body[data-theme="arcadepremium"] #widget-tabs, body[data-theme="arcadepremium"] #widget-shapes,
+body[data-theme="arcadepremium"] .lang-btn, body[data-theme="arcadepremium"] .lang-toggle { border-radius: 2px; }
 body[data-theme="plaza"] .wg-shape, body[data-theme="plaza"] #widget-shapes { border-radius: 10px; }
 
 /* Ofertas (.deal-card) y logros de RetroAchievements (.ra-game-card) — misma
@@ -601,6 +605,26 @@ body.now-playing.widget-retracted #widget-peek { box-shadow: inset 0 0 0 3px var
 }
 .wg-tab:hover { color: var(--text); background: color-mix(in srgb, var(--text) 8%, transparent); }
 .wg-tab.active {
+  background: linear-gradient(135deg, var(--accent), var(--accent2));
+  color: var(--accent-text, #fff);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+/* Selector de idioma (Ajustes → Apariencia) — misma pastilla tokenizada que
+   .wg-tab, a escala de panel completo en vez de widget flotante. */
+.lang-toggle {
+  display: inline-flex; gap: 2px; padding: 2px;
+  background: color-mix(in srgb, var(--text) 6%, transparent);
+  border: 1px solid var(--border); border-radius: 999px;
+}
+.lang-btn {
+  border: none; background: transparent; color: var(--dim);
+  font-size: 12px; font-weight: 700;
+  border-radius: 999px; padding: 6px 16px; cursor: pointer;
+  transition: background 0.15s, color 0.15s, box-shadow 0.15s;
+}
+.lang-btn:hover { color: var(--text); background: color-mix(in srgb, var(--text) 8%, transparent); }
+.lang-btn.active {
   background: linear-gradient(135deg, var(--accent), var(--accent2));
   color: var(--accent-text, #fff);
   box-shadow: 0 2px 8px color-mix(in srgb, var(--accent) 45%, transparent);

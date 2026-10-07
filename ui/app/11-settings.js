@@ -283,12 +283,35 @@ function setupWidgetAutoHideToggle() {
   });
 }
 
+let languageToggleWired = false;
+function setupLanguageToggle() {
+  const box = document.getElementById('language-toggle');
+  if (!box) return;
+  const current = window.megahub.getLanguage();
+  box.querySelectorAll('.lang-btn').forEach((btn) => {
+    btn.classList.toggle('active', btn.dataset.lang === current);
+  });
+  if (languageToggleWired) return;
+  languageToggleWired = true;
+  box.querySelectorAll('.lang-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('active')) return;
+      window.megahub.setLanguage(btn.dataset.lang);
+      box.querySelectorAll('.lang-btn').forEach((b) => b.classList.toggle('active', b === btn));
+      // El resto de la UI todavía no lee t() — se cablea módulo a módulo
+      // (ver plan-traduccion-ingles-2026-09.md Fase 3). Por ahora solo
+      // persiste la preferencia para cuando sí lo haga.
+    });
+  });
+}
+
 function openSettings() {
   document.getElementById('settings-overlay').hidden = false;
   buildLauncherSettings();
   setupRetroTab();
   renderThemeGrid();
   setupWidgetAutoHideToggle();
+  setupLanguageToggle();
   // El modal recién se hace visible: el layout de las pestañas todavía no
   // existía en el frame anterior, así que offsetLeft/offsetWidth se leen
   // recién en el próximo frame para que el indicador arranque bien posicionado.
