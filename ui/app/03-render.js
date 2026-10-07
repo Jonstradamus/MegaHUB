@@ -1,5 +1,5 @@
 /* exported escapeHtml, formatBytes, highlightMatch, makePlaceholder, render, skeletonCardsHtml, skeletonLinesHtml */
-/* global PLAT_ABBR, applyFilters, buildDockIcon, buildListRow, countEl, dock, dockEls, icon, list, listEls, refreshSelection, selectedIndex:writable, updateDockIcon, updateListRow, visible:writable */
+/* global PLAT_ABBR, applyFilters, buildDockIcon, buildListRow, countEl, dock, dockEls, icon, list, listEls, refreshSelection, selectedIndex:writable, tr, updateDockIcon, updateListRow, visible:writable */
 /* ================= Render (compartido por los 2 modos) ================= */
 
 // Sincroniza un contenedor con `visible` reutilizando los nodos ya creados (con su
@@ -32,9 +32,11 @@ function syncContainer(container, elementsMap, buildFn, updateFn, emptyMsg) {
 function render() {
   visible = applyFilters();
   selectedIndex = Math.min(selectedIndex, Math.max(0, visible.length - 1));
-  countEl.textContent = visible.length ? `${visible.length} juegos` : '';
+  countEl.textContent = visible.length
+    ? `${visible.length} ${visible.length === 1 ? tr('megahub.gameList.gameSingular') : tr('megahub.gameList.gamePlural')}`
+    : '';
 
-  const emptyMsg = 'No hay juegos con estos filtros.';
+  const emptyMsg = tr('megahub.gameList.empty');
   syncContainer(dock, dockEls, buildDockIcon, updateDockIcon, emptyMsg);
   syncContainer(list, listEls, buildListRow, updateListRow, emptyMsg);
 

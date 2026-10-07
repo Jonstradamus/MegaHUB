@@ -3,5 +3,51 @@
     "appearance": {
       "languageTitle": "Language"
     }
+  },
+  "megahub": {
+    "consoleGen": {
+      "gen2": "2nd generation",
+      "arcade": "Arcade",
+      "8bit": "8-bit",
+      "16bit": "16-bit",
+      "portable": "Handheld",
+      "32bit": "32-bit",
+      "gen5": "5th generation",
+      "gen6": "6th generation",
+      "64bit": "64-bit",
+      "gen7": "7th generation"
+    },
+    "emulatorGuideGen": {
+      "bits8to16": "8 / 16-bit",
+      "bits32to64": "32 / 64-bit",
+      "sixthGen": "Sixth generation",
+      "seventhGen": "Seventh generation",
+      "bonus": "Bonus"
+    },
+    "emulatorGuideNote": {
+      "snesNote": "bsnes if you prioritize accuracy over speed",
+      "n64Note": "Mupen64Plus-Next as an alternative core",
+      "dreamcastNote": "Redream as a simpler standalone alternative",
+      "naomiNote": "same core as Dreamcast, same base hardware"
+    },
+    "launcherTier": {
+      "clave": "Core",
+      "nicho": "Niche"
+    },
+    "launcher": {
+      "comingSoon": "coming soon"
+    },
+    "sidebar": {
+      "allPlatforms": "All",
+      "allGenres": "All"
+    },
+    "gameList": {
+      "gameSingular": "game",
+      "gamePlural": "games",
+      "empty": "No games match these filters."
+    },
+    "actions": {
+      "openingRom": "Opening \"${title}\"…"
+    }
   }
 }

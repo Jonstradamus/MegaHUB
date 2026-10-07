@@ -1,5 +1,5 @@
 /* exported primaryAction */
-/* global activeChildren, currentConsole, selectedIndex, showToast, visible */
+/* global activeChildren, currentConsole, selectedIndex, showToast, tr, visible */
 /* ================= Acciones ================= */
 
 async function launchGame(game) {
@@ -16,7 +16,7 @@ async function launchLocalRom(entry) {
   // Feedback SIEMPRE visible (toast), no solo la pista de texto junto al
   // botón — antes, si algo fallaba y el usuario no tenía la vista justo ahí,
   // parecía que el click no hizo nada en absoluto.
-  showToast(`Abriendo "${entry.title}"…`, 'info', 2500);
+  showToast(tr('megahub.actions.openingRom', { title: entry.title }), 'info', 2500);
   const result = await window.megahub.retroLaunchRom({
     consoleId: currentConsole.id,
     consoleName: currentConsole.name,

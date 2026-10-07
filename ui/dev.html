@@ -82,6 +82,12 @@
       getMeta: async () => null,
       getSpecs: async () => ({ cpuName: 'CPU dev', cores: 8, threads: 16, gpuName: 'GPU dev', ramGb: 32 }),
       analyzeGame: async () => ({ unsupported: true }),
+      // Sin i18n real acá (src/lib/i18n.js es CommonJS, este harness es un
+      // navegador sin bundler) — devuelve la clave sin traducir, total la
+      // vista de Ajustes/Retro ni siquiera se monta en este HTML reducido.
+      t: (key) => key,
+      getLanguage: () => 'es',
+      setLanguage: () => {},
     };
   </script>
   <!-- app.js (5033 L) se dividió en ui/app/ por sección — ver

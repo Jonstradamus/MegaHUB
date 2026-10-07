@@ -1,5 +1,5 @@
 /* exported applyRetroFilters, consoleMonogram, hueFromString, moveRetro, refreshConsoleOwnedCounts, retroPrimaryAction, updateRetroGameCard */
-/* global CONSOLE_REGISTRY, TEXTURE_PACK_CONSOLES, allGames, buildDerivaSearchButton, buildTexturePackButton, consoleCardEls, currentConsole:writable, escapeHtml, formatBytes, highlightMatch, icon, launchGame, launchLocalRom, localRomCounts:writable, retroCatalog:writable, retroConsoleGrid, retroConsoleSelectedIndex:writable, retroConsoleSortMode:writable, retroConsoleView, retroCountEl, retroDetailMeta, retroDetailName, retroDetailPhoto, retroDetailView, retroFilteredCatalog:writable, retroGameEls, retroGameGrid, retroGridBuilt:writable, retroOwnedFilterMode:writable, retroSearchTerm:writable, retroSelectedIndex:writable, searchInput, showToast, skeletonCardsHtml, skeletonLinesHtml, syncCoverSlot, updateMultiplayerControls, updateSearchContext, updateSidebarMode, viewMode */
+/* global CONSOLE_REGISTRY, TEXTURE_PACK_CONSOLES, allGames, buildDerivaSearchButton, buildTexturePackButton, consoleCardEls, currentConsole:writable, escapeHtml, formatBytes, highlightMatch, icon, launchGame, launchLocalRom, localRomCounts:writable, retroCatalog:writable, retroConsoleGrid, retroConsoleSelectedIndex:writable, retroConsoleSortMode:writable, retroConsoleView, retroCountEl, retroDetailMeta, retroDetailName, retroDetailPhoto, retroDetailView, retroFilteredCatalog:writable, retroGameEls, retroGameGrid, retroGridBuilt:writable, retroOwnedFilterMode:writable, retroSearchTerm:writable, retroSelectedIndex:writable, searchInput, showToast, skeletonCardsHtml, skeletonLinesHtml, syncCoverSlot, tr, updateMultiplayerControls, updateSearchContext, updateSidebarMode, viewMode */
 /* ================= Vista Retro (consolas + catálogo) ================= */
 
 function normalizeRetroTitle(s) {
@@ -50,7 +50,7 @@ function buildConsoleGrid() {
       </div>
       <div class="console-card-body">
         <div class="console-card-name">${escapeHtml(c.name)}</div>
-        <div class="console-card-gen">${escapeHtml(c.gen)}</div>
+        <div class="console-card-gen">${escapeHtml(tr('megahub.consoleGen.' + c.genKey))}</div>
         <div class="console-card-owned">—</div>
       </div>
     `;
@@ -94,7 +94,8 @@ function applyConsoleSort() {
       lastGen = c.gen;
       const header = document.createElement('div');
       header.className = 'console-gen-header';
-      header.textContent = c.gen;
+      header.textContent = tr('megahub.consoleGen.' + c.genKey);
+      header.dataset.genKey = c.genKey;
       retroConsoleGrid.appendChild(header);
     }
     const el = consoleCardEls.get(c.id);
@@ -305,8 +306,8 @@ function renderConsoleFallbackBadge(box, consoleInfo) {
   // la moderna) — para que no todas las consolas usen el mismo molde, sin
   // inventar una forma específica que no se conoce con certeza.
   const shapeClass = real && real.shape === 'oval' ? ' console-btn--oval' : '';
-  const eraClass = /2ª generación|Recreativas|8 bits/.test(consoleInfo.gen) ? ' console-btn--retro'
-    : /6ª generación|7ª generación/.test(consoleInfo.gen) ? ' console-btn--modern' : '';
+  const eraClass = ['gen2', 'arcade', '8bit'].includes(consoleInfo.genKey) ? ' console-btn--retro'
+    : ['gen6', 'gen7'].includes(consoleInfo.genKey) ? ' console-btn--modern' : '';
   const wrap = document.createElement('div');
   wrap.className = 'console-btn-wrap';
   wrap.innerHTML = `
@@ -391,7 +392,7 @@ async function openConsoleDetail(consoleInfo) {
   retroConsoleView.hidden = true;
   retroDetailView.hidden = false;
   retroDetailName.textContent = consoleInfo.name;
-  retroDetailMeta.innerHTML = `<span>${consoleInfo.year}</span><span>${escapeHtml(consoleInfo.gen)}</span><span id="retro-detail-owned-badge" class="skeleton skeleton-pill" style="width:150px;height:18px;"></span>`;
+  retroDetailMeta.innerHTML = `<span>${consoleInfo.year}</span><span>${escapeHtml(tr('megahub.consoleGen.' + consoleInfo.genKey))}</span><span id="retro-detail-owned-badge" class="skeleton skeleton-pill" style="width:150px;height:18px;"></span>`;
   const iconHtml = consoleIconHtml(consoleInfo) || '';
   retroDetailPhoto.innerHTML = iconHtml;
 
@@ -400,7 +401,7 @@ async function openConsoleDetail(consoleInfo) {
     ${iconHtml}
     <div>
       <div class="rsci-name">${escapeHtml(consoleInfo.name)}</div>
-      <div class="rsci-meta">${consoleInfo.year} · ${escapeHtml(consoleInfo.gen)}</div>
+      <div class="rsci-meta">${consoleInfo.year} · ${escapeHtml(tr('megahub.consoleGen.' + consoleInfo.genKey))}</div>
     </div>
   `;
   document.getElementById('retro-download-link').href = consoleInfo.emulatorUrl;

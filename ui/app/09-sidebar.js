@@ -1,5 +1,5 @@
 /* exported buildPlatformChips, filterConsoleGridByName, rebuildGenreChips, syncChips */
-/* global CONSOLE_REGISTRY, PLATFORM_ORDER, PLAT_LABEL, allGames, disabledPlatforms, filters, gameGenres, highlightMatch, render, retroConsoleGrid, selectedIndex:writable */
+/* global CONSOLE_REGISTRY, PLATFORM_ORDER, PLAT_LABEL, allGames, disabledPlatforms, filters, gameGenres, highlightMatch, render, retroConsoleGrid, selectedIndex:writable, tr */
 /* ================= Sidebar ================= */
 
 function buildPlatformChips() {
@@ -10,7 +10,7 @@ function buildPlatformChips() {
   for (const p of plats) {
     const btn = document.createElement('button');
     btn.className = 'chip' + (filters.platform === p ? ' active' : '');
-    btn.textContent = p === 'all' ? 'Todas' : PLAT_LABEL[p];
+    btn.textContent = p === 'all' ? tr('megahub.sidebar.allPlatforms') : PLAT_LABEL[p];
     btn.onclick = () => { filters.platform = p; selectedIndex = 0; syncChips(box, btn); render(); };
     box.appendChild(btn);
   }
@@ -32,7 +32,7 @@ function rebuildGenreChips() {
     btn.onclick = () => { filters.genre = val; selectedIndex = 0; syncChips(box, btn); render(); };
     box.appendChild(btn);
   };
-  mk('all', 'Todos');
+  mk('all', tr('megahub.sidebar.allGenres'));
   [...genres].sort().forEach(g => mk(g, g));
   document.getElementById('genre-note').style.display = genres.size ? 'none' : '';
 }
@@ -63,11 +63,11 @@ function filterConsoleGridByName(term) {
     if (!c) return;
     const match = !t || c.name.toLowerCase().includes(t);
     card.style.display = match ? '' : 'none';
-    if (match) visibleGens.add(c.gen);
+    if (match) visibleGens.add(c.genKey);
     card.querySelector('.console-card-name').innerHTML = highlightMatch(c.name, term);
   });
   retroConsoleGrid.querySelectorAll('.console-gen-header').forEach(h => {
-    h.style.display = (!t || visibleGens.has(h.textContent)) ? '' : 'none';
+    h.style.display = (!t || visibleGens.has(h.dataset.genKey)) ? '' : 'none';
   });
 }
 

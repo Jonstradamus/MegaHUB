@@ -25,7 +25,7 @@ function applyFilters() {
   if (filters.sort === 'date') {
     list_ = [...list_].sort((a, b) => (gameReleaseTs(b) || 0) - (gameReleaseTs(a) || 0));
   } else {
-    list_ = [...list_].sort((a, b) => a.title.localeCompare(b.title, 'es'));
+    list_ = [...list_].sort((a, b) => a.title.localeCompare(b.title, window.megahub.getLanguage()));
   }
   return list_;
 }

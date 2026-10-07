@@ -1,4 +1,4 @@
-/* exported CONSOLE_EMULATOR_GUIDE, CONSOLE_REGISTRY, LAUNCHER_REGISTRY, MULTIPLAYER_KEY, PLATFORM_ORDER, PLAT_ABBR, PLAT_LABEL, achievementsWrap, allGames, applyStaticIcons, consoleCardEls, controlsFooter, countEl, currentConsole, dealsWrap, disabledPlatforms, dock, dockEls, dockWrap, filters, hiddenGameIds, homeWrap, icon, list, listEls, localRomCounts, metaById, padStatus, padStatusLabel, profileWrap, retroCatalog, retroConsoleGrid, retroConsoleSelectedIndex, retroConsoleSortMode, retroConsoleView, retroCountEl, retroDetailMeta, retroDetailName, retroDetailPhoto, retroDetailView, retroEnabled, retroFilteredCatalog, retroGameEls, retroGameGrid, retroGridBuilt, retroOwnedFilterMode, retroSearchTerm, retroSelectedIndex, retroWrap, searchInput, selectedIndex, sgdbInput, sgdbSaveBtn, videoAllowedFor, viewMode, visible, widgetAutoHide */
+/* exported CONSOLE_EMULATOR_GUIDE, CONSOLE_REGISTRY, LAUNCHER_REGISTRY, MULTIPLAYER_KEY, PLATFORM_ORDER, PLAT_ABBR, PLAT_LABEL, achievementsWrap, allGames, applyStaticIcons, consoleCardEls, controlsFooter, countEl, currentConsole, dealsWrap, disabledPlatforms, dock, dockEls, dockWrap, filters, hiddenGameIds, homeWrap, icon, list, listEls, localRomCounts, metaById, padStatus, padStatusLabel, profileWrap, retroCatalog, retroConsoleGrid, retroConsoleSelectedIndex, retroConsoleSortMode, retroConsoleView, retroCountEl, retroDetailMeta, retroDetailName, retroDetailPhoto, retroDetailView, retroEnabled, retroFilteredCatalog, retroGameEls, retroGameGrid, retroGridBuilt, retroOwnedFilterMode, retroSearchTerm, retroSelectedIndex, retroWrap, searchInput, selectedIndex, sgdbInput, sgdbSaveBtn, tr, videoAllowedFor, viewMode, visible, widgetAutoHide */
 /* ================= Iconos ================= */
 // Set propio de iconos SVG monolínea (nada de librería externa ni descarga —
 // paths escritos a mano, 24x24, stroke="currentColor" para heredar color de
@@ -54,6 +54,12 @@ function applyStaticIcons(root = document) {
 }
 applyStaticIcons();
 
+// Traducción del renderer (ver src/lib/i18n.js + src/preload.js) — NO se llama
+// `t` como en companion-desktop: varias funciones de este módulo (05/07/09/18/19)
+// ya usan `t` como variable local para el término de búsqueda en minúsculas, y
+// un helper global del mismo nombre quedaría sombreado en silencio ahí dentro.
+function tr(key, params) { return window.megahub?.t(key, params) ?? key; }
+
 const PLAT_LABEL = {
   steam: 'Steam', epic: 'Epic Games', gog: 'GOG',
   battlenet: 'Battle.net', riot: 'Riot Games', xbox: 'Xbox',
@@ -94,36 +100,36 @@ const LAUNCHER_REGISTRY = [
 // 'standalone' = rinde mejor como programa independiente (más pesados de emular).
 const CONSOLE_EMULATOR_GUIDE = [
   {
-    gen: '8 / 16 bits',
+    gen: '8 / 16 bits', genKey: 'bits8to16',
     items: [
       { console: 'NES', emu: 'Mesen', src: 'core' },
-      { console: 'SNES', emu: 'Snes9x', src: 'core', note: 'bsnes si priorizas precisión sobre velocidad' },
+      { console: 'SNES', emu: 'Snes9x', src: 'core', note: 'bsnes si priorizas precisión sobre velocidad', noteKey: 'snesNote' },
       { console: 'Master System / Game Gear', emu: 'Genesis Plus GX', src: 'core' },
       { console: 'Mega Drive / Genesis', emu: 'Genesis Plus GX', src: 'core' },
       { console: 'Game Boy / Color', emu: 'SameBoy', src: 'core' },
     ],
   },
   {
-    gen: '32 / 64 bits',
+    gen: '32 / 64 bits', genKey: 'bits32to64',
     items: [
-      { console: 'Nintendo 64', emu: 'Project64', src: 'standalone', note: 'Mupen64Plus-Next como core alternativo' },
+      { console: 'Nintendo 64', emu: 'Project64', src: 'standalone', note: 'Mupen64Plus-Next como core alternativo', noteKey: 'n64Note' },
       { console: 'PlayStation (PS1)', emu: 'DuckStation', src: 'core' },
       { console: 'Sega Saturn', emu: 'Mednafen (Beetle Saturn)', src: 'core' },
     ],
   },
   {
-    gen: 'Sexta generación',
+    gen: 'Sexta generación', genKey: 'sixthGen',
     items: [
       { console: 'PlayStation 2', emu: 'PCSX2', src: 'standalone' },
       { console: 'GameCube', emu: 'Dolphin', src: 'standalone' },
       { console: 'Xbox (original)', emu: 'Xemu', src: 'standalone' },
-      { console: 'Dreamcast', emu: 'Flycast', src: 'core', note: 'Redream como alternativa standalone más simple' },
-      { console: 'NAOMI / Atomiswave (arcade)', emu: 'Flycast', src: 'core', note: 'mismo core que Dreamcast, mismo hardware base' },
+      { console: 'Dreamcast', emu: 'Flycast', src: 'core', note: 'Redream como alternativa standalone más simple', noteKey: 'dreamcastNote' },
+      { console: 'NAOMI / Atomiswave (arcade)', emu: 'Flycast', src: 'core', note: 'mismo core que Dreamcast, mismo hardware base', noteKey: 'naomiNote' },
       { console: 'Game Boy Advance', emu: 'mGBA', src: 'core' },
     ],
   },
   {
-    gen: 'Séptima generación',
+    gen: 'Séptima generación', genKey: 'seventhGen',
     items: [
       { console: 'PlayStation 3', emu: 'RPCS3', src: 'standalone' },
       { console: 'Xbox 360', emu: 'Xenia', src: 'standalone' },
@@ -133,7 +139,7 @@ const CONSOLE_EMULATOR_GUIDE = [
     ],
   },
   {
-    gen: 'Bonus',
+    gen: 'Bonus', genKey: 'bonus',
     items: [
       { console: 'Arcade', emu: 'MAME', src: 'core' },
     ],
@@ -145,37 +151,37 @@ const CONSOLE_EMULATOR_GUIDE = [
 // la foto vía Wikipedia/Commons (fotos libres, sin key). Ordenado por año de salida.
 const RETROARCH_DL = 'https://www.retroarch.com/?page=platforms';
 const CONSOLE_REGISTRY = [
-  { id: 'atari2600', name: 'Atari 2600', year: 1977, gen: '2ª generación', wikiTitle: 'Atari 2600', commonsQuery: 'Atari 2600 console', repo: 'Atari_-_2600', emulator: 'Stella (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'arcade', name: 'Arcade', year: 1978, gen: 'Recreativas', wikiTitle: 'Arcade video game', commonsQuery: 'arcade cabinet', repo: 'FBNeo_-_Arcade_Games', emulator: 'FBNeo (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'nes', name: 'NES (Famicom)', year: 1983, gen: '8 bits', wikiTitle: 'Nintendo Entertainment System', commonsQuery: 'NES console', repo: 'Nintendo_-_Nintendo_Entertainment_System', emulator: 'Mesen (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'sms', name: 'Master System', year: 1985, gen: '8 bits', wikiTitle: 'Master System', commonsQuery: 'Sega Master System console', repo: 'Sega_-_Master_System_-_Mark_III', emulator: 'Genesis Plus GX (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'pcengine', name: 'PC Engine / TurboGrafx-16', year: 1987, gen: '16 bits', wikiTitle: 'TurboGrafx-16', commonsQuery: 'PC Engine console', repo: 'NEC_-_PC_Engine_-_TurboGrafx_16', emulator: 'Beetle PCE Fast (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'genesis', name: 'Mega Drive / Genesis', year: 1988, gen: '16 bits', wikiTitle: 'Sega Genesis', commonsQuery: 'Sega Genesis console', repo: 'Sega_-_Mega_Drive_-_Genesis', emulator: 'Genesis Plus GX (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'gb', name: 'Game Boy', year: 1989, gen: 'Portátil', wikiTitle: 'Game Boy', commonsQuery: 'Game Boy console', repo: 'Nintendo_-_Game_Boy', emulator: 'SameBoy (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'snes', name: 'Super Nintendo', year: 1990, gen: '16 bits', wikiTitle: 'Super Nintendo Entertainment System', commonsQuery: 'SNES console', repo: 'Nintendo_-_Super_Nintendo_Entertainment_System', emulator: 'Snes9x (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'gamegear', name: 'Game Gear', year: 1990, gen: 'Portátil', wikiTitle: 'Game Gear', commonsQuery: 'Sega Game Gear console', repo: 'Sega_-_Game_Gear', emulator: 'Genesis Plus GX (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'neogeo', name: 'Neo Geo (AES/MVS)', year: 1990, gen: '16 bits', wikiTitle: 'Neo Geo', commonsQuery: 'Neo Geo console', repo: 'SNK_-_Neo_Geo', emulator: 'FBNeo (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'segacd', name: 'Sega CD', year: 1991, gen: '16 bits', wikiTitle: 'Sega CD', commonsQuery: 'Sega CD console', repo: 'Sega_-_Mega-CD_-_Sega_CD', emulator: 'Genesis Plus GX (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'psx', name: 'PlayStation', year: 1994, gen: '32 bits', wikiTitle: 'PlayStation (console)', commonsQuery: 'PlayStation SCPH-1000', repo: 'Sony_-_PlayStation', emulator: 'DuckStation (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'saturn', name: 'Sega Saturn', year: 1994, gen: '32 bits', wikiTitle: 'Sega Saturn', commonsQuery: 'Sega Saturn console', repo: 'Sega_-_Saturn', emulator: 'Mednafen / Beetle Saturn (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'n64', name: 'Nintendo 64', year: 1996, gen: '64 bits', wikiTitle: 'Nintendo 64', commonsQuery: 'Nintendo 64 console', repo: 'Nintendo_-_Nintendo_64', emulator: 'Mupen64Plus-Next (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'gbc', name: 'Game Boy Color', year: 1998, gen: 'Portátil', wikiTitle: 'Game Boy Color', commonsQuery: 'Game Boy Color console', repo: 'Nintendo_-_Game_Boy_Color', emulator: 'SameBoy (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'dreamcast', name: 'Dreamcast', year: 1998, gen: '6ª generación', wikiTitle: 'Dreamcast', commonsQuery: 'Sega Dreamcast console', repo: 'Sega_-_Dreamcast', emulator: 'Flycast (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'atari2600', name: 'Atari 2600', year: 1977, gen: '2ª generación', genKey: 'gen2', wikiTitle: 'Atari 2600', commonsQuery: 'Atari 2600 console', repo: 'Atari_-_2600', emulator: 'Stella (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'arcade', name: 'Arcade', year: 1978, gen: 'Recreativas', genKey: 'arcade', wikiTitle: 'Arcade video game', commonsQuery: 'arcade cabinet', repo: 'FBNeo_-_Arcade_Games', emulator: 'FBNeo (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'nes', name: 'NES (Famicom)', year: 1983, gen: '8 bits', genKey: '8bit', wikiTitle: 'Nintendo Entertainment System', commonsQuery: 'NES console', repo: 'Nintendo_-_Nintendo_Entertainment_System', emulator: 'Mesen (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'sms', name: 'Master System', year: 1985, gen: '8 bits', genKey: '8bit', wikiTitle: 'Master System', commonsQuery: 'Sega Master System console', repo: 'Sega_-_Master_System_-_Mark_III', emulator: 'Genesis Plus GX (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'pcengine', name: 'PC Engine / TurboGrafx-16', year: 1987, gen: '16 bits', genKey: '16bit', wikiTitle: 'TurboGrafx-16', commonsQuery: 'PC Engine console', repo: 'NEC_-_PC_Engine_-_TurboGrafx_16', emulator: 'Beetle PCE Fast (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'genesis', name: 'Mega Drive / Genesis', year: 1988, gen: '16 bits', genKey: '16bit', wikiTitle: 'Sega Genesis', commonsQuery: 'Sega Genesis console', repo: 'Sega_-_Mega_Drive_-_Genesis', emulator: 'Genesis Plus GX (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'gb', name: 'Game Boy', year: 1989, gen: 'Portátil', genKey: 'portable', wikiTitle: 'Game Boy', commonsQuery: 'Game Boy console', repo: 'Nintendo_-_Game_Boy', emulator: 'SameBoy (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'snes', name: 'Super Nintendo', year: 1990, gen: '16 bits', genKey: '16bit', wikiTitle: 'Super Nintendo Entertainment System', commonsQuery: 'SNES console', repo: 'Nintendo_-_Super_Nintendo_Entertainment_System', emulator: 'Snes9x (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'gamegear', name: 'Game Gear', year: 1990, gen: 'Portátil', genKey: 'portable', wikiTitle: 'Game Gear', commonsQuery: 'Sega Game Gear console', repo: 'Sega_-_Game_Gear', emulator: 'Genesis Plus GX (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'neogeo', name: 'Neo Geo (AES/MVS)', year: 1990, gen: '16 bits', genKey: '16bit', wikiTitle: 'Neo Geo', commonsQuery: 'Neo Geo console', repo: 'SNK_-_Neo_Geo', emulator: 'FBNeo (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'segacd', name: 'Sega CD', year: 1991, gen: '16 bits', genKey: '16bit', wikiTitle: 'Sega CD', commonsQuery: 'Sega CD console', repo: 'Sega_-_Mega-CD_-_Sega_CD', emulator: 'Genesis Plus GX (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'psx', name: 'PlayStation', year: 1994, gen: '32 bits', genKey: '32bit', wikiTitle: 'PlayStation (console)', commonsQuery: 'PlayStation SCPH-1000', repo: 'Sony_-_PlayStation', emulator: 'DuckStation (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'saturn', name: 'Sega Saturn', year: 1994, gen: '32 bits', genKey: '32bit', wikiTitle: 'Sega Saturn', commonsQuery: 'Sega Saturn console', repo: 'Sega_-_Saturn', emulator: 'Mednafen / Beetle Saturn (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'n64', name: 'Nintendo 64', year: 1996, gen: '64 bits', genKey: '64bit', wikiTitle: 'Nintendo 64', commonsQuery: 'Nintendo 64 console', repo: 'Nintendo_-_Nintendo_64', emulator: 'Mupen64Plus-Next (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'gbc', name: 'Game Boy Color', year: 1998, gen: 'Portátil', genKey: 'portable', wikiTitle: 'Game Boy Color', commonsQuery: 'Game Boy Color console', repo: 'Nintendo_-_Game_Boy_Color', emulator: 'SameBoy (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'dreamcast', name: 'Dreamcast', year: 1998, gen: '6ª generación', genKey: 'gen6', wikiTitle: 'Dreamcast', commonsQuery: 'Sega Dreamcast console', repo: 'Sega_-_Dreamcast', emulator: 'Flycast (core RetroArch)', emulatorUrl: RETROARCH_DL },
   // NAOMI/Atomiswave: placas arcade basadas en el mismo hardware que la
   // Dreamcast (por eso comparten emulador) — se agrupan en una sola entrada
   // porque en la práctica sus ROMs conviven en la misma carpeta y se abren
   // con el mismo core; el catálogo de portadas usa el repo de NAOMI (más
   // grande e incluye los juegos más conocidos, ej. House of the Dead 2).
-  { id: 'naomi', name: 'NAOMI / Atomiswave', year: 1998, gen: '6ª generación', wikiTitle: 'Sega NAOMI', commonsQuery: 'Sega Naomi arcade board', repo: 'Sega_-_Naomi', emulator: 'Flycast (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'ps2', name: 'PlayStation 2', year: 2000, gen: '6ª generación', wikiTitle: 'PlayStation 2', commonsQuery: 'PlayStation 2 console', repo: 'Sony_-_PlayStation_2', emulator: 'PCSX2', emulatorUrl: 'https://pcsx2.net/downloads', downloadable: true },
-  { id: 'gba', name: 'Game Boy Advance', year: 2001, gen: 'Portátil', wikiTitle: 'Game Boy Advance', commonsQuery: 'Game Boy Advance console', repo: 'Nintendo_-_Game_Boy_Advance', emulator: 'mGBA (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'gamecube', name: 'GameCube', year: 2001, gen: '6ª generación', wikiTitle: 'GameCube', commonsQuery: 'Nintendo GameCube console', repo: 'Nintendo_-_GameCube', emulator: 'Dolphin', emulatorUrl: 'https://dolphin-emu.org/download/', locatable: true },
-  { id: 'xbox', name: 'Xbox', year: 2001, gen: '6ª generación', wikiTitle: 'Xbox (console)', commonsQuery: 'Xbox console', repo: 'Microsoft_-_Xbox', emulator: 'Xemu', emulatorUrl: 'https://xemu.app/', downloadable: true },
-  { id: 'nds', name: 'Nintendo DS', year: 2004, gen: 'Portátil', wikiTitle: 'Nintendo DS', commonsQuery: 'Nintendo DS console', repo: 'Nintendo_-_Nintendo_DS', emulator: 'melonDS (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'psp', name: 'PSP', year: 2004, gen: 'Portátil', wikiTitle: 'PlayStation Portable', commonsQuery: 'PlayStation Portable console', repo: 'Sony_-_PlayStation_Portable', emulator: 'PPSSPP (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'xbox360', name: 'Xbox 360', year: 2005, gen: '7ª generación', wikiTitle: 'Xbox 360', commonsQuery: 'Xbox 360 console', repo: 'Microsoft_-_Xbox_360', emulator: 'Xenia', emulatorUrl: 'https://xenia.jp/', downloadable: true },
-  { id: 'ps3', name: 'PlayStation 3', year: 2006, gen: '7ª generación', wikiTitle: 'PlayStation 3', commonsQuery: 'PlayStation 3 console', repo: 'Sony_-_PlayStation_3', emulator: 'RPCS3', emulatorUrl: 'https://rpcs3.net/download', downloadable: true },
-  { id: 'wii', name: 'Wii', year: 2006, gen: '7ª generación', wikiTitle: 'Wii', commonsQuery: 'Nintendo Wii console', repo: 'Nintendo_-_Wii', emulator: 'Dolphin', emulatorUrl: 'https://dolphin-emu.org/download/', locatable: true },
+  { id: 'naomi', name: 'NAOMI / Atomiswave', year: 1998, gen: '6ª generación', genKey: 'gen6', wikiTitle: 'Sega NAOMI', commonsQuery: 'Sega Naomi arcade board', repo: 'Sega_-_Naomi', emulator: 'Flycast (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'ps2', name: 'PlayStation 2', year: 2000, gen: '6ª generación', genKey: 'gen6', wikiTitle: 'PlayStation 2', commonsQuery: 'PlayStation 2 console', repo: 'Sony_-_PlayStation_2', emulator: 'PCSX2', emulatorUrl: 'https://pcsx2.net/downloads', downloadable: true },
+  { id: 'gba', name: 'Game Boy Advance', year: 2001, gen: 'Portátil', genKey: 'portable', wikiTitle: 'Game Boy Advance', commonsQuery: 'Game Boy Advance console', repo: 'Nintendo_-_Game_Boy_Advance', emulator: 'mGBA (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'gamecube', name: 'GameCube', year: 2001, gen: '6ª generación', genKey: 'gen6', wikiTitle: 'GameCube', commonsQuery: 'Nintendo GameCube console', repo: 'Nintendo_-_GameCube', emulator: 'Dolphin', emulatorUrl: 'https://dolphin-emu.org/download/', locatable: true },
+  { id: 'xbox', name: 'Xbox', year: 2001, gen: '6ª generación', genKey: 'gen6', wikiTitle: 'Xbox (console)', commonsQuery: 'Xbox console', repo: 'Microsoft_-_Xbox', emulator: 'Xemu', emulatorUrl: 'https://xemu.app/', downloadable: true },
+  { id: 'nds', name: 'Nintendo DS', year: 2004, gen: 'Portátil', genKey: 'portable', wikiTitle: 'Nintendo DS', commonsQuery: 'Nintendo DS console', repo: 'Nintendo_-_Nintendo_DS', emulator: 'melonDS (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'psp', name: 'PSP', year: 2004, gen: 'Portátil', genKey: 'portable', wikiTitle: 'PlayStation Portable', commonsQuery: 'PlayStation Portable console', repo: 'Sony_-_PlayStation_Portable', emulator: 'PPSSPP (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'xbox360', name: 'Xbox 360', year: 2005, gen: '7ª generación', genKey: 'gen7', wikiTitle: 'Xbox 360', commonsQuery: 'Xbox 360 console', repo: 'Microsoft_-_Xbox_360', emulator: 'Xenia', emulatorUrl: 'https://xenia.jp/', downloadable: true },
+  { id: 'ps3', name: 'PlayStation 3', year: 2006, gen: '7ª generación', genKey: 'gen7', wikiTitle: 'PlayStation 3', commonsQuery: 'PlayStation 3 console', repo: 'Sony_-_PlayStation_3', emulator: 'RPCS3', emulatorUrl: 'https://rpcs3.net/download', downloadable: true },
+  { id: 'wii', name: 'Wii', year: 2006, gen: '7ª generación', genKey: 'gen7', wikiTitle: 'Wii', commonsQuery: 'Nintendo Wii console', repo: 'Nintendo_-_Wii', emulator: 'Dolphin', emulatorUrl: 'https://dolphin-emu.org/download/', locatable: true },
 
   // Añadidas tras verificar legalidad: todas son proyectos open-source sin
   // demandas activas ni código propietario de por medio (a diferencia de
@@ -184,19 +190,19 @@ const CONSOLE_REGISTRY = [
   // Citra fue retirado como parte del acuerdo legal de Nintendo con Tropic
   // Haze; Azahar es un fork limpio nacido después, sin código de Nintendo y
   // sin soporte para ROMs cifradas.
-  { id: 'intellivision', name: 'Intellivision', year: 1979, gen: '2ª generación', wikiTitle: 'Intellivision', commonsQuery: 'Intellivision console', repo: 'Mattel_-_Intellivision', emulator: 'FreeIntv (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'atari5200', name: 'Atari 5200', year: 1982, gen: '2ª generación', wikiTitle: 'Atari 5200', commonsQuery: 'Atari 5200 console', repo: 'Atari_-_5200', emulator: 'a5200 (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'colecovision', name: 'ColecoVision', year: 1982, gen: '2ª generación', wikiTitle: 'ColecoVision', commonsQuery: 'ColecoVision console', repo: 'Coleco_-_ColecoVision', emulator: 'Gearcoleco (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'vectrex', name: 'Vectrex', year: 1982, gen: '2ª generación', wikiTitle: 'Vectrex', commonsQuery: 'Vectrex console', repo: 'GCE_-_Vectrex', emulator: 'Vecx (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'msx', name: 'MSX', year: 1983, gen: '8 bits', wikiTitle: 'MSX', commonsQuery: 'MSX computer', repo: 'Microsoft_-_MSX', emulator: 'blueMSX (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'atari7800', name: 'Atari 7800', year: 1986, gen: '8 bits', wikiTitle: 'Atari 7800', commonsQuery: 'Atari 7800 console', repo: 'Atari_-_7800', emulator: 'ProSystem (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'atarilynx', name: 'Atari Lynx', year: 1989, gen: 'Portátil', wikiTitle: 'Atari Lynx', commonsQuery: 'Atari Lynx console', repo: 'Atari_-_Lynx', emulator: 'Handy (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'threedo', name: '3DO', year: 1993, gen: '5ª generación', wikiTitle: '3DO Interactive Multiplayer', commonsQuery: '3DO console', repo: 'The_3DO_Company_-_3DO', emulator: 'Opera (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'atarijaguar', name: 'Atari Jaguar', year: 1993, gen: '5ª generación', wikiTitle: 'Atari Jaguar', commonsQuery: 'Atari Jaguar console', repo: 'Atari_-_Jaguar', emulator: 'Virtual Jaguar (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'virtualboy', name: 'Virtual Boy', year: 1995, gen: 'Portátil', wikiTitle: 'Virtual Boy', commonsQuery: 'Virtual Boy console', repo: 'Nintendo_-_Virtual_Boy', emulator: 'Beetle VB (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'ngp', name: 'Neo Geo Pocket (Color)', year: 1999, gen: 'Portátil', wikiTitle: 'Neo Geo Pocket Color', commonsQuery: 'Neo Geo Pocket Color console', repo: 'SNK_-_Neo_Geo_Pocket_Color', emulator: 'Beetle NeoPop (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'wonderswan', name: 'WonderSwan (Color)', year: 1999, gen: 'Portátil', wikiTitle: 'WonderSwan Color', commonsQuery: 'WonderSwan Color console', repo: 'Bandai_-_WonderSwan_Color', emulator: 'Beetle Cygne (core RetroArch)', emulatorUrl: RETROARCH_DL },
-  { id: 'n3ds', name: 'Nintendo 3DS', year: 2011, gen: 'Portátil', wikiTitle: 'Nintendo 3DS', commonsQuery: 'Nintendo 3DS console', repo: 'Nintendo_-_Nintendo_3DS', emulator: 'Azahar (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'intellivision', name: 'Intellivision', year: 1979, gen: '2ª generación', genKey: 'gen2', wikiTitle: 'Intellivision', commonsQuery: 'Intellivision console', repo: 'Mattel_-_Intellivision', emulator: 'FreeIntv (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'atari5200', name: 'Atari 5200', year: 1982, gen: '2ª generación', genKey: 'gen2', wikiTitle: 'Atari 5200', commonsQuery: 'Atari 5200 console', repo: 'Atari_-_5200', emulator: 'a5200 (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'colecovision', name: 'ColecoVision', year: 1982, gen: '2ª generación', genKey: 'gen2', wikiTitle: 'ColecoVision', commonsQuery: 'ColecoVision console', repo: 'Coleco_-_ColecoVision', emulator: 'Gearcoleco (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'vectrex', name: 'Vectrex', year: 1982, gen: '2ª generación', genKey: 'gen2', wikiTitle: 'Vectrex', commonsQuery: 'Vectrex console', repo: 'GCE_-_Vectrex', emulator: 'Vecx (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'msx', name: 'MSX', year: 1983, gen: '8 bits', genKey: '8bit', wikiTitle: 'MSX', commonsQuery: 'MSX computer', repo: 'Microsoft_-_MSX', emulator: 'blueMSX (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'atari7800', name: 'Atari 7800', year: 1986, gen: '8 bits', genKey: '8bit', wikiTitle: 'Atari 7800', commonsQuery: 'Atari 7800 console', repo: 'Atari_-_7800', emulator: 'ProSystem (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'atarilynx', name: 'Atari Lynx', year: 1989, gen: 'Portátil', genKey: 'portable', wikiTitle: 'Atari Lynx', commonsQuery: 'Atari Lynx console', repo: 'Atari_-_Lynx', emulator: 'Handy (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'threedo', name: '3DO', year: 1993, gen: '5ª generación', genKey: 'gen5', wikiTitle: '3DO Interactive Multiplayer', commonsQuery: '3DO console', repo: 'The_3DO_Company_-_3DO', emulator: 'Opera (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'atarijaguar', name: 'Atari Jaguar', year: 1993, gen: '5ª generación', genKey: 'gen5', wikiTitle: 'Atari Jaguar', commonsQuery: 'Atari Jaguar console', repo: 'Atari_-_Jaguar', emulator: 'Virtual Jaguar (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'virtualboy', name: 'Virtual Boy', year: 1995, gen: 'Portátil', genKey: 'portable', wikiTitle: 'Virtual Boy', commonsQuery: 'Virtual Boy console', repo: 'Nintendo_-_Virtual_Boy', emulator: 'Beetle VB (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'ngp', name: 'Neo Geo Pocket (Color)', year: 1999, gen: 'Portátil', genKey: 'portable', wikiTitle: 'Neo Geo Pocket Color', commonsQuery: 'Neo Geo Pocket Color console', repo: 'SNK_-_Neo_Geo_Pocket_Color', emulator: 'Beetle NeoPop (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'wonderswan', name: 'WonderSwan (Color)', year: 1999, gen: 'Portátil', genKey: 'portable', wikiTitle: 'WonderSwan Color', commonsQuery: 'WonderSwan Color console', repo: 'Bandai_-_WonderSwan_Color', emulator: 'Beetle Cygne (core RetroArch)', emulatorUrl: RETROARCH_DL },
+  { id: 'n3ds', name: 'Nintendo 3DS', year: 2011, gen: 'Portátil', genKey: 'portable', wikiTitle: 'Nintendo 3DS', commonsQuery: 'Nintendo 3DS console', repo: 'Nintendo_-_Nintendo_3DS', emulator: 'Azahar (core RetroArch)', emulatorUrl: RETROARCH_DL },
 ];
 
 // Qué consolas tienen multijugador online real y con qué guía (ver

@@ -1,5 +1,5 @@
 /* exported openSettings, renderThemeGrid */
-/* global CONSOLE_EMULATOR_GUIDE, LAUNCHER_REGISTRY, allGames, buildPlatformChips, disabledPlatforms, escapeHtml, icon, render, retroEnabled:writable, showToast, skeletonLinesHtml, widgetAutoHide:writable */
+/* global CONSOLE_EMULATOR_GUIDE, LAUNCHER_REGISTRY, allGames, buildPlatformChips, disabledPlatforms, escapeHtml, icon, render, retroEnabled:writable, showToast, skeletonLinesHtml, tr, widgetAutoHide:writable */
 /* ================= Ajustes (Launchers + Modo Retro) ================= */
 
 function saveDisabledPlatforms() {
@@ -15,8 +15,8 @@ function buildLauncherSettings() {
     const implemented = l.status === 'implemented';
     row.innerHTML = `
       <span class="launcher-name">${escapeHtml(l.label)}</span>
-      <span class="launcher-tag ${l.tier}">${l.tier}</span>
-      ${implemented ? '' : '<span class="launcher-status planned">próximamente</span>'}
+      <span class="launcher-tag ${l.tier}">${tr('megahub.launcherTier.' + l.tier)}</span>
+      ${implemented ? '' : `<span class="launcher-status planned">${tr('megahub.launcher.comingSoon')}</span>`}
     `;
     const toggle = document.createElement('div');
     toggle.className = 'toggle-switch' + (implemented ? '' : ' disabled');
@@ -46,14 +46,14 @@ function renderConsoleGuide() {
     section.className = 'gen-group';
     const title = document.createElement('div');
     title.className = 'gen-title';
-    title.textContent = group.gen;
+    title.textContent = tr('megahub.emulatorGuideGen.' + group.genKey);
     section.appendChild(title);
     for (const item of group.items) {
       const row = document.createElement('div');
       row.className = 'console-row';
       row.innerHTML = `
         <span class="console-name">${escapeHtml(item.console)}</span>
-        <span class="console-emu"><b>${escapeHtml(item.emu)}</b>${item.note ? ' — ' + escapeHtml(item.note) : ''}</span>
+        <span class="console-emu"><b>${escapeHtml(item.emu)}</b>${item.note ? ' — ' + escapeHtml(tr('megahub.emulatorGuideNote.' + item.noteKey)) : ''}</span>
         <span class="console-src ${item.src}">${item.src === 'core' ? 'core RetroArch' : 'standalone'}</span>
       `;
       section.appendChild(row);
@@ -287,6 +287,8 @@ let languageToggleWired = false;
 function setupLanguageToggle() {
   const box = document.getElementById('language-toggle');
   if (!box) return;
+  const titleEl = document.getElementById('language-title');
+  if (titleEl) titleEl.textContent = tr('settings.appearance.languageTitle');
   const current = window.megahub.getLanguage();
   box.querySelectorAll('.lang-btn').forEach((btn) => {
     btn.classList.toggle('active', btn.dataset.lang === current);
