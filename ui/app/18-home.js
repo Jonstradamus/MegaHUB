@@ -1,5 +1,5 @@
 /* exported buildHomeTile, updateFirstSeenMap */
-/* global PLAT_LABEL, allGames, escapeHtml, findCoverForActivity, formatHours, launchGame, steamPlaytimeMap, syncCoverSlot, viewMode */
+/* global PLAT_LABEL, allGames, escapeHtml, findCoverForActivity, formatHours, launchGame, steamPlaytimeMap, syncCoverSlot, tr, viewMode */
 /* ================= Inicio (dashboard de aterrizaje) =================
    Reusa allGames (ya cargado por rescan()) y activityLog.js — sin escaneo ni
    IPC nuevo salvo 2 lecturas ya expuestas (companionGetRecentlyPlayed y
@@ -145,11 +145,11 @@ function computeTodayPick() {
     if (g.platform === 'steam') {
       const info = steamPlaytimeMap[String(g.id).replace(/^steam-/, '')];
       const minutes = info?.playtimeMinutes || 0;
-      if (minutes === 0) { score = 3; reason = 'Nunca lo probaste'; }
+      if (minutes === 0) { score = 3; reason = tr('megahub.home.neverTried'); }
       else if (info?.lastPlayed) {
         const days = Math.floor((now - info.lastPlayed) / 86400000);
-        if (days >= 21) { score = 2.5; reason = `Hace ${days} días que no lo juegas`; }
-        else if (days >= 7) { score = 1.5; reason = `Hace ${days} días que no lo juegas`; }
+        if (days >= 21) { score = 2.5; reason = tr('megahub.home.daysSincePlayed', { days }); }
+        else if (days >= 7) { score = 1.5; reason = tr('megahub.home.daysSincePlayed', { days }); }
       }
     }
     if (score > bestScore) { bestScore = score; best = g; bestReason = reason; }
@@ -158,7 +158,7 @@ function computeTodayPick() {
     // Nada calificó por horas (biblioteca sin datos de Steam, o todo jugado
     // recién) — mejor un pick al azar entre lo instalado que no mostrar nada.
     best = installed[Math.floor(Math.random() * installed.length)];
-    bestReason = 'Elegido para ti';
+    bestReason = tr('megahub.home.pickedForYou');
   }
   return { game: best, reason: bestReason };
 }
@@ -179,7 +179,7 @@ function renderHomePick() {
   card.appendChild(info);
   const btn = document.createElement('button');
   btn.className = 'home-pick-btn';
-  btn.textContent = 'Jugar';
+  btn.textContent = tr('megahub.home.play');
   btn.addEventListener('click', () => launchGame(pick.game));
   card.appendChild(btn);
 }

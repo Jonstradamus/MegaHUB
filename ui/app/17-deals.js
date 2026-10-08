@@ -1,5 +1,5 @@
 /* exported dealKeyOf, dealsIndex, loadDeals, selectDeal, selectedDealKey */
-/* global applyStaticIcons, buildDerivaSearchButton, escapeHtml, icon:writable, skeletonLinesHtml */
+/* global applyStaticIcons, buildDerivaSearchButton, escapeHtml, icon:writable, skeletonLinesHtml, tr */
 /* ================= Ofertas (Steam/GOG/Epic/otras + recomendado) ================= */
 // Vista a pantalla completa (mismo patrón que Logros): una sección por tienda
 // (Steam/GOG/Epic/"Otras tiendas" — Eneba no está cubierto por CheapShark, la
@@ -46,13 +46,13 @@ function dealCardHtml(d, { showStore = false, isNew = false } = {}) {
   const key = dealKeyOf(d);
   dealsIndex.set(key, d);
   const priceHtml = d.salePrice === 0
-    ? `<div class="deal-card-price"><span class="old">${money(d.normalPrice)}</span><span class="new deal-card-free">GRATIS</span></div>`
+    ? `<div class="deal-card-price"><span class="old">${money(d.normalPrice)}</span><span class="new deal-card-free">${tr('megahub.deals.free')}</span></div>`
     : d.salePrice != null
     ? `<div class="deal-card-price"><span class="old">${money(d.normalPrice)}</span><span class="new">${money(d.salePrice)}</span></div>${d.savings > 0 ? `<div class="deal-card-savings">-${d.savings}%</div>` : ''}`
-    : `<div class="deal-card-price"><span class="new">Ver precio</span></div>`;
+    : `<div class="deal-card-price"><span class="new">${tr('megahub.deals.seePrice')}</span></div>`;
   return `
     <div class="deal-card${key === selectedDealKey ? ' selected' : ''}" data-deal-key="${key}" tabindex="0" role="button" title="${escapeHtml(d.title)}">
-      ${isNew ? '<span class="deal-card-new">Nuevo</span>' : ''}
+      ${isNew ? `<span class="deal-card-new">${tr('megahub.deals.new')}</span>` : ''}
       ${d.thumb ? `<img class="deal-card-thumb" src="${escapeHtml(d.thumb)}" alt="" loading="lazy" />` : '<div class="deal-card-thumb"></div>'}
       <div class="deal-card-title">${escapeHtml(d.title)}</div>
       ${showStore ? `<div class="deal-store-badge">${escapeHtml(d.storeName)}</div>` : ''}
@@ -77,7 +77,7 @@ function steamTier(pct) {
 function scoreBlockHtml(d) {
   if (d.metacriticScore != null) {
     const tier = metacriticTier(d.metacriticScore);
-    const verdict = tier === 'great' ? 'Aclamación general' : tier === 'mixed' ? 'Reseñas mixtas' : 'Reseñas negativas';
+    const verdict = tier === 'great' ? tr('megahub.deals.metacriticGreat') : tier === 'mixed' ? tr('megahub.deals.metacriticMixed') : tr('megahub.deals.metacriticBad');
     return `
       <div class="deal-score">
         <div class="score-badge score-${tier}">${d.metacriticScore}</div>
@@ -89,7 +89,7 @@ function scoreBlockHtml(d) {
   }
   if (d.steamRatingPercent != null) {
     const tier = steamTier(d.steamRatingPercent);
-    const verdict = tier === 'great' ? 'Mayormente positivas' : tier === 'mixed' ? 'Variadas' : 'Mayormente negativas';
+    const verdict = tier === 'great' ? tr('megahub.deals.steamGreat') : tier === 'mixed' ? tr('megahub.deals.steamMixed') : tr('megahub.deals.steamBad');
     return `
       <div class="deal-score">
         <div class="score-badge score-${tier} score-steam">${d.steamRatingPercent}%</div>
@@ -103,8 +103,8 @@ function scoreBlockHtml(d) {
     <div class="deal-score">
       <div class="score-badge score-none">—</div>
       <div class="score-meta">
-        <div class="score-source">Puntuación</div>
-        <div class="score-verdict">Sin datos disponibles</div>
+        <div class="score-source">${tr('megahub.deals.score')}</div>
+        <div class="score-verdict">${tr('megahub.deals.noScoreData')}</div>
       </div>
     </div>`;
 }
@@ -114,7 +114,7 @@ function priceBlockHtml(d) {
     return `<div class="deal-price-block"><span class="deal-price-new">${money(d.normalPrice)}</span></div>`;
   }
   if (d.salePrice === 0) {
-    return `<div class="deal-price-block"><span class="deal-price-old">${money(d.normalPrice)}</span><span class="deal-price-new deal-card-free">GRATIS</span></div>`;
+    return `<div class="deal-price-block"><span class="deal-price-old">${money(d.normalPrice)}</span><span class="deal-price-new deal-card-free">${tr('megahub.deals.free')}</span></div>`;
   }
   return `
     <div class="deal-price-block">
@@ -152,7 +152,7 @@ function renderDealDetails(d) {
   actions.innerHTML = '';
   const goBtn = document.createElement('button');
   goBtn.className = 'action-btn install';
-  goBtn.innerHTML = `${icon('link')} Ir a la tienda`;
+  goBtn.innerHTML = `${icon('link')} ${tr('megahub.deals.goToStore')}`;
   goBtn.onclick = () => window.open(d.dealLink, '_blank');
   actions.appendChild(goBtn);
   actions.appendChild(buildDerivaSearchButton(d.title));
@@ -186,7 +186,7 @@ function renderDealsReco() {
   const section = document.getElementById('deals-reco-section');
   if (!dealsReco || !dealsReco.games || !dealsReco.games.length) { section.hidden = true; return; }
   section.querySelector('.deals-section-title').innerHTML =
-    `<i data-icon="zap"></i> Recomendado para ti — juegas mucho <b>${escapeHtml(dealsReco.tagLabel)}</b>`;
+    `<i data-icon="zap"></i> ${tr('megahub.deals.recommendedForYou', { tagLabel: escapeHtml(dealsReco.tagLabel) })}`;
   document.getElementById('deals-reco-grid').innerHTML = dealsReco.games.map(g => dealCardHtml(g, { showStore: true })).join('');
   applyStaticIcons(section);
   section.hidden = false;
@@ -201,12 +201,12 @@ function renderDealsSection(key) {
   const failed = dealsData.errors.includes(key === 'other' ? 'Otras tiendas' : { steam: 'Steam', gog: 'GOG', epic: 'Epic Games' }[key]);
   countEl.textContent = all.length ? `(${all.length})` : '';
   if (failed && !all.length) {
-    grid.innerHTML = '<div class="empty">No se pudo consultar esta tienda ahora mismo — probá "Actualizar" en un rato.</div>';
+    grid.innerHTML = `<div class="empty">${tr('megahub.deals.storeFetchError')}</div>`;
     moreBtn.hidden = true;
     return;
   }
   if (!all.length) {
-    grid.innerHTML = '<div class="empty">Sin ofertas grandes en este momento.</div>';
+    grid.innerHTML = `<div class="empty">${tr('megahub.deals.noDeals')}</div>`;
     moreBtn.hidden = true;
     return;
   }
@@ -214,7 +214,7 @@ function renderDealsSection(key) {
   const visible = dealsExpanded[key] ? all : all.slice(0, DEALS_SECTION_INITIAL);
   grid.innerHTML = visible.map(d => dealCardHtml(d, { isNew: d.savings >= DEALS_NOTABLE_SAVINGS && !seen.has(d.dealID) })).join('');
   moreBtn.hidden = all.length <= DEALS_SECTION_INITIAL;
-  moreBtn.textContent = dealsExpanded[key] ? 'Ver menos' : `Ver más (${all.length - DEALS_SECTION_INITIAL})`;
+  moreBtn.textContent = dealsExpanded[key] ? tr('megahub.deals.seeLess') : tr('megahub.deals.seeMore', { count: all.length - DEALS_SECTION_INITIAL });
 }
 
 function renderDealsAll() {

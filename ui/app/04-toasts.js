@@ -1,5 +1,5 @@
 /* exported activeChildren, buildDockIcon, buildListRow, refreshSelection, selectById, showToast, syncCoverSlot, toastNewlyUnlockedAchievements, updateDockIcon, updateListRow */
-/* global PLAT_LABEL, dock, escapeHtml, filters, formatBytes, formatHours, gameGenres, highlightMatch, icon, isRecentlyEarned, list, makePlaceholder, metaById, primaryAction, renderDetails, retryCoverViaExternalFallback, selectedIndex:writable, steamPlaytimeMap, videoAllowedFor:writable, viewMode, visible */
+/* global PLAT_LABEL, dock, escapeHtml, filters, formatBytes, formatHours, gameGenres, highlightMatch, icon, isRecentlyEarned, list, makePlaceholder, metaById, primaryAction, renderDetails, retryCoverViaExternalFallback, selectedIndex:writable, steamPlaytimeMap, tr, videoAllowedFor:writable, viewMode, visible */
 /* ================= Toasts ================= */
 
 const toastContainer = document.getElementById('toast-container');
@@ -33,7 +33,7 @@ function showAchievementToast(a) {
   el.innerHTML = `
     ${icon('trophy')}
     <span class="toast-ach-body">
-      <span class="toast-ach-eyebrow">Logro desbloqueado</span>
+      <span class="toast-ach-eyebrow">${tr('megahub.toasts.achievementUnlocked')}</span>
       ${a.gameTitle ? `<span class="toast-ach-game"></span>` : ''}
       <span class="toast-msg"></span>
       ${a.description ? `<span class="toast-ach-desc"></span>` : ''}
@@ -236,7 +236,7 @@ function updateListRow(row, game) {
   row.querySelector('.row-meta').innerHTML = bits.join('');
 
   const state = row.querySelector('.row-state');
-  state.textContent = game.installed ? '✔ Instalado' : '⬇ Biblioteca';
+  state.textContent = game.installed ? tr('megahub.toasts.installed') : tr('megahub.toasts.library');
   state.className = 'row-state ' + (game.installed ? 'installed' : 'not-installed');
 }
 

@@ -96,6 +96,36 @@
     },
     "specs": {
       "notDetected": "No se pudo detectar"
+    },
+    "toasts": {
+      "achievementUnlocked": "Logro desbloqueado",
+      "installed": "✔ Instalado",
+      "library": "⬇ Biblioteca"
+    },
+    "home": {
+      "neverTried": "Nunca lo probaste",
+      "daysSincePlayed": "Hace ${days} días que no lo juegas",
+      "pickedForYou": "Elegido para ti",
+      "play": "Jugar"
+    },
+    "deals": {
+      "free": "GRATIS",
+      "seePrice": "Ver precio",
+      "new": "Nuevo",
+      "metacriticGreat": "Aclamación general",
+      "metacriticMixed": "Reseñas mixtas",
+      "metacriticBad": "Reseñas negativas",
+      "steamGreat": "Mayormente positivas",
+      "steamMixed": "Variadas",
+      "steamBad": "Mayormente negativas",
+      "score": "Puntuación",
+      "noScoreData": "Sin datos disponibles",
+      "goToStore": "Ir a la tienda",
+      "recommendedForYou": "Recomendado para ti — juegas mucho <b>${tagLabel}</b>",
+      "storeFetchError": "No se pudo consultar esta tienda ahora mismo — probá \"Actualizar\" en un rato.",
+      "noDeals": "Sin ofertas grandes en este momento.",
+      "seeLess": "Ver menos",
+      "seeMore": "Ver más (${count})"
     }
   }
 }

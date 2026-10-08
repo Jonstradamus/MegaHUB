@@ -96,6 +96,36 @@
     },
     "specs": {
       "notDetected": "Couldn't detect"
+    },
+    "toasts": {
+      "achievementUnlocked": "Achievement unlocked",
+      "installed": "✔ Installed",
+      "library": "⬇ Library"
+    },
+    "home": {
+      "neverTried": "You've never tried it",
+      "daysSincePlayed": "${days} days since you played it",
+      "pickedForYou": "Picked for you",
+      "play": "Play"
+    },
+    "deals": {
+      "free": "FREE",
+      "seePrice": "See price",
+      "new": "New",
+      "metacriticGreat": "Universal acclaim",
+      "metacriticMixed": "Mixed reviews",
+      "metacriticBad": "Negative reviews",
+      "steamGreat": "Mostly positive",
+      "steamMixed": "Mixed",
+      "steamBad": "Mostly negative",
+      "score": "Score",
+      "noScoreData": "No data available",
+      "goToStore": "Go to store",
+      "recommendedForYou": "Recommended for you — you play a lot of <b>${tagLabel}</b>",
+      "storeFetchError": "Couldn't check this store right now — try \"Refresh\" in a bit.",
+      "noDeals": "No big deals right now.",
+      "seeLess": "See less",
+      "seeMore": "See more (${count})"
     }
   }
 }
