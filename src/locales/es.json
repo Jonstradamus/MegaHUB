@@ -64,7 +64,14 @@
       "placeholderDeals": "Ofertas — sin buscador, revisa las secciones",
       "placeholderHome": "Inicio — busca desde PC o Retro  ( / )",
       "placeholderProfile": "Perfil — sin buscador, revisa las secciones",
-      "placeholderDefault": "Buscar juego…  ( / )"
+      "placeholderDefault": "Buscar juego…  ( / )",
+      "deal": "Oferta",
+      "unlocked": "Desbloqueado",
+      "pending": "Pendiente",
+      "groupLibrary": "Biblioteca",
+      "groupDeals": "Ofertas",
+      "groupAchievements": "Logros",
+      "noResults": "Sin resultados"
     },
     "titlebar": {
       "restore": "Restaurar",
@@ -95,7 +102,8 @@
       "playedTodayWeekly": "Jugaste ${hours} a ${title} · van ${weeklyHours} esta semana"
     },
     "specs": {
-      "notDetected": "No se pudo detectar"
+      "notDetected": "No se pudo detectar",
+      "detecting": "Detectando hardware…"
     },
     "toasts": {
       "achievementUnlocked": "Logro desbloqueado",
@@ -189,15 +197,6 @@
         "heuristicNote": "Estimación heurística comparando componentes, no un benchmark real."
       }
     },
-    "search": {
-      "deal": "Oferta",
-      "unlocked": "Desbloqueado",
-      "pending": "Pendiente",
-      "groupLibrary": "Biblioteca",
-      "groupDeals": "Ofertas",
-      "groupAchievements": "Logros",
-      "noResults": "Sin resultados"
-    },
     "accounts": {
       "connected": "conectado",
       "gameCount": "${count} juegos",
@@ -208,7 +207,8 @@
     },
     "apiKeys": {
       "saved": "Guardada ✓",
-      "savedPlaceholder": "Clave guardada (rellena para cambiarla)"
+      "savedPlaceholder": "Clave guardada (rellena para cambiarla)",
+      "save": "Guardar"
     },
     "backup": {
       "exporting": "Exportando…",
@@ -354,6 +354,181 @@
       "trophiesUnlockStatusUnavailable": "${count} trofeos — estado de desbloqueo no disponible todavía",
       "trophiesCount": "${count} trofeos",
       "unknownStatus": "estado desconocido"
+    },
+    "html": {
+      "titlebar": {
+        "widgetMode": "Modo widget",
+        "widgetModeAria": "Activar modo widget",
+        "minimize": "Minimizar",
+        "close": "Cerrar"
+      },
+      "widget": {
+        "shapeSquare": "Cuadro",
+        "shapeSquareAria": "Forma cuadro",
+        "shapeRect": "Rectángulo",
+        "shapeRectAria": "Forma rectángulo",
+        "shapeVertical": "Dock vertical",
+        "shapeVerticalAria": "Forma dock vertical",
+        "backToExpanded": "Volver a MegaHUB expandido",
+        "backToList": "Volver a la lista"
+      },
+      "sidebar": {
+        "thisWeek": "Esta semana",
+        "platform": "Plataforma",
+        "state": "Estado",
+        "allStates": "Todos",
+        "installed": "Instalados",
+        "library": "Biblioteca",
+        "hidden": "Ocultos",
+        "sortBy": "Ordenar por",
+        "sortName": "Nombre",
+        "sortDate": "Fecha de salida",
+        "genre": "Género",
+        "genresLoadNote": "Los géneros se cargan al obtener metadatos",
+        "accounts": "Cuentas",
+        "xboxTooltip": "Requiere que registres tu propia app en Azure AD (Microsoft no permite una clave compartida). No es un simulacro de 'próximamente' — es una limitación real de su API.",
+        "xboxState": "requiere Client ID propio",
+        "coversSgdb": "Portadas (SteamGridDB)",
+        "apiKeyPlaceholder": "API key gratuita…",
+        "sgdbNote": "Rellena las carátulas de Battle.net, Riot, Rockstar, Ubisoft y EA. <a href=\"https://steamgriddb.com/profile/preferences/api\" target=\"_blank\">Consigue tu clave gratis →</a>",
+        "yourPc": "Tu PC"
+      },
+      "retroSidebar": {
+        "chooseConsole": "Elige una consola en el panel principal para ver sus filtros y accesos.",
+        "console": "Consola",
+        "downloadEmulator": "Descargar emulador",
+        "alreadyHaveLocate": "Ya lo tengo — ubicar carpeta",
+        "openEmulator": "Abrir emulador",
+        "installCore": "Instalar core",
+        "downloadSystemFiles": "Descargar archivos de sistema del core",
+        "openRetroArch": "Abrir RetroArch (jugar / configurar)",
+        "biosGeneric": "Requiere de una BIOS oficial, extráela vía dumping desde tu consola. No proporcionamos BIOS.",
+        "openBiosFolder": "Abrir carpeta de BIOS",
+        "multiplayerTooltip": "Cómo activar el online de este emulador para jugar con amigos",
+        "multiplayer": "Multijugador",
+        "resolutionPerformance": "Resolución / Rendimiento",
+        "presetDefault": "Por defecto",
+        "presetOriginal": "Original",
+        "presetOriginalTooltip": "4:3 (o el aspecto original de la consola) + un shader que reproduce cómo se veía en su época — TV de tubo para sobremesa/arcade, pantalla LCD para portátiles.",
+        "localFolders": "Carpetas locales",
+        "createFolders": "Crear carpetas del emulador/ROMs",
+        "openRomsFolder": "Abrir carpeta de ROMs"
+      },
+      "topbar": {
+        "toggleSidebar": "Mostrar/ocultar panel lateral",
+        "viewDock": "Vista Dock",
+        "viewList": "Vista Lista",
+        "viewRetro": "Consolas Retro",
+        "achievementsTooltip": "Logros (RetroAchievements)",
+        "profileTooltip": "Perfil (estadísticas)"
+      },
+      "home": {
+        "pickTitle": "Qué jugar hoy",
+        "continueTitle": "Seguir jugando",
+        "recentTitle": "Agregado recién",
+        "emptyState": "Instala o abre un juego para ver tu resumen aquí."
+      },
+      "retroView": {
+        "disclaimer": "MegaHUB no distribuye BIOS ni ROMs de ningún tipo. Esto es solo una guía visual con portadas — tú debes obtener tus propios archivos legalmente y configurarlos en RetroArch (o el emulador que prefieras).",
+        "sortLabel": "Ordenar:",
+        "sortYear": "Año",
+        "sortGen": "Generación",
+        "sortOwnedFirst": "Obtenidas primero",
+        "backToConsoles": "← Consolas"
+      },
+      "achievements": {
+        "mhTitle": "Logros de MegaHUB",
+        "mhDescription": "Generados por tu actividad real — horas jugadas de Steam (exactas, leídas de tu propio Steam), y sesiones de Modo Retro medidas por MegaHUB mismo. El resto de launchers (Epic/GOG/Battle.net/etc.) solo cuentan como \"lanzado\" para las rachas, ya que corren fuera del alcance de MegaHUB.",
+        "tabGeneral": "Generales",
+        "tabBySteamGame": "Por juego (Steam)",
+        "tabByRetroConsole": "Por consola (Retro)",
+        "tabByRetroGame": "Por juego (Retro)",
+        "raTitle": "Logros",
+        "raConnectIntro": "Conecta tu cuenta de <a href=\"https://retroachievements.org\" target=\"_blank\" rel=\"noopener\">RetroAchievements</a> para ver aquí tu perfil de logros — juegos, progreso e historial, igual que Steam o Xbox.",
+        "raUsernamePlaceholder": "Tu usuario de RetroAchievements…",
+        "raKeyPlaceholder": "Web API key (Panel de control → Keys)…",
+        "raKeyNote": "<a href=\"https://retroachievements.org/controlpanel.php\" target=\"_blank\" rel=\"noopener\">Consigue tu clave gratis en tu Panel de control →</a> No es tu contraseña — es un token de solo lectura. MegaHUB nunca ve ni guarda tu contraseña.",
+        "raEnableCheevos": "Activar logros en RetroArch",
+        "raOpenRetroArch": "Abrir RetroArch para iniciar sesión",
+        "disconnect": "Desconectar",
+        "tabMyGames": "Mis juegos",
+        "tabRecentActivity": "Actividad reciente",
+        "backToMyGames": "← Mis juegos",
+        "consolasTitle": "Xenia (Xbox 360) y RPCS3 (PS3)",
+        "consolasDescription": "Logros y trofeos leídos directamente de los archivos locales que genera cada emulador — sin cuenta ni red. RPCS3 aún no expone de forma fiable qué trofeos ya desbloqueaste (formato propietario sin documentar); por ahora se muestra el catálogo completo de cada juego."
+      },
+      "actions": {
+        "refresh": "Actualizar"
+      },
+      "deals": {
+        "freeNow": "Gratis ahora",
+        "otherStores": "Otras tiendas",
+        "seeMore": "Ver más"
+      },
+      "details": {
+        "emptyState": "Selecciona un juego para ver sus detalles",
+        "reqsTitle": "¿Lo mueve tu PC?"
+      },
+      "profile": {
+        "totalHours": "Horas jugadas (Steam + Retro)",
+        "daysPlayed": "Días distintos jugados",
+        "hoursByPlatform": "Horas por plataforma",
+        "mostPlayed": "Más jugados",
+        "emptyState": "Todavía no hay horas registradas — juega algo desde MegaHUB para ver tus estadísticas aquí."
+      },
+      "controls": {
+        "navigate": "navegar",
+        "playInstall": "jugar · instalar",
+        "platform": "plataforma",
+        "switchView": "cambiar de vista",
+        "search": "buscar"
+      },
+      "onboarding": {
+        "skip": "Omitir",
+        "step1Title": "Bienvenido a MegaHUB",
+        "step1Copy": "Ya escaneamos tu PC: Steam, Battle.net, Rockstar, Ubisoft y EA se detectan solos. Si además usas GOG o Epic Games, conéctalos aquí para sumarlos a la biblioteca.",
+        "step2Title": "Elige un estilo",
+        "step2Copy": "10 skins con forma e identidad propia, no solo color — se puede cambiar cuando quieras desde Ajustes → Apariencia.",
+        "step3Title": "¿Tienes juegos retro?",
+        "step3Copy": "MegaHUB también emula consolas, desde el Atari 2600 hasta la Xbox 360 — instala cores, resuelve carpetas y reconoce tus ROMs contra un catálogo público. Si no juegas retro, no hace falta tocar nada aquí.",
+        "goToRetro": "Ir al Modo Retro",
+        "back": "Atrás"
+      },
+      "settings": {
+        "title": "Ajustes",
+        "tabRetro": "Modo Retro",
+        "tabAppearance": "Apariencia",
+        "tabBackup": "Respaldo",
+        "tabCredits": "Créditos",
+        "launchersIntro": "Activa o desactiva qué plataformas se muestran en tu biblioteca. Las marcadas \"próximamente\" ya están en el mapa pero MegaHUB todavía no sabe leerlas.",
+        "retroZoneLabel": "Zona de emuladores (RetroArch)",
+        "retroSearching": "Buscando RetroArch…",
+        "romsFolderTitle": "Carpeta de emuladores y ROMs",
+        "romsFolderIntro": "Carpeta raíz donde MegaHUB crea <code>emulators/</code> y <code>roms/</code> para las consolas que no tengan su propia ubicación señalada a mano. Por defecto es tu carpeta de Documentos (siempre escribible, sin importar dónde se instaló MegaHUB).",
+        "loadingGeneric": "Cargando…",
+        "changeFolderBtn": "Cambiar carpeta…",
+        "resetFolderBtn": "Restaurar Documentos",
+        "skinsTitle": "Skins de RetroArch",
+        "skinsIntro": "Instala temas de menú (XMB/RGUI) de la comunidad directo en tu RetroArch, sin tener que copiar carpetas a mano. El original se respalda antes de reemplazarlo.",
+        "guideSummary": "Guía de referencia: emulador recomendado por consola",
+        "guideIntro": "El más popular/funcional por consola hasta PS3/Xbox 360. La mayoría corren como core de RetroArch; los más pesados (Dolphin, PCSX2, RPCS3, Xenia…) rinden mejor como programa independiente.",
+        "tgdbGuideSummary": "Ficha completa de catálogo retro (TheGamesDB, opcional)",
+        "tgdbGuideIntro": "Las portadas ya funcionan sin clave (libretro-thumbnails). Para género, desarrollador, descripción y fecha hace falta una clave gratuita propia de TheGamesDB:",
+        "tgdbKeyPlaceholder": "API key de TheGamesDB (opcional)…",
+        "tgdbCreateAccountLink": "<a href=\"https://thegamesdb.net/action/register.php\" target=\"_blank\">Crear cuenta y conseguir la clave gratis →</a>",
+        "appearanceIntro": "Cambia la paleta de color de todo MegaHUB — se aplica al instante y se recuerda entre sesiones. (No confundir con los \"Temas\" de RetroArch en Modo Retro: eso cambia el menú del emulador, esto cambia MegaHUB.)",
+        "widgetModeTitle": "Modo widget",
+        "widgetAutohideLabel": "Auto-ocultar al pegarlo a un borde de la pantalla",
+        "widgetAutohideIntro": "Si arrastras el widget hasta un borde de la pantalla, con esto activado se retrae a una tira fina cuando sacas el mouse de encima (como la barra de tareas de Windows) y se despliega al volver a pasarlo por ahí. Desactívalo si prefieres que se quede fijo, como un dock normal, sin contraerse nunca.",
+        "backupIntro": "Guarda tus ajustes en un archivo .json y llévalo a otra PC (USB, correo, tu propia nube personal — MegaHUB no sube nada por su cuenta). Incluye: carpetas de emulador/ROMs que ubicaste a mano, tus claves de SteamGridDB/TheGamesDB, tu cuenta de RetroAchievements, tu progreso de logros de MegaHUB y los juegos que ocultaste. <b>No incluye</b> las sesiones de GOG/Epic (hay que reconectarlas en la PC nueva) ni cachés de portadas/metadata (se vuelven a pedir solas).",
+        "exportBtn": "Exportar ajustes…",
+        "importBtn": "Importar ajustes…",
+        "ecosystemNote": "<b>Ecosistema DERIVA:</b> si tienes el DERIVA Companion instalado, MegaHUB comparte con él — solo en tu propia PC, sin servidor ni cuenta — qué estás jugando ahora y un resumen de tus logros, para que aparezcan en el modo gaming y el perfil de DERIVA. Ninguna de las dos apps necesita a la otra para funcionar.",
+        "creditsIntro": "MegaHUB no reproduce logos ni marcas de ninguna consola o fabricante — los íconos del catálogo son siluetas genéricas de hardware, elegidas justamente para evitar eso.",
+        "consoleIconsTitle": "Íconos de consola",
+        "consoleIconsCredit": "Proyecto <a href=\"https://github.com/libretro/retroarch-assets\" target=\"_blank\">RetroArch / libretro (retroarch-assets)</a>, tema de menú XMB \"Monochrome\", creado originalmente por <b>Kivutar</b>.",
+        "consoleIconsLicense": "Licencia: <a href=\"https://creativecommons.org/licenses/by/4.0/\" target=\"_blank\">Creative Commons Attribution 4.0 International (CC BY 4.0)</a> — recoloreados por consola respetando la licencia (permite modificar con atribución)."
+      }
     }
   }
 }

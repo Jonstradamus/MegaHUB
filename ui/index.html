@@ -21,13 +21,13 @@
 
   <header id="titlebar">
     <div id="titlebar-controls-left">
-      <button id="tb-widget" class="tb-btn" title="Modo widget" aria-label="Activar modo widget"><i data-icon="grid"></i></button>
+      <button id="tb-widget" class="tb-btn" data-i18n-title="megahub.html.titlebar.widgetMode" data-i18n-aria-label="megahub.html.titlebar.widgetModeAria"><i data-icon="grid"></i></button>
     </div>
     <div id="titlebar-drag"></div>
     <div id="titlebar-controls">
-      <button id="tb-min" class="tb-btn" title="Minimizar" aria-label="Minimizar"><i data-icon="winMin"></i></button>
-      <button id="tb-max" class="tb-btn" title="Maximizar" aria-label="Maximizar"><i data-icon="winMax"></i></button>
-      <button id="tb-close" class="tb-btn tb-close" title="Cerrar" aria-label="Cerrar"><i data-icon="winClose"></i></button>
+      <button id="tb-min" class="tb-btn" data-i18n-title="megahub.html.titlebar.minimize" data-i18n-aria-label="megahub.html.titlebar.minimize"><i data-icon="winMin"></i></button>
+      <button id="tb-max" class="tb-btn" data-i18n-title="megahub.titlebar.maximize" data-i18n-aria-label="megahub.titlebar.maximize"><i data-icon="winMax"></i></button>
+      <button id="tb-close" class="tb-btn tb-close" data-i18n-title="megahub.html.titlebar.close" data-i18n-aria-label="megahub.html.titlebar.close"><i data-icon="winClose"></i></button>
     </div>
   </header>
 
@@ -54,20 +54,20 @@
            clase "on" según haya una sesión activa. -->
       <span id="widget-now-playing" class="wg-now-playing"><span class="wg-now-dot"></span><span id="widget-now-playing-text"></span></span>
       <div id="widget-shapes">
-        <button type="button" class="wg-shape" data-shape="square" title="Cuadro" aria-label="Forma cuadro">◻</button>
-        <button type="button" class="wg-shape active" data-shape="rect" title="Rectángulo" aria-label="Forma rectángulo">▯</button>
-        <button type="button" class="wg-shape" data-shape="vertical" title="Dock vertical" aria-label="Forma dock vertical">▮</button>
+        <button type="button" class="wg-shape" data-shape="square" data-i18n-title="megahub.html.widget.shapeSquare" data-i18n-aria-label="megahub.html.widget.shapeSquareAria">◻</button>
+        <button type="button" class="wg-shape active" data-shape="rect" data-i18n-title="megahub.html.widget.shapeRect" data-i18n-aria-label="megahub.html.widget.shapeRectAria">▯</button>
+        <button type="button" class="wg-shape" data-shape="vertical" data-i18n-title="megahub.html.widget.shapeVertical" data-i18n-aria-label="megahub.html.widget.shapeVerticalAria">▮</button>
       </div>
-      <button id="widget-exit" title="Volver a MegaHUB expandido" aria-label="Volver a MegaHUB expandido"><i data-icon="winRestore"></i></button>
+      <button id="widget-exit" data-i18n-title="megahub.html.widget.backToExpanded" data-i18n-aria-label="megahub.html.widget.backToExpanded"><i data-icon="winRestore"></i></button>
     </div>
     <div id="widget-body">
-      <div id="widget-empty" hidden>Sin juegos instalados todavía.</div>
+      <div id="widget-empty" hidden data-i18n="megahub.widget.emptyPc"></div>
       <div id="widget-list"></div>
       <div id="widget-detail" hidden>
-        <button id="widget-detail-back" aria-label="Volver a la lista"><i data-icon="chevron"></i></button>
+        <button id="widget-detail-back" data-i18n-aria-label="megahub.html.widget.backToList"><i data-icon="chevron"></i></button>
         <div id="widget-detail-cover"></div>
         <div id="widget-detail-title"></div>
-        <button id="widget-detail-play">Jugar</button>
+        <button id="widget-detail-play" data-i18n="megahub.details.play"></button>
       </div>
     </div>
   </div>
@@ -111,63 +111,63 @@
              muestra cuánto se jugó esta semana, con datos propios de MegaHUB
              — ver activityLog.js. -->
         <div class="companion-pill-expand">
-          <div class="cpx-activity-title">Esta semana</div>
+          <div class="cpx-activity-title" data-i18n="megahub.html.sidebar.thisWeek"></div>
           <div class="cpx-activity-list"></div>
         </div>
       </div>
 
       <section class="side-section">
-        <h3>Plataforma</h3>
+        <h3 data-i18n="megahub.html.sidebar.platform"></h3>
         <div id="platform-filters" class="chip-list"></div>
       </section>
 
       <section class="side-section">
-        <h3>Estado</h3>
+        <h3 data-i18n="megahub.html.sidebar.state"></h3>
         <div id="state-filters" class="chip-list">
-          <button class="chip active" data-state="all">Todos</button>
-          <button class="chip" data-state="installed">Instalados</button>
-          <button class="chip" data-state="library">Biblioteca</button>
-          <button class="chip" data-state="hidden">Ocultos</button>
+          <button class="chip active" data-state="all" data-i18n="megahub.html.sidebar.allStates"></button>
+          <button class="chip" data-state="installed" data-i18n="megahub.html.sidebar.installed"></button>
+          <button class="chip" data-state="library" data-i18n="megahub.html.sidebar.library"></button>
+          <button class="chip" data-state="hidden" data-i18n="megahub.html.sidebar.hidden"></button>
         </div>
       </section>
 
       <section class="side-section">
-        <h3>Ordenar por</h3>
+        <h3 data-i18n="megahub.html.sidebar.sortBy"></h3>
         <div id="sort-filters" class="chip-list">
-          <button class="chip active" data-sort="name">Nombre</button>
-          <button class="chip" data-sort="date">Fecha de salida</button>
+          <button class="chip active" data-sort="name" data-i18n="megahub.html.sidebar.sortName"></button>
+          <button class="chip" data-sort="date" data-i18n="megahub.html.sidebar.sortDate"></button>
         </div>
       </section>
 
       <section class="side-section">
-        <h3>Género</h3>
+        <h3 data-i18n="megahub.html.sidebar.genre"></h3>
         <div id="genre-filters" class="chip-list">
-          <button class="chip active" data-genre="all">Todos</button>
+          <button class="chip active" data-genre="all" data-i18n="megahub.sidebar.allGenres"></button>
         </div>
-        <div class="side-note" id="genre-note">Los géneros se cargan al obtener metadatos</div>
+        <div class="side-note" id="genre-note" data-i18n="megahub.html.sidebar.genresLoadNote"></div>
       </section>
 
       <section class="side-section" id="accounts-section">
-        <h3>Cuentas</h3>
-        <button class="account-btn" data-account="gog"><span class="dot"></span> GOG <span class="account-state">conectar</span></button>
-        <button class="account-btn" data-account="epic"><span class="dot"></span> Epic Games <span class="account-state">conectar</span></button>
-        <button class="account-btn disabled" data-account="xbox" title="Requiere que registres tu propia app en Azure AD (Microsoft no permite una clave compartida). No es un simulacro de 'próximamente' — es una limitación real de su API.">
-          <span class="dot"></span> Xbox <span class="account-state">requiere Client ID propio</span>
+        <h3 data-i18n="megahub.html.sidebar.accounts"></h3>
+        <button class="account-btn" data-account="gog"><span class="dot"></span> GOG <span class="account-state" data-i18n="megahub.accounts.connect"></span></button>
+        <button class="account-btn" data-account="epic"><span class="dot"></span> Epic Games <span class="account-state" data-i18n="megahub.accounts.connect"></span></button>
+        <button class="account-btn disabled" data-account="xbox" data-i18n-title="megahub.html.sidebar.xboxTooltip">
+          <span class="dot"></span> Xbox <span class="account-state" data-i18n="megahub.html.sidebar.xboxState"></span>
         </button>
       </section>
 
       <section class="side-section" id="sgdb-section">
-        <h3>Portadas (SteamGridDB)</h3>
+        <h3 data-i18n="megahub.html.sidebar.coversSgdb"></h3>
         <div class="sgdb-row">
-          <input id="sgdb-key" type="password" placeholder="API key gratuita…" />
-          <button id="sgdb-save">Guardar</button>
+          <input id="sgdb-key" type="password" data-i18n-placeholder="megahub.html.sidebar.apiKeyPlaceholder" />
+          <button id="sgdb-save" data-i18n="megahub.apiKeys.save"></button>
         </div>
-        <div class="side-note">Rellena las carátulas de Battle.net, Riot, Rockstar, Ubisoft y EA. <a href="https://steamgriddb.com/profile/preferences/api" target="_blank">Consigue tu clave gratis →</a></div>
+        <div class="side-note" data-i18n-html="megahub.html.sidebar.sgdbNote"></div>
       </section>
 
       <div id="specs-box">
-        <h3>Tu PC</h3>
-        <div id="specs-content">Detectando hardware…</div>
+        <h3 data-i18n="megahub.html.sidebar.yourPc"></h3>
+        <div id="specs-content" data-i18n="megahub.specs.detecting"></div>
       </div>
     </aside>
 
@@ -202,70 +202,70 @@
              muestra cuánto se jugó esta semana, con datos propios de MegaHUB
              — ver activityLog.js. -->
         <div class="companion-pill-expand">
-          <div class="cpx-activity-title">Esta semana</div>
+          <div class="cpx-activity-title" data-i18n="megahub.html.sidebar.thisWeek"></div>
           <div class="cpx-activity-list"></div>
         </div>
       </div>
 
       <div id="retro-sidebar-empty">
-        <div class="side-note">Elige una consola en el panel principal para ver sus filtros y accesos.</div>
+        <div class="side-note" data-i18n="megahub.html.retroSidebar.chooseConsole"></div>
       </div>
       <div id="retro-sidebar-content" hidden>
         <section class="side-section">
-          <h3>Consola</h3>
+          <h3 data-i18n="megahub.html.retroSidebar.console"></h3>
           <div id="retro-sidebar-console-info"></div>
         </section>
 
         <section class="side-section">
-          <h3>Estado</h3>
+          <h3 data-i18n="megahub.html.sidebar.state"></h3>
           <div id="retro-owned-filter" class="chip-list">
-            <button class="chip active" data-owned="all">Todos</button>
-            <button class="chip" data-owned="owned">Obtenido</button>
+            <button class="chip active" data-owned="all" data-i18n="megahub.html.sidebar.allStates"></button>
+            <button class="chip" data-owned="owned" data-i18n="megahub.retro.ownedBadge"></button>
           </div>
           <div class="side-note" id="retro-count"></div>
         </section>
 
         <section class="side-section side-section-emulator">
-          <a id="retro-download-link" class="account-btn" target="_blank" rel="noopener"><i data-icon="download"></i> <span>Descargar emulador</span></a>
-          <button id="retro-auto-download-btn" class="account-btn" hidden><i data-icon="zap"></i> <span>Descargar e instalar automáticamente (con tu confirmación)</span></button>
-          <button id="retro-locate-emulator-btn" class="account-btn" hidden><i data-icon="pin"></i> <span>Ya lo tengo — ubicar carpeta</span></button>
-          <button id="retro-open-standalone-btn" class="account-btn" hidden><i data-icon="gamepad"></i> <span>Abrir emulador</span></button>
+          <a id="retro-download-link" class="account-btn" target="_blank" rel="noopener"><i data-icon="download"></i> <span data-i18n="megahub.html.retroSidebar.downloadEmulator"></span></a>
+          <button id="retro-auto-download-btn" class="account-btn" hidden><i data-icon="zap"></i> <span data-i18n="megahub.retro.autoDownloadDefault"></span></button>
+          <button id="retro-locate-emulator-btn" class="account-btn" hidden><i data-icon="pin"></i> <span data-i18n="megahub.html.retroSidebar.alreadyHaveLocate"></span></button>
+          <button id="retro-open-standalone-btn" class="account-btn" hidden><i data-icon="gamepad"></i> <span data-i18n="megahub.html.retroSidebar.openEmulator"></span></button>
           <div class="side-note" id="retro-auto-download-status"></div>
 
           <div id="retro-core-controls" hidden>
             <div class="side-note" id="retro-core-status" style="margin:0 0 8px;"></div>
-            <button id="retro-install-core-btn" class="account-btn" hidden><i data-icon="zap"></i> <span>Instalar core</span></button>
-            <button id="retro-install-sysfiles-btn" class="account-btn" hidden><i data-icon="package"></i> <span>Descargar archivos de sistema del core</span></button>
-            <button id="retro-open-retroarch-btn" class="account-btn" hidden><i data-icon="gamepad"></i> <span>Abrir RetroArch (jugar / configurar)</span></button>
+            <button id="retro-install-core-btn" class="account-btn" hidden><i data-icon="zap"></i> <span data-i18n="megahub.html.retroSidebar.installCore"></span></button>
+            <button id="retro-install-sysfiles-btn" class="account-btn" hidden><i data-icon="package"></i> <span data-i18n="megahub.html.retroSidebar.downloadSystemFiles"></span></button>
+            <button id="retro-open-retroarch-btn" class="account-btn" hidden><i data-icon="gamepad"></i> <span data-i18n="megahub.html.retroSidebar.openRetroArch"></span></button>
             <div class="side-note" id="retro-core-install-status"></div>
             <div id="retro-bios-warning" class="bios-warning" hidden>
-              <div><i data-icon="warning"></i> <span id="retro-bios-warning-text">Requiere de una BIOS oficial, extráela vía dumping desde tu consola. No proporcionamos BIOS.</span></div>
-              <button id="retro-open-bios-folder-btn" class="account-btn"><i data-icon="folderOpen"></i> <span>Abrir carpeta de BIOS</span></button>
+              <div><i data-icon="warning"></i> <span id="retro-bios-warning-text" data-i18n="megahub.html.retroSidebar.biosGeneric"></span></div>
+              <button id="retro-open-bios-folder-btn" class="account-btn"><i data-icon="folderOpen"></i> <span data-i18n="megahub.html.retroSidebar.openBiosFolder"></span></button>
             </div>
           </div>
 
-          <button id="retro-multiplayer-btn" class="account-btn multiplayer-btn" hidden title="Cómo activar el online de este emulador para jugar con amigos">
-            <i data-icon="users"></i> <span>Multijugador</span>
+          <button id="retro-multiplayer-btn" class="account-btn multiplayer-btn" hidden data-i18n-title="megahub.html.retroSidebar.multiplayerTooltip">
+            <i data-icon="users"></i> <span data-i18n="megahub.html.retroSidebar.multiplayer"></span>
           </button>
         </section>
 
         <section class="side-section" id="retro-resolution-section" hidden>
-          <h3>Resolución / Rendimiento</h3>
+          <h3 data-i18n="megahub.html.retroSidebar.resolutionPerformance"></h3>
           <div id="retro-resolution-presets" class="chip-list">
-            <button class="chip" data-tier="default">Por defecto</button>
+            <button class="chip" data-tier="default" data-i18n="megahub.html.retroSidebar.presetDefault"></button>
             <button class="chip" data-tier="1080p">1080p</button>
             <button class="chip" data-tier="2k">2K</button>
             <button class="chip" data-tier="4k">4K</button>
-            <button class="chip chip-original" data-tier="original" hidden title="4:3 (o el aspecto original de la consola) + un shader que reproduce cómo se veía en su época — TV de tubo para sobremesa/arcade, pantalla LCD para portátiles.">Original</button>
+            <button class="chip chip-original" data-tier="original" hidden data-i18n="megahub.html.retroSidebar.presetOriginal" data-i18n-title="megahub.html.retroSidebar.presetOriginalTooltip"></button>
           </div>
           <div class="side-note" id="retro-resolution-status"></div>
         </section>
 
         <section class="side-section side-section-folders">
-          <h3>Carpetas locales</h3>
-          <button id="retro-create-folders-btn" class="account-btn"><i data-icon="folder"></i> Crear carpetas del emulador/ROMs</button>
-          <button id="retro-open-roms-btn" class="account-btn"><i data-icon="folderOpen"></i> Abrir carpeta de ROMs</button>
-          <button id="retro-locate-roms-btn" class="account-btn"><i data-icon="pin"></i> <span>¿Ya tienes ROMs en otra carpeta? Ubicar</span></button>
+          <h3 data-i18n="megahub.html.retroSidebar.localFolders"></h3>
+          <button id="retro-create-folders-btn" class="account-btn"><i data-icon="folder"></i> <span data-i18n="megahub.html.retroSidebar.createFolders"></span></button>
+          <button id="retro-open-roms-btn" class="account-btn"><i data-icon="folderOpen"></i> <span data-i18n="megahub.html.retroSidebar.openRomsFolder"></span></button>
+          <button id="retro-locate-roms-btn" class="account-btn"><i data-icon="pin"></i> <span data-i18n="megahub.retro.locateRomFolder"></span></button>
           <div class="side-note" id="retro-rom-location-status"></div>
           <div class="side-note" id="retro-rom-scan-status"></div>
         </section>
@@ -275,9 +275,9 @@
 
   <div id="main-col">
     <header id="topbar">
-      <button class="icon-btn" id="sidebar-toggle" title="Mostrar/ocultar panel lateral"><i data-icon="menu"></i></button>
+      <button class="icon-btn" id="sidebar-toggle" data-i18n-title="megahub.html.topbar.toggleSidebar"><i data-icon="menu"></i></button>
       <div id="search-wrap">
-        <input id="search" type="text" placeholder="Buscar juego…  ( / )" autocomplete="off" />
+        <input id="search" type="text" data-i18n-placeholder="megahub.search.placeholderDefault" autocomplete="off" />
         <!-- Búsqueda global (Fase 6): cruza biblioteca + logros + ofertas ya
              cargados, aparte del filtrado normal de la vista actual (que
              sigue funcionando igual, ver el listener de #search en app.js).
@@ -295,10 +295,10 @@
         <div class="view-primary">
           <div class="view-group">
             <span class="view-group-label">PC</span>
-            <button class="view-btn active" data-view="dock" title="Vista Dock"><i data-icon="grid"></i></button>
-            <button class="view-btn" data-view="list" title="Vista Lista"><i data-icon="menu"></i></button>
+            <button class="view-btn active" data-view="dock" data-i18n-title="megahub.html.topbar.viewDock"><i data-icon="grid"></i></button>
+            <button class="view-btn" data-view="list" data-i18n-title="megahub.html.topbar.viewList"><i data-icon="menu"></i></button>
           </div>
-          <button class="view-btn view-retro-btn" data-view="retro" title="Consolas Retro"><i data-icon="gamepad" class="icon-lg"></i> <span>RETRO</span></button>
+          <button class="view-btn view-retro-btn" data-view="retro" data-i18n-title="megahub.html.topbar.viewRetro"><i data-icon="gamepad" class="icon-lg"></i> <span>RETRO</span></button>
         </div>
         <span class="view-divider" aria-hidden="true"></span>
         <!-- El nombre de cada botón se muestra en #mini-tooltip (un único
@@ -310,19 +310,19 @@
              recortado. position:fixed en el body lo saca de ese problema
              para siempre, sin importar cómo cambie el layout de la topbar. -->
         <div class="view-secondary">
-          <button class="view-btn topbar-mini-btn view-home-btn" data-view="home" data-tooltip="Inicio">
+          <button class="view-btn topbar-mini-btn view-home-btn" data-view="home" data-tooltip="megahub.viewMode.home">
             <i data-icon="home"></i>
           </button>
-          <button class="view-btn topbar-mini-btn view-achievements-btn" data-view="achievements" data-tooltip="Logros (RetroAchievements)">
+          <button class="view-btn topbar-mini-btn view-achievements-btn" data-view="achievements" data-tooltip="megahub.html.topbar.achievementsTooltip">
             <i data-icon="trophy"></i>
           </button>
-          <button class="view-btn topbar-mini-btn view-deals-btn" data-view="deals" data-tooltip="Ofertas">
+          <button class="view-btn topbar-mini-btn view-deals-btn" data-view="deals" data-tooltip="megahub.viewMode.deals">
             <span class="deals-icon-wrap"><i data-icon="tag"></i><span id="deals-badge" class="deals-badge" hidden></span></span>
           </button>
-          <button class="view-btn topbar-mini-btn view-profile-btn" data-view="profile" data-tooltip="Perfil (estadísticas)">
+          <button class="view-btn topbar-mini-btn view-profile-btn" data-view="profile" data-tooltip="megahub.html.topbar.profileTooltip">
             <i data-icon="chart"></i>
           </button>
-          <button class="topbar-mini-btn" id="settings-open" data-tooltip="Ajustes">
+          <button class="topbar-mini-btn" id="settings-open" data-tooltip="megahub.html.settings.title">
             <i data-icon="settings"></i>
           </button>
         </div>
@@ -339,22 +339,22 @@
            cruza horas jugadas + biblioteca para sugerir algo concreto, con
            datos que MegaHUB ya calculaba por separado. -->
       <section id="home-pick" class="home-section" hidden>
-        <h2 class="home-section-title">Qué jugar hoy</h2>
+        <h2 class="home-section-title" data-i18n="megahub.html.home.pickTitle">Qué jugar hoy</h2>
         <div id="home-pick-card"></div>
       </section>
       <section id="home-continue" class="home-section" hidden>
-        <h2 class="home-section-title">Seguir jugando</h2>
+        <h2 class="home-section-title" data-i18n="megahub.html.home.continueTitle">Seguir jugando</h2>
         <div id="home-continue-grid" class="home-hero-grid"></div>
       </section>
       <section id="home-recent" class="home-section" hidden>
-        <h2 class="home-section-title">Agregado recién</h2>
+        <h2 class="home-section-title" data-i18n="megahub.html.home.recentTitle">Agregado recién</h2>
         <div id="home-recent-grid" class="home-card-grid"></div>
       </section>
       <section id="home-week" class="home-section" hidden>
-        <h2 class="home-section-title">Esta semana</h2>
+        <h2 class="home-section-title" data-i18n="megahub.html.sidebar.thisWeek">Esta semana</h2>
         <div id="home-week-list" class="home-week-list"></div>
       </section>
-      <div id="home-empty" hidden>Instala o abre un juego para ver tu resumen aquí.</div>
+      <div id="home-empty" hidden data-i18n="megahub.html.home.emptyState">Instala o abre un juego para ver tu resumen aquí.</div>
     </main>
 
     <main id="dock-wrap">
@@ -364,24 +364,24 @@
 
     <main id="retro-wrap" hidden>
       <div id="retro-disclaimer">
-        <i data-icon="warning"></i> MegaHUB no distribuye BIOS ni ROMs de ningún tipo. Esto es solo una guía
+        <i data-icon="warning"></i> <span data-i18n="megahub.html.retroView.disclaimer">MegaHUB no distribuye BIOS ni ROMs de ningún tipo. Esto es solo una guía
         visual con portadas — tú debes obtener tus propios archivos legalmente y
-        configurarlos en RetroArch (o el emulador que prefieras).
+        configurarlos en RetroArch (o el emulador que prefieras).</span>
       </div>
 
       <div id="retro-console-view">
         <div id="retro-console-sort" class="chip-list">
-          <span class="sort-label">Ordenar:</span>
-          <button class="chip active" data-consort="year">Año</button>
-          <button class="chip" data-consort="gen">Generación</button>
-          <button class="chip" data-consort="owned">Obtenidas primero</button>
+          <span class="sort-label" data-i18n="megahub.html.retroView.sortLabel">Ordenar:</span>
+          <button class="chip active" data-consort="year" data-i18n="megahub.html.retroView.sortYear">Año</button>
+          <button class="chip" data-consort="gen" data-i18n="megahub.html.retroView.sortGen">Generación</button>
+          <button class="chip" data-consort="owned" data-i18n="megahub.html.retroView.sortOwnedFirst">Obtenidas primero</button>
         </div>
         <div id="retro-console-grid"></div>
       </div>
 
       <div id="retro-detail-view" hidden>
         <div id="retro-detail-header">
-          <button id="retro-back">← Consolas</button>
+          <button id="retro-back" data-i18n="megahub.html.retroView.backToConsoles">← Consolas</button>
           <div id="retro-detail-photo"></div>
           <div id="retro-detail-info">
             <h2 id="retro-detail-name"></h2>
@@ -402,39 +402,39 @@
       <div id="ach-source-mh" class="ach-source-panel">
         <div id="mh-header">
           <div>
-            <h2>Logros de MegaHUB</h2>
-            <p class="side-note">Generados por tu actividad real — horas jugadas de Steam (exactas, leídas de tu propio Steam),
+            <h2 data-i18n="megahub.html.achievements.mhTitle">Logros de MegaHUB</h2>
+            <p class="side-note" data-i18n="megahub.html.achievements.mhDescription">Generados por tu actividad real — horas jugadas de Steam (exactas, leídas de tu propio Steam),
               y sesiones de Modo Retro medidas por MegaHUB mismo. El resto de launchers (Epic/GOG/Battle.net/etc.) solo
               cuentan como "lanzado" para las rachas, ya que corren fuera del alcance de MegaHUB.</p>
           </div>
-          <button id="mh-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span>Actualizar</span></button>
+          <button id="mh-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span data-i18n="megahub.html.actions.refresh">Actualizar</span></button>
         </div>
         <div id="mh-tabs" class="chip-list">
-          <button class="chip active" data-mh-tab="global">Generales</button>
-          <button class="chip" data-mh-tab="steamgame">Por juego (Steam)</button>
-          <button class="chip" data-mh-tab="retroconsole">Por consola (Retro)</button>
-          <button class="chip" data-mh-tab="retrogame">Por juego (Retro)</button>
+          <button class="chip active" data-mh-tab="global" data-i18n="megahub.html.achievements.tabGeneral">Generales</button>
+          <button class="chip" data-mh-tab="steamgame" data-i18n="megahub.html.achievements.tabBySteamGame">Por juego (Steam)</button>
+          <button class="chip" data-mh-tab="retroconsole" data-i18n="megahub.html.achievements.tabByRetroConsole">Por consola (Retro)</button>
+          <button class="chip" data-mh-tab="retrogame" data-i18n="megahub.html.achievements.tabByRetroGame">Por juego (Retro)</button>
         </div>
         <div id="mh-panel" class="ach-grid"></div>
       </div>
 
       <div id="ach-source-ra" class="ach-source-panel" hidden>
       <div id="ra-empty-state">
-        <h2><i data-icon="trophy" class="icon-xl"></i> Logros</h2>
-        <p>Conecta tu cuenta de <a href="https://retroachievements.org" target="_blank" rel="noopener">RetroAchievements</a>
+        <h2><i data-icon="trophy" class="icon-xl"></i> <span data-i18n="megahub.html.achievements.raTitle">Logros</span></h2>
+        <p data-i18n-html="megahub.html.achievements.raConnectIntro">Conecta tu cuenta de <a href="https://retroachievements.org" target="_blank" rel="noopener">RetroAchievements</a>
           para ver aquí tu perfil de logros — juegos, progreso e historial, igual que Steam o Xbox.</p>
         <div class="ra-connect-row">
-          <input id="ra-username-input" type="text" placeholder="Tu usuario de RetroAchievements…" />
-          <input id="ra-key-input" type="password" placeholder="Web API key (Panel de control → Keys)…" />
-          <button id="ra-connect-btn" class="account-btn">Conectar</button>
+          <input id="ra-username-input" type="text" data-i18n-placeholder="megahub.html.achievements.raUsernamePlaceholder" />
+          <input id="ra-key-input" type="password" data-i18n-placeholder="megahub.html.achievements.raKeyPlaceholder" />
+          <button id="ra-connect-btn" class="account-btn" data-i18n="megahub.achievements.connect">Conectar</button>
         </div>
-        <div class="side-note">
+        <div class="side-note" data-i18n-html="megahub.html.achievements.raKeyNote">
           <a href="https://retroachievements.org/controlpanel.php" target="_blank" rel="noopener">Consigue tu clave gratis en tu Panel de control →</a>
           No es tu contraseña — es un token de solo lectura. MegaHUB nunca ve ni guarda tu contraseña.
         </div>
         <div class="side-note" id="ra-cheevos-status"></div>
-        <button id="ra-enable-cheevos-btn" class="account-btn" hidden><i data-icon="zap"></i> <span>Activar logros en RetroArch</span></button>
-        <button id="ra-open-retroarch-btn" class="account-btn" hidden><i data-icon="gamepad"></i> <span>Abrir RetroArch para iniciar sesión</span></button>
+        <button id="ra-enable-cheevos-btn" class="account-btn" hidden><i data-icon="zap"></i> <span data-i18n="megahub.html.achievements.raEnableCheevos">Activar logros en RetroArch</span></button>
+        <button id="ra-open-retroarch-btn" class="account-btn" hidden><i data-icon="gamepad"></i> <span data-i18n="megahub.html.achievements.raOpenRetroArch">Abrir RetroArch para iniciar sesión</span></button>
       </div>
 
       <div id="ra-dashboard" hidden>
@@ -444,14 +444,14 @@
             <div id="ra-stats"></div>
           </div>
           <div id="ra-header-actions">
-            <button id="ra-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span>Actualizar</span></button>
-            <button id="ra-disconnect-btn" class="account-btn">Desconectar</button>
+            <button id="ra-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span data-i18n="megahub.html.actions.refresh">Actualizar</span></button>
+            <button id="ra-disconnect-btn" class="account-btn" data-i18n="megahub.html.achievements.disconnect">Desconectar</button>
           </div>
         </div>
 
         <div id="ra-tabs" class="chip-list">
-          <button class="chip active" data-ra-tab="games">Mis juegos</button>
-          <button class="chip" data-ra-tab="recent">Actividad reciente</button>
+          <button class="chip active" data-ra-tab="games" data-i18n="megahub.html.achievements.tabMyGames">Mis juegos</button>
+          <button class="chip" data-ra-tab="recent" data-i18n="megahub.html.achievements.tabRecentActivity">Actividad reciente</button>
         </div>
 
         <div id="ra-panel-games" class="ra-panel"></div>
@@ -459,7 +459,7 @@
       </div>
 
       <div id="ra-game-detail" hidden>
-        <button id="ra-game-back">← Mis juegos</button>
+        <button id="ra-game-back" data-i18n="megahub.html.achievements.backToMyGames">← Mis juegos</button>
         <div id="ra-game-detail-header"></div>
         <div id="ra-game-detail-grid"></div>
       </div>
@@ -469,18 +469,18 @@
         <div id="consolas-dashboard">
           <div id="consolas-header" class="mh-header-layout">
             <div>
-              <h2><i data-icon="trophy" class="icon-xl"></i> Xenia (Xbox 360) y RPCS3 (PS3)</h2>
-              <p class="side-note">Logros y trofeos leídos directamente de los archivos locales que genera cada emulador
+              <h2><i data-icon="trophy" class="icon-xl"></i> <span data-i18n="megahub.html.achievements.consolasTitle">Xenia (Xbox 360) y RPCS3 (PS3)</span></h2>
+              <p class="side-note" data-i18n="megahub.html.achievements.consolasDescription">Logros y trofeos leídos directamente de los archivos locales que genera cada emulador
                 — sin cuenta ni red. RPCS3 aún no expone de forma fiable qué trofeos ya desbloqueaste (formato propietario
                 sin documentar); por ahora se muestra el catálogo completo de cada juego.</p>
             </div>
-            <button id="consolas-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span>Actualizar</span></button>
+            <button id="consolas-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span data-i18n="megahub.html.actions.refresh">Actualizar</span></button>
           </div>
           <div id="consolas-panel-games" class="ra-panel"></div>
         </div>
 
         <div id="consolas-game-detail" hidden>
-          <button id="consolas-game-back">← Mis juegos</button>
+          <button id="consolas-game-back" data-i18n="megahub.html.achievements.backToMyGames">← Mis juegos</button>
           <div id="consolas-game-detail-header"></div>
           <div id="consolas-game-detail-grid"></div>
         </div>
@@ -494,9 +494,9 @@
     <main id="deals-wrap" hidden>
       <div id="deals-header">
         <div>
-          <h2><i data-icon="tag" class="icon-xl"></i> Ofertas</h2>
+          <h2><i data-icon="tag" class="icon-xl"></i> <span data-i18n="megahub.viewMode.deals">Ofertas</span></h2>
         </div>
-        <button id="deals-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span>Actualizar</span></button>
+        <button id="deals-refresh-btn" class="account-btn"><i data-icon="refresh"></i> <span data-i18n="megahub.html.actions.refresh">Actualizar</span></button>
       </div>
 
       <!-- Juegos temporalmente gratis (Epic semanal + freebies puntuales de
@@ -504,7 +504,7 @@
            checkFreeGamesAndNotify() en main.js (notificación nativa de
            Windows aunque la ventana esté cerrada). -->
       <section id="deals-free-section" hidden>
-        <h3 class="deals-section-title"><i data-icon="gift"></i> Gratis ahora</h3>
+        <h3 class="deals-section-title"><i data-icon="gift"></i> <span data-i18n="megahub.html.deals.freeNow">Gratis ahora</span></h3>
         <div class="deals-grid" id="deals-free-grid"></div>
       </section>
 
@@ -516,25 +516,25 @@
       <section class="deals-store-section" data-store="steam">
         <h3 class="deals-section-title"><i data-icon="tag"></i> Steam <span class="deals-count"></span></h3>
         <div class="deals-grid"></div>
-        <button class="deals-more-btn account-btn" hidden>Ver más</button>
+        <button class="deals-more-btn account-btn" hidden data-i18n="megahub.html.deals.seeMore">Ver más</button>
       </section>
 
       <section class="deals-store-section" data-store="gog">
         <h3 class="deals-section-title"><i data-icon="tag"></i> GOG <span class="deals-count"></span></h3>
         <div class="deals-grid"></div>
-        <button class="deals-more-btn account-btn" hidden>Ver más</button>
+        <button class="deals-more-btn account-btn" hidden data-i18n="megahub.html.deals.seeMore">Ver más</button>
       </section>
 
       <section class="deals-store-section" data-store="epic">
         <h3 class="deals-section-title"><i data-icon="tag"></i> Epic Games <span class="deals-count"></span></h3>
         <div class="deals-grid"></div>
-        <button class="deals-more-btn account-btn" hidden>Ver más</button>
+        <button class="deals-more-btn account-btn" hidden data-i18n="megahub.html.deals.seeMore">Ver más</button>
       </section>
 
       <section class="deals-store-section" data-store="other">
-        <h3 class="deals-section-title"><i data-icon="tag"></i> Otras tiendas <span class="deals-count"></span></h3>
+        <h3 class="deals-section-title"><i data-icon="tag"></i> <span data-i18n="megahub.html.deals.otherStores">Otras tiendas</span> <span class="deals-count"></span></h3>
         <div class="deals-grid"></div>
-        <button class="deals-more-btn account-btn" hidden>Ver más</button>
+        <button class="deals-more-btn account-btn" hidden data-i18n="megahub.html.deals.seeMore">Ver más</button>
       </section>
     </main>
 
@@ -545,33 +545,33 @@
          comentario del handler get-profile-stats en main.js. -->
     <main id="profile-wrap" hidden>
       <div id="profile-header">
-        <h2><i data-icon="chart" class="icon-xl"></i> Perfil</h2>
+        <h2><i data-icon="chart" class="icon-xl"></i> <span data-i18n="megahub.viewMode.profile">Perfil</span></h2>
       </div>
 
       <section id="profile-summary" class="profile-section" hidden>
         <div class="profile-stat">
           <div class="profile-stat-n" id="profile-total-hours">—</div>
-          <div class="profile-stat-l">Horas jugadas (Steam + Retro)</div>
+          <div class="profile-stat-l" data-i18n="megahub.html.profile.totalHours">Horas jugadas (Steam + Retro)</div>
         </div>
         <div class="profile-stat">
           <div class="profile-stat-n" id="profile-days-played">—</div>
-          <div class="profile-stat-l">Días distintos jugados</div>
+          <div class="profile-stat-l" data-i18n="megahub.html.profile.daysPlayed">Días distintos jugados</div>
         </div>
       </section>
 
       <section id="profile-breakdown" class="profile-section" hidden>
-        <h3 class="profile-section-title">Horas por plataforma</h3>
+        <h3 class="profile-section-title" data-i18n="megahub.html.profile.hoursByPlatform">Horas por plataforma</h3>
         <div id="profile-breakdown-bars" class="profile-bars"></div>
       </section>
 
       <section id="profile-top" class="profile-section" hidden>
-        <h3 class="profile-section-title">Más jugados</h3>
+        <h3 class="profile-section-title" data-i18n="megahub.html.profile.mostPlayed">Más jugados</h3>
         <div id="profile-top-grid" class="home-card-grid"></div>
       </section>
 
       <div id="profile-untracked" hidden></div>
 
-      <div id="profile-empty" hidden>Todavía no hay horas registradas — juega algo desde MegaHUB para ver tus estadísticas aquí.</div>
+      <div id="profile-empty" hidden data-i18n="megahub.html.profile.emptyState">Todavía no hay horas registradas — juega algo desde MegaHUB para ver tus estadísticas aquí.</div>
     </main>
 
     <!-- Antes esta barra ocupaba espacio vertical siempre, tuvieras o no un
@@ -580,19 +580,19 @@
          puramente de gamepad (pollGamepad en app.js le agrega/saca la clase
          "pad-active" a #controls según haya un pad detectado). -->
     <footer id="controls">
-      <span id="gamepad-status"><i data-icon="plug"></i> <span id="gamepad-status-label">sin mando</span></span>
+      <span id="gamepad-status"><i data-icon="plug"></i> <span id="gamepad-status-label" data-i18n="megahub.gamepad.noController">sin mando</span></span>
       <div id="controls-hints">
-        <span><b>←→↑↓</b><span class="pad-only">/stick</span> — navegar</span>
-        <span><b>Enter</b><span class="pad-only">/<b>A</b></span> — jugar · instalar</span>
-        <span><b>Q·E</b><span class="pad-only">/<b>LB·RB</b></span> — plataforma</span>
-        <span class="pad-only"><b>LT·RT</b> — cambiar de vista</span>
-        <span><b>/</b> — buscar</span>
+        <span><b>←→↑↓</b><span class="pad-only">/stick</span> — <span data-i18n="megahub.html.controls.navigate">navegar</span></span>
+        <span><b>Enter</b><span class="pad-only">/<b>A</b></span> — <span data-i18n="megahub.html.controls.playInstall">jugar · instalar</span></span>
+        <span><b>Q·E</b><span class="pad-only">/<b>LB·RB</b></span> — <span data-i18n="megahub.html.controls.platform">plataforma</span></span>
+        <span class="pad-only"><b>LT·RT</b> — <span data-i18n="megahub.html.controls.switchView">cambiar de vista</span></span>
+        <span><b>/</b> — <span data-i18n="megahub.html.controls.search">buscar</span></span>
       </div>
     </footer>
   </div>
 
   <aside id="details">
-    <div id="details-empty">Selecciona un juego para ver sus detalles</div>
+    <div id="details-empty" data-i18n="megahub.html.details.emptyState">Selecciona un juego para ver sus detalles</div>
     <div id="details-content" hidden>
       <div id="d-video" hidden></div>
       <div id="d-cover"></div>
@@ -602,7 +602,7 @@
       <div id="d-meta"></div>
       <div id="d-achievements" hidden></div>
       <div id="d-reqs">
-        <h3>¿Lo mueve tu PC?</h3>
+        <h3 data-i18n="megahub.html.details.reqsTitle">¿Lo mueve tu PC?</h3>
         <div id="d-reqs-body">—</div>
       </div>
       <div id="d-actions"></div>
@@ -613,20 +613,20 @@
   <div id="settings-overlay" hidden>
     <div id="settings-modal">
       <div id="settings-header">
-        <h2>Ajustes</h2>
+        <h2 data-i18n="megahub.html.settings.title">Ajustes</h2>
         <button id="settings-close" class="icon-btn"><i data-icon="x"></i></button>
       </div>
       <div id="settings-tabs">
         <button class="settings-tab active" data-tab="launchers">Launchers</button>
-        <button class="settings-tab" data-tab="retro">Modo Retro</button>
-        <button class="settings-tab" data-tab="apariencia">Apariencia</button>
-        <button class="settings-tab" data-tab="backup">Respaldo</button>
-        <button class="settings-tab" data-tab="creditos">Créditos</button>
+        <button class="settings-tab" data-tab="retro" data-i18n="megahub.html.settings.tabRetro">Modo Retro</button>
+        <button class="settings-tab" data-tab="apariencia" data-i18n="megahub.html.settings.tabAppearance">Apariencia</button>
+        <button class="settings-tab" data-tab="backup" data-i18n="megahub.html.settings.tabBackup">Respaldo</button>
+        <button class="settings-tab" data-tab="creditos" data-i18n="megahub.html.settings.tabCredits">Créditos</button>
         <div id="settings-tab-indicator"></div>
       </div>
       <div id="settings-body">
         <div class="settings-panel" data-panel="launchers">
-          <div class="settings-intro">
+          <div class="settings-intro" data-i18n="megahub.html.settings.launchersIntro">
             Activa o desactiva qué plataformas se muestran en tu biblioteca. Las marcadas
             "próximamente" ya están en el mapa pero MegaHUB todavía no sabe leerlas.
           </div>
@@ -635,29 +635,29 @@
         <div class="settings-panel" data-panel="retro" hidden>
           <div class="retro-box">
             <div class="launcher-row" style="border:none;padding:0;">
-              <span class="launcher-name">Zona de emuladores (RetroArch)</span>
+              <span class="launcher-name" data-i18n="megahub.html.settings.retroZoneLabel">Zona de emuladores (RetroArch)</span>
               <div class="toggle-switch" id="retro-toggle"></div>
             </div>
-            <div class="retro-status" id="retro-status">Buscando RetroArch…</div>
+            <div class="retro-status" id="retro-status" data-i18n="megahub.html.settings.retroSearching">Buscando RetroArch…</div>
           </div>
 
           <section class="side-section" style="margin-top:18px;">
-            <h3>Carpeta de emuladores y ROMs</h3>
-            <div class="settings-intro" style="margin-bottom:10px;">
+            <h3 data-i18n="megahub.html.settings.romsFolderTitle">Carpeta de emuladores y ROMs</h3>
+            <div class="settings-intro" style="margin-bottom:10px;" data-i18n-html="megahub.html.settings.romsFolderIntro">
               Carpeta raíz donde MegaHUB crea <code>emulators/</code> y <code>roms/</code> para las consolas
               que no tengan su propia ubicación señalada a mano. Por defecto es tu carpeta de Documentos
               (siempre escribible, sin importar dónde se instaló MegaHUB).
             </div>
-            <div class="side-note" id="default-root-path">Cargando…</div>
+            <div class="side-note" id="default-root-path" data-i18n="megahub.html.settings.loadingGeneric">Cargando…</div>
             <div style="display:flex; gap:8px; margin-top:10px;">
-              <button id="default-root-change-btn" class="account-btn"><i data-icon="folderOpen"></i> <span>Cambiar carpeta…</span></button>
-              <button id="default-root-reset-btn" class="account-btn" hidden><i data-icon="refresh"></i> <span>Restaurar Documentos</span></button>
+              <button id="default-root-change-btn" class="account-btn"><i data-icon="folderOpen"></i> <span data-i18n="megahub.html.settings.changeFolderBtn">Cambiar carpeta…</span></button>
+              <button id="default-root-reset-btn" class="account-btn" hidden><i data-icon="refresh"></i> <span data-i18n="megahub.html.settings.resetFolderBtn">Restaurar Documentos</span></button>
             </div>
           </section>
 
           <section class="side-section" style="margin-top:18px;">
-            <h3>Skins de RetroArch</h3>
-            <div class="settings-intro" style="margin-bottom:10px;">
+            <h3 data-i18n="megahub.html.settings.skinsTitle">Skins de RetroArch</h3>
+            <div class="settings-intro" style="margin-bottom:10px;" data-i18n="megahub.html.settings.skinsIntro">
               Instala temas de menú (XMB/RGUI) de la comunidad directo en tu RetroArch, sin tener
               que copiar carpetas a mano. El original se respalda antes de reemplazarlo.
             </div>
@@ -665,8 +665,8 @@
           </section>
 
           <details class="collapsible-guide" style="margin-top:18px;">
-            <summary>Guía de referencia: emulador recomendado por consola</summary>
-            <div class="console-guide-intro">
+            <summary data-i18n="megahub.html.settings.guideSummary">Guía de referencia: emulador recomendado por consola</summary>
+            <div class="console-guide-intro" data-i18n="megahub.html.settings.guideIntro">
               El más popular/funcional por consola hasta PS3/Xbox 360. La mayoría corren como
               core de RetroArch; los más pesados (Dolphin, PCSX2, RPCS3, Xenia…) rinden mejor
               como programa independiente.
@@ -675,23 +675,23 @@
           </details>
 
           <details class="collapsible-guide" style="margin-top:10px;">
-            <summary>Ficha completa de catálogo retro (TheGamesDB, opcional)</summary>
-            <div class="console-guide-intro">
+            <summary data-i18n="megahub.html.settings.tgdbGuideSummary">Ficha completa de catálogo retro (TheGamesDB, opcional)</summary>
+            <div class="console-guide-intro" data-i18n="megahub.html.settings.tgdbGuideIntro">
               Las portadas ya funcionan sin clave (libretro-thumbnails). Para género, desarrollador,
               descripción y fecha hace falta una clave gratuita propia de TheGamesDB:
             </div>
             <div class="sgdb-row">
-              <input id="tgdb-key" type="password" placeholder="API key de TheGamesDB (opcional)…" />
-              <button id="tgdb-save">Guardar</button>
+              <input id="tgdb-key" type="password" data-i18n-placeholder="megahub.html.settings.tgdbKeyPlaceholder" />
+              <button id="tgdb-save" data-i18n="megahub.apiKeys.save">Guardar</button>
             </div>
-            <div class="side-note">
+            <div class="side-note" data-i18n-html="megahub.html.settings.tgdbCreateAccountLink">
               <a href="https://thegamesdb.net/action/register.php" target="_blank">Crear cuenta y conseguir la clave gratis →</a>
             </div>
           </details>
         </div>
 
         <div class="settings-panel" data-panel="apariencia" hidden>
-          <div class="settings-intro">
+          <div class="settings-intro" data-i18n="megahub.html.settings.appearanceIntro">
             Cambia la paleta de color de todo MegaHUB — se aplica al instante y se recuerda entre sesiones.
             (No confundir con los "Temas" de RetroArch en Modo Retro: eso cambia el menú del emulador, esto
             cambia MegaHUB.)
@@ -707,12 +707,12 @@
           </section>
 
           <section class="side-section" style="margin-top:18px;">
-            <h3>Modo widget</h3>
+            <h3 data-i18n="megahub.html.settings.widgetModeTitle">Modo widget</h3>
             <div class="launcher-row" style="border:none;padding:0;">
-              <span class="launcher-name">Auto-ocultar al pegarlo a un borde de la pantalla</span>
+              <span class="launcher-name" data-i18n="megahub.html.settings.widgetAutohideLabel">Auto-ocultar al pegarlo a un borde de la pantalla</span>
               <div class="toggle-switch" id="widget-autohide-toggle"></div>
             </div>
-            <div class="settings-intro" style="margin-top:8px;margin-bottom:0;">
+            <div class="settings-intro" style="margin-top:8px;margin-bottom:0;" data-i18n="megahub.html.settings.widgetAutohideIntro">
               Si arrastras el widget hasta un borde de la pantalla, con esto activado se retrae a una
               tira fina cuando sacas el mouse de encima (como la barra de tareas de Windows) y se
               despliega al volver a pasarlo por ahí. Desactívalo si prefieres que se quede fijo, como un
@@ -722,17 +722,17 @@
         </div>
 
         <div class="settings-panel" data-panel="backup" hidden>
-          <div class="settings-intro">
+          <div class="settings-intro" data-i18n-html="megahub.html.settings.backupIntro">
             Guarda tus ajustes en un archivo .json y llévalo a otra PC (USB, correo, tu propia nube personal —
             MegaHUB no sube nada por su cuenta). Incluye: carpetas de emulador/ROMs que ubicaste a mano, tus
             claves de SteamGridDB/TheGamesDB, tu cuenta de RetroAchievements, tu progreso de logros de MegaHUB
             y los juegos que ocultaste. <b>No incluye</b> las sesiones de GOG/Epic (hay que reconectarlas en la
             PC nueva) ni cachés de portadas/metadata (se vuelven a pedir solas).
           </div>
-          <button id="backup-export-btn" class="account-btn"><i data-icon="download"></i> <span>Exportar ajustes…</span></button>
-          <button id="backup-import-btn" class="account-btn"><i data-icon="folderOpen"></i> <span>Importar ajustes…</span></button>
+          <button id="backup-export-btn" class="account-btn"><i data-icon="download"></i> <span data-i18n="megahub.html.settings.exportBtn">Exportar ajustes…</span></button>
+          <button id="backup-import-btn" class="account-btn"><i data-icon="folderOpen"></i> <span data-i18n="megahub.html.settings.importBtn">Importar ajustes…</span></button>
 
-          <div class="settings-intro" style="margin-top:18px;">
+          <div class="settings-intro" style="margin-top:18px;" data-i18n-html="megahub.html.settings.ecosystemNote">
             <b>Ecosistema DERIVA:</b> si tienes el DERIVA Companion instalado, MegaHUB comparte con él —
             solo en tu propia PC, sin servidor ni cuenta — qué estás jugando ahora y un resumen de tus logros,
             para que aparezcan en el modo gaming y el perfil de DERIVA. Ninguna de las dos apps necesita a la
@@ -742,17 +742,17 @@
         </div>
 
         <div class="settings-panel" data-panel="creditos" hidden>
-          <div class="settings-intro">
+          <div class="settings-intro" data-i18n="megahub.html.settings.creditsIntro">
             MegaHUB no reproduce logos ni marcas de ninguna consola o fabricante — los íconos del
             catálogo son siluetas genéricas de hardware, elegidas justamente para evitar eso.
           </div>
           <section class="side-section">
-            <h3>Íconos de consola</h3>
-            <div class="settings-intro" style="margin-bottom:6px;">
+            <h3 data-i18n="megahub.html.settings.consoleIconsTitle">Íconos de consola</h3>
+            <div class="settings-intro" style="margin-bottom:6px;" data-i18n-html="megahub.html.settings.consoleIconsCredit">
               Proyecto <a href="https://github.com/libretro/retroarch-assets" target="_blank">RetroArch / libretro (retroarch-assets)</a>,
               tema de menú XMB "Monochrome", creado originalmente por <b>Kivutar</b>.
             </div>
-            <div class="side-note">
+            <div class="side-note" data-i18n-html="megahub.html.settings.consoleIconsLicense">
               Licencia: <a href="https://creativecommons.org/licenses/by/4.0/" target="_blank">Creative Commons Attribution 4.0 International (CC BY 4.0)</a>
               — recoloreados por consola respetando la licencia (permite modificar con atribución).
             </div>
@@ -768,36 +768,36 @@
        a nadie sin la función. Ver initOnboarding() en app.js. -->
   <div id="onboarding-overlay" hidden>
     <div id="onboarding-modal">
-      <button id="onboarding-skip" type="button">Omitir</button>
+      <button id="onboarding-skip" type="button" data-i18n="megahub.html.onboarding.skip">Omitir</button>
 
       <section class="onboarding-step" data-step="1">
         <div class="onboarding-icon"><i data-icon="grid" class="icon-xl"></i></div>
-        <h2>Bienvenido a MegaHUB</h2>
-        <p class="onboarding-copy">
+        <h2 data-i18n="megahub.html.onboarding.step1Title">Bienvenido a MegaHUB</h2>
+        <p class="onboarding-copy" data-i18n="megahub.html.onboarding.step1Copy">
           Ya escaneamos tu PC: Steam, Battle.net, Rockstar, Ubisoft y EA se detectan solos.
           Si además usas GOG o Epic Games, conéctalos aquí para sumarlos a la biblioteca.
         </p>
         <div class="onboarding-accounts">
-          <button class="account-btn" data-account="gog"><span class="dot"></span> GOG <span class="account-state">conectar</span></button>
-          <button class="account-btn" data-account="epic"><span class="dot"></span> Epic Games <span class="account-state">conectar</span></button>
+          <button class="account-btn" data-account="gog"><span class="dot"></span> GOG <span class="account-state" data-i18n="megahub.accounts.connect">conectar</span></button>
+          <button class="account-btn" data-account="epic"><span class="dot"></span> Epic Games <span class="account-state" data-i18n="megahub.accounts.connect">conectar</span></button>
         </div>
       </section>
 
       <section class="onboarding-step" data-step="2" hidden>
-        <h2>Elige un estilo</h2>
-        <p class="onboarding-copy">10 skins con forma e identidad propia, no solo color — se puede cambiar cuando quieras desde Ajustes → Apariencia.</p>
+        <h2 data-i18n="megahub.html.onboarding.step2Title">Elige un estilo</h2>
+        <p class="onboarding-copy" data-i18n="megahub.html.onboarding.step2Copy">10 skins con forma e identidad propia, no solo color — se puede cambiar cuando quieras desde Ajustes → Apariencia.</p>
         <div id="onboarding-theme-grid" class="theme-grid"></div>
       </section>
 
       <section class="onboarding-step" data-step="3" hidden>
-        <h2>¿Tienes juegos retro?</h2>
-        <p class="onboarding-copy">
+        <h2 data-i18n="megahub.html.onboarding.step3Title">¿Tienes juegos retro?</h2>
+        <p class="onboarding-copy" data-i18n="megahub.html.onboarding.step3Copy">
           MegaHUB también emula consolas, desde el Atari 2600 hasta la Xbox 360 — instala
           cores, resuelve carpetas y reconoce tus ROMs contra un catálogo público. Si no
           juegas retro, no hace falta tocar nada aquí.
         </p>
         <button id="onboarding-retro-btn" type="button" class="account-btn">
-          <i data-icon="gamepad"></i> <span>Ir al Modo Retro</span>
+          <i data-icon="gamepad"></i> <span data-i18n="megahub.html.onboarding.goToRetro">Ir al Modo Retro</span>
         </button>
       </section>
 
@@ -808,7 +808,7 @@
           <span class="onboarding-dot" data-dot="3"></span>
         </div>
         <div id="onboarding-nav">
-          <button id="onboarding-back" type="button" hidden>Atrás</button>
+          <button id="onboarding-back" type="button" hidden data-i18n="megahub.html.onboarding.back">Atrás</button>
           <button id="onboarding-next" type="button">Siguiente</button>
         </div>
       </div>

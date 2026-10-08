@@ -150,7 +150,7 @@ document.getElementById('sidebar-toggle').addEventListener('click', () => {
   function place(btn) {
     const r = btn.getBoundingClientRect();
     tooltip.hidden = false;
-    tooltip.textContent = btn.dataset.tooltip;
+    tooltip.textContent = tr(btn.dataset.tooltip);
     const tw = tooltip.offsetWidth;
     let left = r.left + r.width / 2 - tw / 2;
     left = Math.max(6, Math.min(left, window.innerWidth - tw - 6));

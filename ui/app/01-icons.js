@@ -60,6 +60,18 @@ applyStaticIcons();
 // un helper global del mismo nombre quedaría sombreado en silencio ahí dentro.
 function tr(key, params) { return window.megahub?.t(key, params) ?? key; }
 
+// Texto estático de index.html/dev.html marcado con data-i18n* (mismo patrón
+// que companion-desktop, ver sus *.html) — se resuelve una sola vez al
+// arrancar, igual que applyStaticIcons() arriba.
+(function i18nBootstrap() {
+  document.documentElement.lang = window.megahub.getLanguage();
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = tr(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach((el) => { el.innerHTML = tr(el.dataset.i18nHtml); });
+  document.querySelectorAll('[data-i18n-title]').forEach((el) => { el.title = tr(el.dataset.i18nTitle); });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((el) => { el.placeholder = tr(el.dataset.i18nPlaceholder); });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach((el) => { el.setAttribute('aria-label', tr(el.dataset.i18nAriaLabel)); });
+})();
+
 const PLAT_LABEL = {
   steam: 'Steam', epic: 'Epic Games', gog: 'GOG',
   battlenet: 'Battle.net', riot: 'Riot Games', xbox: 'Xbox',
