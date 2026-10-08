@@ -10,6 +10,10 @@ const path = require('path');
 const os = require('os');
 const sevenZip = require('7zip-min');
 const scanRetroArch = require('../scanners/retroarch');
+const { t } = require('../lib/i18n');
+const store = require('../util/store');
+
+function lang() { return store.load('language', 'es'); }
 
 // Cada skin declara EXACTAMENTE qué copiar del archivo descargado y a dónde,
 // verificado contra el README real de cada proyecto (no un heurístico
@@ -21,7 +25,7 @@ const RETRO_SKINS = [
     creator: 'JMRDev0',
     creatorUrl: 'https://github.com/JMRDev0',
     sourceUrl: 'https://github.com/JMRDev0/XMB-PS3-Icons-Sounds-Pack',
-    description: 'Iconos, sonidos y tipografía al estilo XMB de PlayStation 3.',
+    get description() { return t(lang(), 'megahub.retroSkins.description.ps3Icons'); },
     menuDriver: 'xmb',
     slot: 'systematic', // sobreescribe el tema oficial "Systematic" — se hace backup antes
     archiveUrl: 'https://raw.githubusercontent.com/JMRDev0/XMB-PS3-Icons-Sounds-Pack/main/PS3%20Icons%20%2B%20Sounds.zip',
@@ -35,7 +39,7 @@ const RETRO_SKINS = [
     creator: 'RobLoach',
     creatorUrl: 'https://github.com/RobLoach',
     sourceUrl: 'https://github.com/RobLoach/retroarch-theme-materialdesign',
-    description: 'Iconos y tipografía Roboto siguiendo el lenguaje visual Material Design.',
+    get description() { return t(lang(), 'megahub.retroSkins.description.materialDesign'); },
     menuDriver: 'xmb',
     slot: 'custom', // ranura "Custom" del menú — instalar otro tema Custom la reemplaza
     archiveUrl: 'https://codeload.github.com/RobLoach/retroarch-theme-materialdesign/zip/refs/heads/master',
@@ -49,7 +53,7 @@ const RETRO_SKINS = [
     creator: 'PepCodes',
     creatorUrl: 'https://github.com/PepCodes',
     sourceUrl: 'https://github.com/PepCodes/RGUI-Themes',
-    description: '18 presets de color (Cupertino, PlayStation, Wii, Redmond…) para el menú RGUI, en variante centrada y ancho completo.',
+    get description() { return t(lang(), 'megahub.retroSkins.description.rguiPepcodes'); },
     menuDriver: 'rgui',
     slot: null, // se fusiona en assets/rgui/ sin reemplazar nada — cada preset es un .cfg con nombre propio
     archiveUrl: 'https://codeload.github.com/PepCodes/RGUI-Themes/zip/refs/heads/master',
@@ -113,9 +117,9 @@ async function findSingleTopDir(dir) {
 
 async function installSkin(id) {
   const skin = findSkin(id);
-  if (!skin) return { error: 'Skin no encontrada.' };
+  if (!skin) return { error: t(lang(), 'megahub.retroSkins.errors.skinNotFound') };
   const assetsDir = getAssetsDir();
-  if (!assetsDir) return { error: 'No se detectó la carpeta assets/ de RetroArch. Instala/abre RetroArch al menos una vez primero.' };
+  if (!assetsDir) return { error: t(lang(), 'megahub.retroSkins.errors.assetsNotFound') };
 
   const tmpRoot = path.join(os.tmpdir(), `megahub-skin-${id}-${Date.now()}`);
   const archivePath = path.join(tmpRoot, 'archive.zip');
@@ -152,7 +156,7 @@ async function installSkin(id) {
       }
     }
     if (!sourceDir || !fs.existsSync(sourceDir)) {
-      return { error: 'El archivo descargado no tiene la estructura esperada (¿cambió el repo del autor?).' };
+      return { error: t(lang(), 'megahub.retroSkins.errors.unexpectedArchiveStructure') };
     }
 
     // Destino: ranura de tema (XMB) o assets/rgui (fusión, sin reemplazar nada).
@@ -205,12 +209,12 @@ function getSkinsStatus() {
 
 async function restoreSlot(id) {
   const skin = findSkin(id);
-  if (!skin || !skin.slot) return { error: 'Esta skin no tiene original que restaurar.' };
+  if (!skin || !skin.slot) return { error: t(lang(), 'megahub.retroSkins.errors.noOriginalToRestore') };
   const assetsDir = getAssetsDir();
-  if (!assetsDir) return { error: 'No se detectó RetroArch.' };
+  if (!assetsDir) return { error: t(lang(), 'megahub.retroSkins.errors.retroArchNotDetected') };
   const destDir = path.join(assetsDir, skin.menuDriver, skin.slot);
   const backupDir = path.join(assetsDir, skin.menuDriver, `${skin.slot}.megahub-original`);
-  if (!fs.existsSync(backupDir)) return { error: 'No hay una copia original guardada para restaurar (el tema ya estaba modificado antes de instalar la skin).' };
+  if (!fs.existsSync(backupDir)) return { error: t(lang(), 'megahub.retroSkins.errors.noBackupSaved') };
   await rmrf(destDir);
   await copyDir(backupDir, destDir);
   return { ok: true };

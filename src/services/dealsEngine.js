@@ -13,8 +13,11 @@
 // Todos los steamAppID de abajo fueron verificados contra la propia API de
 // CheapShark (GET /games?title=...) al escribir este archivo — no son adivinados.
 const store = require('../util/store');
+const { t } = require('../lib/i18n');
 const steamPlaytimeSvc = require('./steamPlaytime');
 const { getSteamMeta } = require('./metadata');
+
+function lang() { return store.load('language', 'es'); }
 
 const CHEAPSHARK = 'https://www.cheapshark.com/api/1.0';
 const STORE_NAMES = {
@@ -78,19 +81,10 @@ const GAME_TAGS = {
   892970: 'cozy-survival', // Valheim
 };
 
-const TAG_LABELS = {
-  'soulslike': 'soulslikes',
-  'roguelike': 'roguelikes',
-  'metroidvania': 'metroidvanias',
-  'openworld-rpg': 'RPG de mundo abierto',
-  'survival-horror': 'terror y supervivencia',
-  'citybuilder-strategy': 'gestión y estrategia',
-  'racing': 'carreras',
-  'fighting': 'juegos de lucha',
-  'shooter-looter': 'shooters',
-  'jrpg': 'JRPG',
-  'cozy-survival': 'supervivencia/vida tranquila',
-};
+// Las claves son identificadores internos (no se muestran); el label sí se
+// muestra, interpolado en megahub.deals.recommendedForYou del renderer — se
+// resuelve con tr() en vez de tenerlo fijo en español.
+function tagLabel(tag) { return t(lang(), `megahub.dealsEngine.tagLabel.${tag}`); }
 
 // Candidatos recomendados por microgénero — {appid, title}. Se filtran en
 // runtime los que el usuario ya tiene (vía playtime de Steam).
@@ -429,7 +423,7 @@ async function getRecommendations({ force = false } = {}) {
     game.steamRatingPercent = null;
     return game;
   }));
-  const value = resolved.length ? { tag: topTag, tagLabel: TAG_LABELS[topTag] || topTag, reasonKind, games: resolved } : null;
+  const value = resolved.length ? { tag: topTag, tagLabel: tagLabel(topTag) || topTag, reasonKind, games: resolved } : null;
   cache.reco = { at: Date.now(), value };
   saveDealsCache(cache);
   return value;

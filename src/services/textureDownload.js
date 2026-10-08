@@ -22,6 +22,9 @@ const retroFolders = require('./retroFolders');
 const scanRetroArch = require('../scanners/retroarch');
 const store = require('../util/store');
 const archiveExtract = require('./archiveExtract');
+const { t } = require('../lib/i18n');
+
+function lang() { return store.load('language', 'es'); }
 
 const API = 'https://gamebanana.com/apiv11';
 
@@ -208,10 +211,10 @@ async function downloadAndInstall(consoleId, romPath, mod) {
     ? getTextureDestDir(consoleId, romPath)
     : getManualModDestDir(consoleId, romPath, modId, mod.name);
   if (!destDir) {
-    return { error: 'No se pudo identificar el ID del juego (o falta el emulador correspondiente) para saber dónde instalar el pack.' };
+    return { error: t(lang(), 'megahub.textureDownload.errors.cannotIdentifyGame') };
   }
   const info = await getModDownloadInfo(modId);
-  if (!info) throw new Error('No se pudo obtener el archivo de descarga de GameBanana');
+  if (!info) throw new Error(t(lang(), 'megahub.textureDownload.errors.cannotGetDownloadFile'));
   // GameBanana acepta subir .zip, .7z o .rar indistintamente — el nombre del
   // archivo temporal tiene que usar la extensión REAL para que archiveExtract
   // sepa con qué descompresor abrirlo (antes se forzaba ".zip" fijo y los

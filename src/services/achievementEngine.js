@@ -23,24 +23,18 @@
 // propios a partir de estadísticas). La escala de tiers y las categorías de
 // abajo son diseño propio.
 const store = require('../util/store');
+const { t } = require('../lib/i18n');
 const steamPlaytime = require('./steamPlaytime');
 const { NON_GAME_APPIDS } = require('./steamKnownApps');
 
+function lang() { return store.load('language', 'es'); }
+
 // Tiers de horas con nombre propio (mismo eje 0.5h→500h se reutiliza para
 // logros globales, por consola y por juego — el título de cada uno se arma
-// distinto según el ámbito, ver más abajo).
-const HOUR_TIERS = [
-  { h: 0.5, label: 'Le diste una oportunidad' },
-  { h: 1, label: 'Enganchado' },
-  { h: 2, label: 'Con curiosidad' },
-  { h: 5, label: 'En serio' },
-  { h: 10, label: 'Comprometido' },
-  { h: 25, label: 'Fanático' },
-  { h: 50, label: 'Veterano' },
-  { h: 100, label: 'Leyenda personal' },
-  { h: 200, label: 'Adicto (con cariño)' },
-  { h: 500, label: 'Vives ahí' },
-];
+// distinto según el ámbito, ver más abajo). El label se resuelve por tr(),
+// nunca se compara contra texto (solo h, un número, identifica el tier).
+const HOUR_TIERS = [0.5, 1, 2, 5, 10, 25, 50, 100, 200, 500].map(h => ({ h }));
+function hourTierLabel(h) { return t(lang(), `megahub.achievementEngine.hourTier.${h}`); }
 const CONSOLE_GAME_TIERS = [1, 3, 5, 10, 25, 50];
 const CONSOLE_COLLECTOR_TIERS = [5, 10, 20, 50, 100];
 const LIBRARY_TIERS = [10, 25, 50, 100, 250];
@@ -156,7 +150,7 @@ function hoursOf(ms) { return ms / 3600000; }
 // se corta en el primer tier no alcanzado (+1 de "próximo objetivo" para que
 // el front pueda mostrar hacia dónde va, sin listar los otros 8 inútiles).
 function relevantTiers(hours) {
-  const idx = HOUR_TIERS.findIndex(t => hours < t.h);
+  const idx = HOUR_TIERS.findIndex(tier => hours < tier.h);
   return idx === -1 ? HOUR_TIERS : HOUR_TIERS.slice(0, idx + 1);
 }
 
@@ -197,25 +191,31 @@ async function evaluate({ libraryGamesCount = 0, consoleNames = {}, genreCounts 
   const totalHours = hoursOf(totalRetroMs) + totalSteamMinutes / 60;
 
   push('global:first_launch', {
-    scope: 'global', title: 'Primeros pasos', description: 'Lanza tu primer juego desde MegaHUB.',
+    scope: 'global', title: t(lang(), 'megahub.achievementEngine.firstLaunch.title'), description: t(lang(), 'megahub.achievementEngine.firstLaunch.description'),
     reached: generic.launchCount > 0 || Object.keys(retro.byGame).length > 0, current: Math.min(generic.launchCount, 1), target: 1,
   });
-  for (const t of relevantTiers(totalHours)) {
-    push(`global:playtime_${t.h}h`, {
-      scope: 'global', title: `${t.label} (${t.h}h en total)`, description: `Acumula ${t.h} horas jugadas en total (Steam + Retro).`,
-      reached: totalHours >= t.h, current: Math.round(totalHours * 10) / 10, target: t.h,
+  for (const tier of relevantTiers(totalHours)) {
+    push(`global:playtime_${tier.h}h`, {
+      scope: 'global',
+      title: t(lang(), 'megahub.achievementEngine.global.playtimeTitle', { label: hourTierLabel(tier.h), h: tier.h }),
+      description: t(lang(), 'megahub.achievementEngine.global.playtimeDescription', { h: tier.h }),
+      reached: totalHours >= tier.h, current: Math.round(totalHours * 10) / 10, target: tier.h,
     });
   }
   const streak = longestStreak(generic.daysPlayed);
   for (const n of STREAK_TIERS) {
     push(`global:streak_${n}`, {
-      scope: 'global', title: `Racha de ${n} días`, description: `Juega ${n} días seguidos.`,
+      scope: 'global',
+      title: t(lang(), 'megahub.achievementEngine.global.streakTitle', { n }),
+      description: t(lang(), 'megahub.achievementEngine.global.streakDescription', { n }),
       reached: streak >= n, current: streak, target: n,
     });
   }
   for (const n of LIBRARY_TIERS) {
     push(`global:library_${n}`, {
-      scope: 'global', title: `Colección de ${n}`, description: `Ten ${n} juegos en tu biblioteca (todas las plataformas).`,
+      scope: 'global',
+      title: t(lang(), 'megahub.achievementEngine.global.libraryTitle', { n }),
+      description: t(lang(), 'megahub.achievementEngine.global.libraryDescription', { n }),
       reached: libraryGamesCount >= n, current: libraryGamesCount, target: n,
     });
   }
@@ -224,25 +224,32 @@ async function evaluate({ libraryGamesCount = 0, consoleNames = {}, genreCounts 
   if (Object.keys(retro.byConsole).length) platformsUsed.add('retro');
   for (const n of MULTIPLATFORM_TIERS) {
     push(`global:multiplatform_${n}`, {
-      scope: 'global', title: `Multiplataforma x${n}`, description: `Juega en ${n} plataformas/launchers distintos.`,
+      scope: 'global',
+      title: t(lang(), 'megahub.achievementEngine.global.multiplatformTitle', { n }),
+      description: t(lang(), 'megahub.achievementEngine.global.multiplatformDescription', { n }),
       reached: platformsUsed.size >= n, current: platformsUsed.size, target: n,
     });
   }
   // Basados en la HORA REAL de inicio de sesión — solo el modo Retro nos la
   // da (Steam solo reporta el total acumulado, no cuándo empezó cada sesión).
   push('global:night_owl', {
-    scope: 'global', title: 'Ave nocturna', description: 'Juega una sesión de Retro entre medianoche y las 5am, 5 veces.',
+    scope: 'global', title: t(lang(), 'megahub.achievementEngine.nightOwl.title'), description: t(lang(), 'megahub.achievementEngine.nightOwl.description'),
     reached: (generic.nightSessions || 0) >= 5, current: generic.nightSessions || 0, target: 5,
   });
   push('global:weekend_warrior', {
-    scope: 'global', title: 'Guerrero de fin de semana', description: 'Juega 10 sesiones de Retro en sábado o domingo.',
+    scope: 'global', title: t(lang(), 'megahub.achievementEngine.weekendWarrior.title'), description: t(lang(), 'megahub.achievementEngine.weekendWarrior.description'),
     reached: (generic.weekendSessions || 0) >= 10, current: generic.weekendSessions || 0, target: 10,
   });
   for (const [genre, count] of Object.entries(genreCounts)) {
     for (const n of GENRE_TIERS) {
       push(`global:genre_${genre}_${n}`, {
-        scope: 'global', title: n === 1 ? `Primer juego de ${genre}` : `Explorador de ${genre} (${n})`,
-        description: n === 1 ? `Juega un juego de género ${genre}.` : `Juega ${n} juegos distintos de género ${genre}.`,
+        scope: 'global',
+        title: n === 1
+          ? t(lang(), 'megahub.achievementEngine.global.genreFirstTitle', { genre })
+          : t(lang(), 'megahub.achievementEngine.global.genreExplorerTitle', { genre, n }),
+        description: n === 1
+          ? t(lang(), 'megahub.achievementEngine.global.genreFirstDescription', { genre })
+          : t(lang(), 'megahub.achievementEngine.global.genreExplorerDescription', { genre, n }),
         reached: count >= n, current: Math.min(count, n), target: n,
       });
     }
@@ -255,10 +262,10 @@ async function evaluate({ libraryGamesCount = 0, consoleNames = {}, genreCounts 
     // mismo filtro que ya usa steamOwned.js para no mostrarlas en la biblioteca.
     if (NON_GAME_APPIDS.has(appid)) continue;
     const hours = info.playtimeMinutes / 60;
-    for (const t of relevantTiers(hours)) {
-      push(`steamgame:${appid}:${t.h}h`, {
-        scope: 'steamgame', title: t.label, description: `${t.h} horas jugadas.`,
-        reached: hours >= t.h, current: Math.round(hours * 10) / 10, target: t.h,
+    for (const tier of relevantTiers(hours)) {
+      push(`steamgame:${appid}:${tier.h}h`, {
+        scope: 'steamgame', title: hourTierLabel(tier.h), description: t(lang(), 'megahub.achievementEngine.steamGame.description', { h: tier.h }),
+        reached: hours >= tier.h, current: Math.round(hours * 10) / 10, target: tier.h,
         appid,
       });
     }
@@ -271,15 +278,22 @@ async function evaluate({ libraryGamesCount = 0, consoleNames = {}, genreCounts 
     const name = consoleNames[consoleId] || consoleId;
     for (const n of CONSOLE_GAME_TIERS) {
       push(`retroconsole:${consoleId}:played_${n}`, {
-        scope: 'retroconsole', title: n === 1 ? `Primer juego de ${name}` : `${n} juegos de ${name}`,
-        description: n === 1 ? `Juega tu primer juego de ${name}.` : `Juega ${n} juegos distintos de ${name}.`,
+        scope: 'retroconsole',
+        title: n === 1
+          ? t(lang(), 'megahub.achievementEngine.retroConsole.firstGameTitle', { name })
+          : t(lang(), 'megahub.achievementEngine.retroConsole.nGamesTitle', { name, n }),
+        description: n === 1
+          ? t(lang(), 'megahub.achievementEngine.retroConsole.firstGameDescription', { name })
+          : t(lang(), 'megahub.achievementEngine.retroConsole.nGamesDescription', { name, n }),
         reached: c.gamesPlayed.length >= n, current: c.gamesPlayed.length, target: n, consoleId,
       });
     }
-    for (const t of relevantTiers(hoursOf(c.playtimeMs))) {
-      push(`retroconsole:${consoleId}:${t.h}h`, {
-        scope: 'retroconsole', title: `${t.label} — ${name}`, description: `Acumula ${t.h} horas jugadas en ${name}.`,
-        reached: hoursOf(c.playtimeMs) >= t.h, current: Math.round(hoursOf(c.playtimeMs) * 10) / 10, target: t.h, consoleId,
+    for (const tier of relevantTiers(hoursOf(c.playtimeMs))) {
+      push(`retroconsole:${consoleId}:${tier.h}h`, {
+        scope: 'retroconsole',
+        title: t(lang(), 'megahub.achievementEngine.retroConsole.playtimeTitle', { label: hourTierLabel(tier.h), name }),
+        description: t(lang(), 'megahub.achievementEngine.retroConsole.playtimeDescription', { h: tier.h, name }),
+        reached: hoursOf(c.playtimeMs) >= tier.h, current: Math.round(hoursOf(c.playtimeMs) * 10) / 10, target: tier.h, consoleId,
       });
     }
   }
@@ -298,10 +312,11 @@ async function evaluate({ libraryGamesCount = 0, consoleNames = {}, genreCounts 
     // Para una ROM sin jugar todavía, solo se muestra el primer tier (bloqueado)
     // como "próximo objetivo" — listar los 10 sería puro ruido.
     const tiers = hours > 0 ? relevantTiers(hours) : [HOUR_TIERS[0]];
-    for (const t of tiers) {
-      push(`retrogame:${key}:${t.h}h`, {
-        scope: 'retrogame', title: t.label, description: `${t.h} horas jugadas en ${g.title} (${consoleNames[g.consoleId] || g.consoleId}).`,
-        reached: hours >= t.h, current: Math.round(hours * 10) / 10, target: t.h,
+    for (const tier of tiers) {
+      push(`retrogame:${key}:${tier.h}h`, {
+        scope: 'retrogame', title: hourTierLabel(tier.h),
+        description: t(lang(), 'megahub.achievementEngine.retroGame.description', { h: tier.h, title: g.title, console: consoleNames[g.consoleId] || g.consoleId }),
+        reached: hours >= tier.h, current: Math.round(hours * 10) / 10, target: tier.h,
         consoleId: g.consoleId, gameKey: key, gameTitle: g.title,
       });
     }
@@ -321,8 +336,8 @@ function evaluateCollectorAchievements(consoleId, name, romCount) {
     const reached = romCount >= n;
     if (reached && !unlocked[id]) { unlocked[id] = Date.now(); saveUnlocked(unlocked); }
     return {
-      id, scope: 'retroconsole', title: `Coleccionista de ${name} (${n})`,
-      description: `Ten ${n} ROMs de ${name} en tu carpeta.`,
+      id, scope: 'retroconsole', title: t(lang(), 'megahub.achievementEngine.collector.title', { name, n }),
+      description: t(lang(), 'megahub.achievementEngine.collector.description', { name, n }),
       earned: reached, earnedAt: unlocked[id] || null, progressCurrent: romCount, progressTarget: n, consoleId,
     };
   });

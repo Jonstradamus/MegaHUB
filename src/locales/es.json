@@ -561,6 +561,171 @@
         "quit": "Salir"
       },
       "autostartIssue": "No se pudo activar \"Iniciar con Windows\" automáticamente — podés activarlo a mano desde el ícono de MegaHUB en la bandeja del sistema."
+    },
+    "resolutionPresets": {
+      "tierLabel": {
+        "default": "nativo (mejor rendimiento)",
+        "1080p": "1080p",
+        "2k": "1440p / 2K",
+        "4k": "4K",
+        "original": "Original"
+      },
+      "familyLabel": {
+        "tvCrt": "TV CRT 4:3",
+        "arcadeCrt": "CRT de arcade, aspecto original del gabinete",
+        "handheldLcd": "pantalla LCD original"
+      },
+      "errors": {
+        "noAutoSettings": "Esta consola no tiene ajustes automáticos.",
+        "retroArchNotInstalledYet": "RetroArch no está instalado todavía.",
+        "shaderNotFound": "No se encontró el shader \"${shader}\" en tu carpeta shaders/ de RetroArch.",
+        "noOriginalMode": "Esta consola no tiene un modo Original disponible.",
+        "unknownPreset": "Preset desconocido.",
+        "originalOnlyRetroArch": "El modo Original solo está disponible para consolas emuladas con RetroArch.",
+        "locateDolphinFirst": "Ubica primero tu carpeta de Dolphin (\"Ya lo tengo — ubicar carpeta\").",
+        "openEmulatorOnceFirst": "Abre el emulador una vez (y ciérralo) para que genere su configuración, luego vuelve a intentar.",
+        "noAutoResolutionSettings": "Esta consola no tiene ajustes de resolución automáticos."
+      },
+      "messages": {
+        "corePresetApplied": "${core}: preset ${tier} aplicado (aplica a todos los juegos de este core). Reinicia el juego/RetroArch si estaba abierto.",
+        "pixelShaderOff": "${core}: shader de píxeles desactivado (nativo, mejor rendimiento). Reinicia el juego/RetroArch si estaba abierto.",
+        "pixelShaderApplied": "${core}: shader ${shader} (${tier}). Reinicia el juego/RetroArch si estaba abierto.",
+        "originalModeApplied": "${core}: modo Original aplicado (${family}). Reinicia el juego/RetroArch si estaba abierto.",
+        "pcsx2": "PCSX2: resolución interna x${mult} nativo (${tier}).",
+        "rpcs3": "RPCS3: Resolution Scale ${scale}% (${tier}).",
+        "renderScale": "${emulator}: escala de render x${scale}${windowPart} (${tier}).",
+        "windowSizePart": ", ventana ${size}",
+        "dolphin": "Dolphin: resolución interna x${scale} nativo (${tier}).",
+        "restartDolphinSuffix": "Reinicia Dolphin si estaba abierto.",
+        "restartEmulatorSuffix": "Reinicia el emulador si estaba abierto."
+      }
+    },
+    "retroFolders": {
+      "errors": {
+        "notWritable": "Esa carpeta no se puede escribir (permisos insuficientes)."
+      },
+      "theEmulatorFallback": "el emulador",
+      "multiDiscSuffix": "(multidisco)",
+      "romFormatNote": {
+        "noInfo": "Usa el formato de ROM que lea ${emulator} (revisa su documentación).",
+        "header": "Formatos que lee ${emulator}: ${formats}.",
+        "zipOk": "También puedes dejar el juego comprimido en .zip o .7z — lo lee igual, sin necesidad de descomprimirlo tú.",
+        "noZip": "Este sistema NO acepta .zip/.rar aquí: tiene que ser el archivo de disco/ROM tal cual, sin comprimir.",
+        "notes": {
+          "naomi": "Igual que en Arcade, el .zip es el romset nativo (formato MAME) — no un juego cualquiera comprimido. Naomi necesita \"naomi.zip\" (BIOS) y Atomiswave \"awbios.zip\" en la misma carpeta para que sus juegos arranquen.",
+          "xbox": "Ojo: tiene que ser formato \"xiso\" (convertido con xdvdfs/Qwix), no un ISO normal de disco.",
+          "ps2": "Evita .bin/.cue: PCSX2 no los lee directo, conviértelos primero.",
+          "ps3": "El .iso es la imagen completa del disco; la carpeta PS3_GAME/... es el disco tal cual sin empaquetar; .pkg es para copias digitales. RPCS3 también necesita el firmware oficial de PS3 (PS3UPDAT.PUP) instalado dentro del propio emulador — se configura ahí, no poniendo un archivo en esta carpeta.",
+          "arcade": "A diferencia del resto, aquí el .zip NO es opcional: es el formato nativo del romset (el mismo que usan MAME/FBNeo), con los archivos internos exactos que pide cada juego — no es solo \"un juego comprimido\".",
+          "neogeo": "Igual que en Arcade, el .zip es el romset nativo (formato MAME/FBNeo). Muchos juegos de Neo Geo además necesitan el romset \"neogeo.zip\" (BIOS compartida del sistema) en la misma carpeta."
+        }
+      },
+      "leeme": {
+        "emulator": "Carpeta para ${emulator} (${consoleName}).\n\nMegaHUB NO incluye ni descarga BIOS: son archivos con copyright, ilegales de\nredistribuir. Si esta consola necesita BIOS, consíguelo tú mismo y colócalo\naquí según lo pida el emulador una vez instalado.\n\nUsa el enlace \"Descargar emulador\" en MegaHUB para bajar el instalador oficial\ny descomprímelo/instálalo en esta carpeta si el emulador es portable.\n",
+        "roms": "Coloca aquí tus propias copias de seguridad de juegos de ${consoleName}.\n\n${formatNote}\n\nPara que MegaHUB reconozca la carátula correcta, nombra el archivo IGUAL al\ntítulo del catálogo — la extensión no importa, solo el nombre antes de ella\n(mayúsculas/minúsculas tampoco importan). Ejemplos:\n  \"Super Mario Bros.\"  ✔ se reconoce (con cualquiera de los formatos de arriba)\n  \"copia de seguridad\" ✘ no se puede identificar\n"
+      }
+    },
+    "achievementEngine": {
+      "hourTier": {
+        "0": {
+          "5": "Le diste una oportunidad"
+        },
+        "1": "Enganchado",
+        "2": "Con curiosidad",
+        "5": "En serio",
+        "10": "Comprometido",
+        "25": "Fanático",
+        "50": "Veterano",
+        "100": "Leyenda personal",
+        "200": "Adicto (con cariño)",
+        "500": "Vives ahí"
+      },
+      "firstLaunch": {
+        "title": "Primeros pasos",
+        "description": "Lanza tu primer juego desde MegaHUB."
+      },
+      "global": {
+        "playtimeTitle": "${label} (${h}h en total)",
+        "playtimeDescription": "Acumula ${h} horas jugadas en total (Steam + Retro).",
+        "streakTitle": "Racha de ${n} días",
+        "streakDescription": "Juega ${n} días seguidos.",
+        "libraryTitle": "Colección de ${n}",
+        "libraryDescription": "Ten ${n} juegos en tu biblioteca (todas las plataformas).",
+        "multiplatformTitle": "Multiplataforma x${n}",
+        "multiplatformDescription": "Juega en ${n} plataformas/launchers distintos.",
+        "genreFirstTitle": "Primer juego de ${genre}",
+        "genreExplorerTitle": "Explorador de ${genre} (${n})",
+        "genreFirstDescription": "Juega un juego de género ${genre}.",
+        "genreExplorerDescription": "Juega ${n} juegos distintos de género ${genre}."
+      },
+      "nightOwl": {
+        "title": "Ave nocturna",
+        "description": "Juega una sesión de Retro entre medianoche y las 5am, 5 veces."
+      },
+      "weekendWarrior": {
+        "title": "Guerrero de fin de semana",
+        "description": "Juega 10 sesiones de Retro en sábado o domingo."
+      },
+      "steamGame": {
+        "description": "${h} horas jugadas."
+      },
+      "retroConsole": {
+        "firstGameTitle": "Primer juego de ${name}",
+        "nGamesTitle": "${n} juegos de ${name}",
+        "firstGameDescription": "Juega tu primer juego de ${name}.",
+        "nGamesDescription": "Juega ${n} juegos distintos de ${name}.",
+        "playtimeTitle": "${label} — ${name}",
+        "playtimeDescription": "Acumula ${h} horas jugadas en ${name}."
+      },
+      "retroGame": {
+        "description": "${h} horas jugadas en ${title} (${console})."
+      },
+      "collector": {
+        "title": "Coleccionista de ${name} (${n})",
+        "description": "Ten ${n} ROMs de ${name} en tu carpeta."
+      }
+    },
+    "dealsEngine": {
+      "tagLabel": {
+        "soulslike": "soulslikes",
+        "roguelike": "roguelikes",
+        "metroidvania": "metroidvanias",
+        "openworld-rpg": "RPG de mundo abierto",
+        "survival-horror": "terror y supervivencia",
+        "citybuilder-strategy": "gestión y estrategia",
+        "racing": "carreras",
+        "fighting": "juegos de lucha",
+        "shooter-looter": "shooters",
+        "jrpg": "JRPG",
+        "cozy-survival": "supervivencia/vida tranquila"
+      }
+    },
+    "retroSkins": {
+      "description": {
+        "ps3Icons": "Iconos, sonidos y tipografía al estilo XMB de PlayStation 3.",
+        "materialDesign": "Iconos y tipografía Roboto siguiendo el lenguaje visual Material Design.",
+        "rguiPepcodes": "18 presets de color (Cupertino, PlayStation, Wii, Redmond…) para el menú RGUI, en variante centrada y ancho completo."
+      },
+      "errors": {
+        "skinNotFound": "Skin no encontrada.",
+        "assetsNotFound": "No se detectó la carpeta assets/ de RetroArch. Instala/abre RetroArch al menos una vez primero.",
+        "unexpectedArchiveStructure": "El archivo descargado no tiene la estructura esperada (¿cambió el repo del autor?).",
+        "noOriginalToRestore": "Esta skin no tiene original que restaurar.",
+        "retroArchNotDetected": "No se detectó RetroArch.",
+        "noBackupSaved": "No hay una copia original guardada para restaurar (el tema ya estaba modificado antes de instalar la skin)."
+      }
+    },
+    "textureDownload": {
+      "errors": {
+        "cannotIdentifyGame": "No se pudo identificar el ID del juego (o falta el emulador correspondiente) para saber dónde instalar el pack.",
+        "cannotGetDownloadFile": "No se pudo obtener el archivo de descarga de GameBanana"
+      }
+    },
+    "retroAchievements": {
+      "errors": {
+        "cfgNotFound": "No se encontró retroarch.cfg — abre RetroArch al menos una vez."
+      },
+      "cheevosEnabledMessage": "Logros activados en RetroArch — inicia sesión en Ajustes > Logros dentro de RetroArch con tu cuenta (MegaHUB nunca ve tu contraseña)."
     }
   }
 }

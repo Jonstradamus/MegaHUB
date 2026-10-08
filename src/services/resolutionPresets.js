@@ -17,15 +17,15 @@ const emulatorDownload = require('./emulatorDownload');
 const retroFolders = require('./retroFolders');
 const retroCoreInstall = require('./retroCoreInstall');
 const scanRetroArch = require('../scanners/retroarch');
+const { t } = require('../lib/i18n');
+const store = require('../util/store');
+
+// Servicio del proceso principal (Node puro, sin window.megahub.t) — mismo
+// patrón que main.js: lee el idioma del store atómico en cada llamada.
+function lang() { return store.load('language', 'es'); }
 
 const TIERS = ['default', '1080p', '2k', '4k', 'original'];
-const TIER_LABEL = {
-  default: 'nativo (mejor rendimiento)',
-  '1080p': '1080p',
-  '2k': '1440p / 2K',
-  '4k': '4K',
-  original: 'Original',
-};
+function tierLabel(tier) { return t(lang(), `megahub.resolutionPresets.tierLabel.${tier}`); }
 
 // "Original": no es un nivel de resolución más, es un modo aparte — 4:3 (o el
 // aspecto real de cada sistema) + un shader que reproduce cómo se veía la
@@ -226,12 +226,12 @@ function findRetroArchConfigRoot() {
 // preset de resolución interna y el de shader de píxeles.
 function ensureCoreConfigDir(consoleId) {
   const folder = CORE_FOLDER[consoleId];
-  if (!folder) return { error: 'Esta consola no tiene ajustes automáticos.' };
+  if (!folder) return { error: t(lang(), 'megahub.resolutionPresets.errors.noAutoSettings') };
   const exe = scanRetroArch.findRetroArch();
-  if (!exe) return { error: 'RetroArch no está instalado todavía.' };
+  if (!exe) return { error: t(lang(), 'megahub.resolutionPresets.errors.retroArchNotInstalledYet') };
   const coreName = retroCoreInstall.CORE_MAP[consoleId];
   const dllPath = retroCoreInstall.coreDllPath(path.dirname(exe), coreName);
-  if (!fs.existsSync(dllPath)) return { error: `Falta instalar el core "${coreName}" — usa el botón "Instalar core" primero.` };
+  if (!fs.existsSync(dllPath)) return { error: t(lang(), 'megahub.main.retroLaunch.coreMissing', { core: coreName }) };
   const coreDir = path.join(findRetroArchConfigRoot(), folder);
   fs.mkdirSync(coreDir, { recursive: true });
   return { folder, exe, coreDir };
@@ -252,7 +252,7 @@ function applyRetroArchCorePreset(consoleId, tier) {
     text = patchFlatOption(text, key, value);
   }
   fs.writeFileSync(optPath, text);
-  return { ok: true, message: `${ctx.folder}: preset ${TIER_LABEL[tier]} aplicado (aplica a todos los juegos de este core). Reinicia el juego/RetroArch si estaba abierto.` };
+  return { ok: true, message: t(lang(), 'megahub.resolutionPresets.messages.corePresetApplied', { core: ctx.folder, tier: tierLabel(tier) }) };
 }
 
 // Búsqueda recursiva de un preset de shader por nombre de archivo exacto
@@ -294,7 +294,7 @@ function applyPixelShaderPreset(consoleId, tier) {
     // Por defecto: sin shader — se quita cualquier override para que
     // RetroArch use el filtrado normal (nativo, mejor rendimiento).
     for (const p of [slangOverride, glslOverride]) { if (fs.existsSync(p)) fs.unlinkSync(p); }
-    return { ok: true, message: `${ctx.folder}: shader de píxeles desactivado (nativo, mejor rendimiento). Reinicia el juego/RetroArch si estaba abierto.` };
+    return { ok: true, message: t(lang(), 'megahub.resolutionPresets.messages.pixelShaderOff', { core: ctx.folder }) };
   }
 
   const shadersRoot = path.join(path.dirname(ctx.exe), 'shaders');
@@ -307,9 +307,9 @@ function applyPixelShaderPreset(consoleId, tier) {
     const found = findShaderPreset(root, `${want}.${ext}`);
     if (!found) continue;
     fs.writeFileSync(overridePath, `#reference "${found}"\n`);
-    return { ok: true, message: `${ctx.folder}: shader ${want} (${TIER_LABEL[tier]}). Reinicia el juego/RetroArch si estaba abierto.` };
+    return { ok: true, message: t(lang(), 'megahub.resolutionPresets.messages.pixelShaderApplied', { core: ctx.folder, shader: want, tier: tierLabel(tier) }) };
   }
-  return { error: `No se encontró el shader "${want}" en tu carpeta shaders/ de RetroArch.` };
+  return { error: t(lang(), 'megahub.resolutionPresets.errors.shaderNotFound', { shader: want }) };
 }
 
 // Escribe/borra el override de shader por-core (mismo mecanismo "#reference"
@@ -344,10 +344,10 @@ function applyOriginalPreset(consoleId) {
   if (ctx.error) return ctx;
 
   let shaderName, aspect, familyLabel;
-  if (ORIGINAL_TV.includes(consoleId)) { shaderName = 'crt-easymode'; aspect = ORIGINAL_ASPECT_4_3; familyLabel = 'TV CRT 4:3'; }
-  else if (ORIGINAL_ARCADE.includes(consoleId)) { shaderName = 'crt-easymode'; aspect = ORIGINAL_ASPECT_CORE_PROVIDED; familyLabel = 'CRT de arcade, aspecto original del gabinete'; }
-  else if (ORIGINAL_HANDHELD.includes(consoleId)) { shaderName = 'lcd1x'; aspect = ORIGINAL_ASPECT_CORE_PROVIDED; familyLabel = 'pantalla LCD original'; }
-  else return { error: 'Esta consola no tiene un modo Original disponible.' };
+  if (ORIGINAL_TV.includes(consoleId)) { shaderName = 'crt-easymode'; aspect = ORIGINAL_ASPECT_4_3; familyLabel = t(lang(), 'megahub.resolutionPresets.familyLabel.tvCrt'); }
+  else if (ORIGINAL_ARCADE.includes(consoleId)) { shaderName = 'crt-easymode'; aspect = ORIGINAL_ASPECT_CORE_PROVIDED; familyLabel = t(lang(), 'megahub.resolutionPresets.familyLabel.arcadeCrt'); }
+  else if (ORIGINAL_HANDHELD.includes(consoleId)) { shaderName = 'lcd1x'; aspect = ORIGINAL_ASPECT_CORE_PROVIDED; familyLabel = t(lang(), 'megahub.resolutionPresets.familyLabel.handheldLcd'); }
+  else return { error: t(lang(), 'megahub.resolutionPresets.errors.noOriginalMode') };
 
   // Si el sistema tiene resolución interna real (3D: N64/PSX/Dreamcast/PSP/
   // etc.), Original la resetea a nativa — el objetivo es "cómo se veía en su
@@ -368,9 +368,9 @@ function applyOriginalPreset(consoleId) {
   fs.writeFileSync(cfgPath, cfgText);
 
   if (!writeShaderReference(ctx, shaderName)) {
-    return { error: `No se encontró el shader "${shaderName}" en tu carpeta shaders/ de RetroArch.` };
+    return { error: t(lang(), 'megahub.resolutionPresets.errors.shaderNotFound', { shader: shaderName }) };
   }
-  return { ok: true, message: `${ctx.folder}: modo Original aplicado (${familyLabel}). Reinicia el juego/RetroArch si estaba abierto.` };
+  return { ok: true, message: t(lang(), 'megahub.resolutionPresets.messages.originalModeApplied', { core: ctx.folder, family: familyLabel }) };
 }
 
 async function getInstalledDir(consoleId) {
@@ -392,7 +392,7 @@ function applyPcsx2(tier, emuDir) {
   text = patchKeyValue(text, 'EmuCore/GS', 'upscale_multiplier', mult);
   if (tier !== 'default') text = patchKeyValue(text, 'EmuCore/GS', 'MaxAnisotropy', 16);
   fs.writeFileSync(iniPath, text);
-  return `PCSX2: resolución interna x${mult} nativo (${TIER_LABEL[tier]}).`;
+  return t(lang(), 'megahub.resolutionPresets.messages.pcsx2', { mult, tier: tierLabel(tier) });
 }
 
 function applyRpcs3(tier, emuDir) {
@@ -405,7 +405,7 @@ function applyRpcs3(tier, emuDir) {
   text = patchYamlChild(text, 'Video', 'Resolution Scale', scale);
   if (tier !== 'default') text = patchYamlChild(text, 'Video', 'Anisotropic Filter Override', 16);
   fs.writeFileSync(cfgPath, text);
-  return `RPCS3: Resolution Scale ${scale}% (${TIER_LABEL[tier]}).`;
+  return t(lang(), 'megahub.resolutionPresets.messages.rpcs3', { scale, tier: tierLabel(tier) });
 }
 
 function findXeniaConfig(emuDir) {
@@ -428,7 +428,11 @@ function applyXenia(tier, emuDir) {
     text = patchKeyValue(text, 'UI', 'window_size_y', h);
   }
   fs.writeFileSync(cfgPath, text);
-  return `Xenia: escala de render x${scale}${winRes ? `, ventana ${winRes}` : ''} (${TIER_LABEL[tier]}).`;
+  return t(lang(), 'megahub.resolutionPresets.messages.renderScale', {
+    emulator: 'Xenia', scale,
+    windowPart: winRes ? t(lang(), 'megahub.resolutionPresets.messages.windowSizePart', { size: winRes }) : '',
+    tier: tierLabel(tier),
+  });
 }
 
 function applyXemu(tier, emuDir) {
@@ -442,7 +446,11 @@ function applyXemu(tier, emuDir) {
   text = patchKeyValue(text, 'display.quality', 'surface_scale', scale);
   if (winRes) text = patchKeyValue(text, 'display.window', 'startup_size', `"${winRes}"`);
   fs.writeFileSync(cfgPath, text);
-  return `Xemu: escala de render x${scale}${winRes ? `, ventana ${winRes}` : ''} (${TIER_LABEL[tier]}).`;
+  return t(lang(), 'megahub.resolutionPresets.messages.renderScale', {
+    emulator: 'Xemu', scale,
+    windowPart: winRes ? t(lang(), 'megahub.resolutionPresets.messages.windowSizePart', { size: winRes }) : '',
+    tier: tierLabel(tier),
+  });
 }
 
 function applyDolphin(consoleId, tier) {
@@ -465,18 +473,18 @@ function applyDolphin(consoleId, tier) {
   const scale = PRESET_VALUES[consoleId][tier];
   text = patchKeyValue(text, 'Settings', 'InternalResolution', scale);
   fs.writeFileSync(cfgPath, text);
-  return `Dolphin: resolución interna x${scale} nativo (${TIER_LABEL[tier]}).`;
+  return t(lang(), 'megahub.resolutionPresets.messages.dolphin', { scale, tier: tierLabel(tier) });
 }
 
 const SUPPORTED = ['ps2', 'ps3', 'xbox', 'xbox360', 'gamecube', 'wii'];
 
 async function applyPreset(consoleId, tier) {
-  if (!TIERS.includes(tier)) return { error: 'Preset desconocido.' };
+  if (!TIERS.includes(tier)) return { error: t(lang(), 'megahub.resolutionPresets.errors.unknownPreset') };
 
   try {
     if (tier === 'original') {
       if (!retroCoreInstall.CORE_MAP[consoleId]) {
-        return { error: 'El modo Original solo está disponible para consolas emuladas con RetroArch.' };
+        return { error: t(lang(), 'megahub.resolutionPresets.errors.originalOnlyRetroArch') };
       }
       return applyOriginalPreset(consoleId);
     }
@@ -487,13 +495,13 @@ async function applyPreset(consoleId, tier) {
 
     if (consoleId === 'gamecube' || consoleId === 'wii') {
       const message = applyDolphin(consoleId, tier);
-      if (!message) return { error: 'Ubica primero tu carpeta de Dolphin ("Ya lo tengo — ubicar carpeta").' };
-      return { ok: true, message: message + ' Reinicia Dolphin si estaba abierto.' };
+      if (!message) return { error: t(lang(), 'megahub.resolutionPresets.errors.locateDolphinFirst') };
+      return { ok: true, message: message + ' ' + t(lang(), 'megahub.resolutionPresets.messages.restartDolphinSuffix') };
     }
 
     if (SUPPORTED.includes(consoleId)) {
       const emuDir = await getInstalledDir(consoleId);
-      if (!emuDir) return { error: 'El emulador de esta consola no está instalado todavía.' };
+      if (!emuDir) return { error: t(lang(), 'megahub.main.retroLaunch.emulatorNotInstalled') };
 
       let message = null;
       if (consoleId === 'ps2') message = applyPcsx2(tier, emuDir);
@@ -501,8 +509,8 @@ async function applyPreset(consoleId, tier) {
       else if (consoleId === 'xbox') message = applyXemu(tier, emuDir);
       else if (consoleId === 'xbox360') message = applyXenia(tier, emuDir);
 
-      if (!message) return { error: 'Abre el emulador una vez (y ciérralo) para que genere su configuración, luego vuelve a intentar.' };
-      return { ok: true, message: message + ' Reinicia el emulador si estaba abierto.' };
+      if (!message) return { error: t(lang(), 'megahub.resolutionPresets.errors.openEmulatorOnceFirst') };
+      return { ok: true, message: message + ' ' + t(lang(), 'megahub.resolutionPresets.messages.restartEmulatorSuffix') };
     }
 
     if (RETROARCH_CORE_FOLDER[consoleId]) {
@@ -518,10 +526,10 @@ async function applyPreset(consoleId, tier) {
       if (result) return result;
     }
 
-    return { error: 'Esta consola no tiene ajustes de resolución automáticos.' };
+    return { error: t(lang(), 'megahub.resolutionPresets.errors.noAutoResolutionSettings') };
   } catch (e) {
     return { error: String(e.message || e) };
   }
 }
 
-module.exports = { applyPreset, SUPPORTED, CORE_FOLDER, RETROARCH_CORE_FOLDER, TIERS, TIER_LABEL, patchKeyValue };
+module.exports = { applyPreset, SUPPORTED, CORE_FOLDER, RETROARCH_CORE_FOLDER, TIERS, patchKeyValue };

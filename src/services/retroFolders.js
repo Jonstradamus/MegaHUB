@@ -13,6 +13,9 @@ const fs = require('fs');
 const path = require('path');
 const { app, shell } = require('electron');
 const store = require('../util/store');
+const { t } = require('../lib/i18n');
+
+function lang() { return store.load('language', 'es'); }
 
 // BUG CRÍTICO corregido: antes la raíz por defecto era la carpeta donde vive
 // MegaHUB.exe. En desarrollo eso resolvía bien, pero empaquetado esa carpeta
@@ -57,7 +60,7 @@ function applyRoot(newRoot, persist) {
 // Elegido a mano desde Ajustes generales: se valida que sea escribible antes
 // de aceptarlo, para no dejar al usuario con una raíz rota.
 function setDefaultRoot(newRoot) {
-  if (!isWritableDir(newRoot)) return { error: 'Esa carpeta no se puede escribir (permisos insuficientes).' };
+  if (!isWritableDir(newRoot)) return { error: t(lang(), 'megahub.retroFolders.errors.notWritable') };
   applyRoot(newRoot, true);
   return { ok: true, root: ROOT };
 }
@@ -107,37 +110,21 @@ const ROM_FORMATS = {
   gbc: { formats: '.gbc', zip: true },
   snes: { formats: '.sfc, .smc', zip: true },
   segacd: { formats: '.cue+.bin, .iso, .chd', zip: false },
-  psx: { formats: '.cue+.bin, .iso, .chd, .pbp, .exe/.psexe, .m3u (multidisco)', zip: false },
-  saturn: { formats: '.cue+.bin, .ccd, .chd, .m3u (multidisco)', zip: false },
+  psx: { formats: '.cue+.bin, .iso, .chd, .pbp, .exe/.psexe, .m3u', multiDisc: true, zip: false },
+  saturn: { formats: '.cue+.bin, .ccd, .chd, .m3u', multiDisc: true, zip: false },
   dreamcast: { formats: '.cdi, .gdi, .chd, .cue+.bin', zip: true },
-  naomi: {
-    formats: '.zip',
-    note: 'Igual que en Arcade, el .zip es el romset nativo (formato MAME) — no un juego cualquiera comprimido. ' +
-      'Naomi necesita "naomi.zip" (BIOS) y Atomiswave "awbios.zip" en la misma carpeta para que sus juegos arranquen.',
-  },
+  naomi: { formats: '.zip', noteKey: 'naomi' },
   gba: { formats: '.gba', zip: true },
   nds: { formats: '.nds', zip: false },
   psp: { formats: '.iso, .cso, .pbp', zip: false },
-  xbox: { formats: '.iso — ojo: tiene que ser formato "xiso" (convertido con xdvdfs/Qwix), no un ISO normal de disco', zip: false },
-  ps2: { formats: '.iso, .chd, .mdf (evita .bin/.cue: PCSX2 no los lee directo, conviértelos primero)', zip: false },
+  xbox: { formats: '.iso', noteKey: 'xbox', zip: false },
+  ps2: { formats: '.iso, .chd, .mdf', noteKey: 'ps2', zip: false },
   xbox360: { formats: '.iso, .xex, .zar', zip: false },
-  ps3: {
-    formats: '.iso, o la carpeta del disco tal cual (PS3_GAME/...), o .pkg para copias digitales',
-    note: 'RPCS3 también necesita el firmware oficial de PS3 (PS3UPDAT.PUP) instalado dentro del propio ' +
-      'emulador — se configura ahí, no poniendo un archivo en esta carpeta.',
-  },
+  ps3: { formats: '.iso, PS3_GAME/..., .pkg', noteKey: 'ps3', zip: false },
   atari2600: { formats: '.a26, .bin', zip: true },
   pcengine: { formats: '.pce, .sgx', zip: true },
-  arcade: {
-    formats: '.zip',
-    note: 'A diferencia del resto, aquí el .zip NO es opcional: es el formato nativo del romset ' +
-      '(el mismo que usan MAME/FBNeo), con los archivos internos exactos que pide cada juego — no es solo "un juego comprimido".',
-  },
-  neogeo: {
-    formats: '.zip',
-    note: 'Igual que en Arcade, el .zip es el romset nativo (formato MAME/FBNeo). Muchos juegos de ' +
-      'Neo Geo además necesitan el romset "neogeo.zip" (BIOS compartida del sistema) en la misma carpeta.',
-  },
+  arcade: { formats: '.zip', noteKey: 'arcade' },
+  neogeo: { formats: '.zip', noteKey: 'neogeo' },
   n64: { formats: '.n64, .z64, .v64', zip: false },
   n3ds: { formats: '.3ds, .cci, .cxi', zip: false },
   intellivision: { formats: '.int, .bin', zip: true },
@@ -156,12 +143,14 @@ const ROM_FORMATS = {
 
 function romFormatNote(consoleId, emulatorName) {
   const info = ROM_FORMATS[consoleId];
-  if (!info) return `Usa el formato de ROM que lea ${emulatorName || 'el emulador'} (revisa su documentación).`;
-  if (info.note) return `Formatos que lee ${emulatorName || 'el emulador'}: ${info.formats}.\n${info.note}`;
-  return `Formatos que lee ${emulatorName || 'el emulador'}: ${info.formats}.\n` +
-    (info.zip
-      ? 'También puedes dejar el juego comprimido en .zip o .7z — lo lee igual, sin necesidad de descomprimirlo tú.'
-      : 'Este sistema NO acepta .zip/.rar aquí: tiene que ser el archivo de disco/ROM tal cual, sin comprimir.');
+  const emulator = emulatorName || t(lang(), 'megahub.retroFolders.theEmulatorFallback');
+  if (!info) return t(lang(), 'megahub.retroFolders.romFormatNote.noInfo', { emulator });
+  const formats = info.formats + (info.multiDisc ? ` ${t(lang(), 'megahub.retroFolders.multiDiscSuffix')}` : '');
+  const header = t(lang(), 'megahub.retroFolders.romFormatNote.header', { emulator, formats });
+  if (info.noteKey) return `${header}\n${t(lang(), `megahub.retroFolders.romFormatNote.notes.${info.noteKey}`)}`;
+  return `${header}\n` + (info.zip
+    ? t(lang(), 'megahub.retroFolders.romFormatNote.zipOk')
+    : t(lang(), 'megahub.retroFolders.romFormatNote.noZip'));
 }
 
 function getOverrides() {
@@ -236,14 +225,10 @@ function ensureConsoleFolders(consoleId, consoleName, emulatorName) {
   if (!isCustomEmuDir(consoleId)) {
     const emuReadme = path.join(emuDir, 'LEEME.txt');
     if (!fs.existsSync(emuReadme)) {
-      fs.writeFileSync(emuReadme,
-        `Carpeta para ${emulatorName || 'el emulador'} (${consoleName}).\n\n` +
-        `MegaHUB NO incluye ni descarga BIOS: son archivos con copyright, ilegales de\n` +
-        `redistribuir. Si esta consola necesita BIOS, consíguelo tú mismo y colócalo\n` +
-        `aquí según lo pida el emulador una vez instalado.\n\n` +
-        `Usa el enlace "Descargar emulador" en MegaHUB para bajar el instalador oficial\n` +
-        `y descomprímelo/instálalo en esta carpeta si el emulador es portable.\n`
-      );
+      fs.writeFileSync(emuReadme, t(lang(), 'megahub.retroFolders.leeme.emulator', {
+        emulator: emulatorName || t(lang(), 'megahub.retroFolders.theEmulatorFallback'),
+        consoleName,
+      }));
     }
   }
   if (!isCustomRomDir(consoleId)) {
@@ -251,15 +236,10 @@ function ensureConsoleFolders(consoleId, consoleName, emulatorName) {
     // antes de este cambio también reciban el formato correcto en vez de
     // quedarse con el LEEME viejo y desactualizado.
     const romReadme = path.join(romDir, 'LEEME.txt');
-    fs.writeFileSync(romReadme,
-      `Coloca aquí tus propias copias de seguridad de juegos de ${consoleName}.\n\n` +
-      `${romFormatNote(consoleId, emulatorName)}\n\n` +
-      `Para que MegaHUB reconozca la carátula correcta, nombra el archivo IGUAL al\n` +
-      `título del catálogo — la extensión no importa, solo el nombre antes de ella\n` +
-      `(mayúsculas/minúsculas tampoco importan). Ejemplos:\n` +
-      `  "Super Mario Bros."  ✔ se reconoce (con cualquiera de los formatos de arriba)\n` +
-      `  "copia de seguridad" ✘ no se puede identificar\n`
-    );
+    fs.writeFileSync(romReadme, t(lang(), 'megahub.retroFolders.leeme.roms', {
+      consoleName,
+      formatNote: romFormatNote(consoleId, emulatorName),
+    }));
   }
   return { emuDir, romDir };
 }

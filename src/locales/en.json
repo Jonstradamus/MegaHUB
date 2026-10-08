@@ -561,6 +561,171 @@
         "quit": "Quit"
       },
       "autostartIssue": "Couldn't turn on \"Start with Windows\" automatically — you can turn it on by hand from the MegaHUB icon in the system tray."
+    },
+    "resolutionPresets": {
+      "tierLabel": {
+        "default": "native (best performance)",
+        "1080p": "1080p",
+        "2k": "1440p / 2K",
+        "4k": "4K",
+        "original": "Original"
+      },
+      "familyLabel": {
+        "tvCrt": "CRT TV 4:3",
+        "arcadeCrt": "Arcade CRT, original cabinet aspect ratio",
+        "handheldLcd": "original LCD screen"
+      },
+      "errors": {
+        "noAutoSettings": "This console doesn't have automatic settings.",
+        "retroArchNotInstalledYet": "RetroArch isn't installed yet.",
+        "shaderNotFound": "Couldn't find the \"${shader}\" shader in your RetroArch shaders/ folder.",
+        "noOriginalMode": "This console doesn't have an Original mode available.",
+        "unknownPreset": "Unknown preset.",
+        "originalOnlyRetroArch": "Original mode is only available for consoles emulated with RetroArch.",
+        "locateDolphinFirst": "First locate your Dolphin folder (\"I already have it — locate folder\").",
+        "openEmulatorOnceFirst": "Open the emulator once (and close it) so it generates its configuration, then try again.",
+        "noAutoResolutionSettings": "This console doesn't have automatic resolution settings."
+      },
+      "messages": {
+        "corePresetApplied": "${core}: ${tier} preset applied (applies to every game on this core). Restart the game/RetroArch if it was open.",
+        "pixelShaderOff": "${core}: pixel shader turned off (native, best performance). Restart the game/RetroArch if it was open.",
+        "pixelShaderApplied": "${core}: ${shader} shader (${tier}). Restart the game/RetroArch if it was open.",
+        "originalModeApplied": "${core}: Original mode applied (${family}). Restart the game/RetroArch if it was open.",
+        "pcsx2": "PCSX2: internal resolution x${mult} native (${tier}).",
+        "rpcs3": "RPCS3: Resolution Scale ${scale}% (${tier}).",
+        "renderScale": "${emulator}: render scale x${scale}${windowPart} (${tier}).",
+        "windowSizePart": ", window ${size}",
+        "dolphin": "Dolphin: internal resolution x${scale} native (${tier}).",
+        "restartDolphinSuffix": "Restart Dolphin if it was open.",
+        "restartEmulatorSuffix": "Restart the emulator if it was open."
+      }
+    },
+    "retroFolders": {
+      "errors": {
+        "notWritable": "That folder can't be written to (insufficient permissions)."
+      },
+      "theEmulatorFallback": "the emulator",
+      "multiDiscSuffix": "(multi-disc)",
+      "romFormatNote": {
+        "noInfo": "Use whichever ROM format ${emulator} reads (check its documentation).",
+        "header": "${emulator} reads these formats: ${formats}.",
+        "zipOk": "You can also leave the game compressed as .zip or .7z — it reads it the same way, no need to unzip it yourself.",
+        "noZip": "This system does NOT accept .zip/.rar here: it has to be the disc/ROM file as-is, uncompressed.",
+        "notes": {
+          "naomi": "Same as Arcade, the .zip is the native romset (MAME format) — not just any compressed game. Naomi needs \"naomi.zip\" (BIOS) and Atomiswave \"awbios.zip\" in the same folder for their games to boot.",
+          "xbox": "Heads up: it has to be \"xiso\" format (converted with xdvdfs/Qwix), not a regular disc ISO.",
+          "ps2": "Avoid .bin/.cue: PCSX2 doesn't read them directly, convert them first.",
+          "ps3": "The .iso is the full disc image; the PS3_GAME/... folder is the disc as-is, unpackaged; .pkg is for digital copies. RPCS3 also needs the official PS3 firmware (PS3UPDAT.PUP) installed inside the emulator itself — it's set up there, not by placing a file in this folder.",
+          "arcade": "Unlike the rest, the .zip here is NOT optional: it is the romset's native format (the same one MAME/FBNeo use), with the exact internal files each game expects — it's not just \"a compressed game\".",
+          "neogeo": "Same as Arcade, the .zip is the native romset (MAME/FBNeo format). Many Neo Geo games also need the \"neogeo.zip\" romset (the system's shared BIOS) in the same folder."
+        }
+      },
+      "leeme": {
+        "emulator": "Folder for ${emulator} (${consoleName}).\n\nMegaHUB does NOT include or download BIOS files: they're copyrighted and illegal\nto redistribute. If this console needs a BIOS, get it yourself and place it\nhere however the emulator asks for it once installed.\n\nUse the \"Download emulator\" link in MegaHUB to get the official installer\nand unzip/install it into this folder if the emulator is portable.\n",
+        "roms": "Place your own backup copies of ${consoleName} games here.\n\n${formatNote}\n\nFor MegaHUB to recognize the right cover, name the file EXACTLY like the\ncatalog title — the extension doesn't matter, only the name before it\n(upper/lowercase doesn't matter either). Examples:\n  \"Super Mario Bros.\"  ✔ gets recognized (with any of the formats above)\n  \"backup copy\" ✘ cannot be identified\n"
+      }
+    },
+    "achievementEngine": {
+      "hourTier": {
+        "0": {
+          "5": "You gave it a shot"
+        },
+        "1": "Hooked",
+        "2": "Curious",
+        "5": "For real",
+        "10": "Committed",
+        "25": "Fanatic",
+        "50": "Veteran",
+        "100": "Personal legend",
+        "200": "Addicted (affectionately)",
+        "500": "You live there"
+      },
+      "firstLaunch": {
+        "title": "First steps",
+        "description": "Launch your first game from MegaHUB."
+      },
+      "global": {
+        "playtimeTitle": "${label} (${h}h total)",
+        "playtimeDescription": "Rack up ${h} hours played in total (Steam + Retro).",
+        "streakTitle": "${n}-day streak",
+        "streakDescription": "Play ${n} days in a row.",
+        "libraryTitle": "Collection of ${n}",
+        "libraryDescription": "Have ${n} games in your library (all platforms).",
+        "multiplatformTitle": "Multiplatform x${n}",
+        "multiplatformDescription": "Play on ${n} different platforms/launchers.",
+        "genreFirstTitle": "First ${genre} game",
+        "genreExplorerTitle": "${genre} explorer (${n})",
+        "genreFirstDescription": "Play a ${genre} genre game.",
+        "genreExplorerDescription": "Play ${n} different games in the ${genre} genre."
+      },
+      "nightOwl": {
+        "title": "Night owl",
+        "description": "Play a Retro session between midnight and 5am, 5 times."
+      },
+      "weekendWarrior": {
+        "title": "Weekend warrior",
+        "description": "Play 10 Retro sessions on a Saturday or Sunday."
+      },
+      "steamGame": {
+        "description": "${h} hours played."
+      },
+      "retroConsole": {
+        "firstGameTitle": "First ${name} game",
+        "nGamesTitle": "${n} ${name} games",
+        "firstGameDescription": "Play your first ${name} game.",
+        "nGamesDescription": "Play ${n} different ${name} games.",
+        "playtimeTitle": "${label} — ${name}",
+        "playtimeDescription": "Rack up ${h} hours played on ${name}."
+      },
+      "retroGame": {
+        "description": "${h} hours played on ${title} (${console})."
+      },
+      "collector": {
+        "title": "${name} collector (${n})",
+        "description": "Have ${n} ${name} ROMs in your folder."
+      }
+    },
+    "dealsEngine": {
+      "tagLabel": {
+        "soulslike": "soulslikes",
+        "roguelike": "roguelikes",
+        "metroidvania": "metroidvanias",
+        "openworld-rpg": "open-world RPGs",
+        "survival-horror": "survival horror",
+        "citybuilder-strategy": "management and strategy",
+        "racing": "racing",
+        "fighting": "fighting games",
+        "shooter-looter": "shooters",
+        "jrpg": "JRPGs",
+        "cozy-survival": "cozy survival"
+      }
+    },
+    "retroSkins": {
+      "description": {
+        "ps3Icons": "Icons, sounds and typography in the PlayStation 3 XMB style.",
+        "materialDesign": "Icons and Roboto typography following the Material Design visual language.",
+        "rguiPepcodes": "18 color presets (Cupertino, PlayStation, Wii, Redmond…) for the RGUI menu, in centered and full-width variants."
+      },
+      "errors": {
+        "skinNotFound": "Skin not found.",
+        "assetsNotFound": "RetroArch's assets/ folder wasn't detected. Install/open RetroArch at least once first.",
+        "unexpectedArchiveStructure": "The downloaded file doesn't have the expected structure (did the author's repo change?).",
+        "noOriginalToRestore": "This skin doesn't have an original to restore.",
+        "retroArchNotDetected": "RetroArch wasn't detected.",
+        "noBackupSaved": "There is no saved original copy to restore (the theme was already modified before installing the skin)."
+      }
+    },
+    "textureDownload": {
+      "errors": {
+        "cannotIdentifyGame": "Couldn't identify the game's ID (or the matching emulator is missing) to know where to install the pack.",
+        "cannotGetDownloadFile": "Couldn't get the download file from GameBanana"
+      }
+    },
+    "retroAchievements": {
+      "errors": {
+        "cfgNotFound": "Couldn't find retroarch.cfg — open RetroArch at least once."
+      },
+      "cheevosEnabledMessage": "Achievements enabled in RetroArch — log in under Settings > Achievements inside RetroArch with your account (MegaHUB never sees your password)."
     }
   }
 }

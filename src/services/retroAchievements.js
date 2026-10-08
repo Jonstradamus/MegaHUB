@@ -14,6 +14,9 @@ const fs = require('fs');
 const path = require('path');
 const store = require('../util/store');
 const scanRetroArch = require('../scanners/retroarch');
+const { t } = require('../lib/i18n');
+
+function lang() { return store.load('language', 'es'); }
 
 const API_BASE = 'https://retroachievements.org/API';
 const MEDIA_BASE = 'https://i.retroachievements.org';
@@ -151,14 +154,14 @@ function getCheevosStatus() {
 
 function enableCheevos() {
   const exe = scanRetroArch.findRetroArch();
-  if (!exe) return { error: 'RetroArch no está instalado todavía.' };
+  if (!exe) return { error: t(lang(), 'megahub.resolutionPresets.errors.retroArchNotInstalledYet') };
   const cfgPath = path.join(path.dirname(exe), 'retroarch.cfg');
-  if (!fs.existsSync(cfgPath)) return { error: 'No se encontró retroarch.cfg — abre RetroArch al menos una vez.' };
+  if (!fs.existsSync(cfgPath)) return { error: t(lang(), 'megahub.retroAchievements.errors.cfgNotFound') };
   let text = fs.readFileSync(cfgPath, 'utf8');
   const re = /^cheevos_enable\s*=.*$/m;
   text = re.test(text) ? text.replace(re, 'cheevos_enable = "true"') : text.replace(/\s*$/, '') + '\ncheevos_enable = "true"\n';
   fs.writeFileSync(cfgPath, text);
-  return { ok: true, message: 'Logros activados en RetroArch — inicia sesión en Ajustes > Logros dentro de RetroArch con tu cuenta (MegaHUB nunca ve tu contraseña).' };
+  return { ok: true, message: t(lang(), 'megahub.retroAchievements.cheevosEnabledMessage') };
 }
 
 module.exports = {
