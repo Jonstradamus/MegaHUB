@@ -1,5 +1,5 @@
 /* exported TEXTURE_PACK_CONSOLES, buildDerivaSearchButton, buildTexturePackButton, updateMultiplayerControls */
-/* global MULTIPLAYER_KEY, PLAT_LABEL, escapeHtml, fetchMhAchievements, formatBytes, icon, launchGame, metaById, mhAchCache, rebuildGenreChips, showToast, skeletonLinesHtml, videoAllowedFor, viewMode */
+/* global MULTIPLAYER_KEY, PLAT_LABEL, escapeHtml, fetchMhAchievements, formatBytes, icon, launchGame, metaById, mhAchCache, rebuildGenreChips, showToast, skeletonLinesHtml, tr, videoAllowedFor, viewMode */
 /* ================= Panel de detalles ================= */
 
 let detailsToken = 0;
@@ -12,8 +12,8 @@ const DERIVA_URL = 'https://deriva-webapp.vercel.app';
 function buildDerivaSearchButton(title) {
   const btn = document.createElement('button');
   btn.className = 'action-btn deriva-search';
-  btn.innerHTML = `${icon('link')} Buscar en DERIVA`;
-  btn.title = 'Abre la búsqueda de contenido de DERIVA para este juego';
+  btn.innerHTML = `${icon('link')} ${tr('megahub.details.searchDeriva')}`;
+  btn.title = tr('megahub.details.searchDerivaTooltip');
   btn.onclick = () => window.open(`${DERIVA_URL}/?buscar=${encodeURIComponent(title)}`, '_blank');
   return btn;
 }
@@ -25,15 +25,15 @@ function buildDerivaSearchButton(title) {
 // así que el panel los muestra todos, no solo los que calzan con ese nombre.
 const TEXTURE_PACK_CONSOLES = ['gamecube', 'wii', 'psp'];
 const MOD_SORTS = [
-  { key: 'new', label: 'Nuevos', apiSort: 'new' },
-  { key: 'popular', label: 'Más populares', apiSort: 'default' },
+  { key: 'new', label: tr('megahub.details.mods.sortNew'), apiSort: 'new' },
+  { key: 'popular', label: tr('megahub.details.mods.sortPopular'), apiSort: 'default' },
 ];
 
 function buildTexturePackButton(entry, consoleId) {
   const btn = document.createElement('button');
   btn.className = 'action-btn';
-  btn.innerHTML = `${icon('image')} Buscar mods (GameBanana)`;
-  btn.title = 'Busca mods para este juego en GameBanana: texturas, skins, idiomas, etc.';
+  btn.innerHTML = `${icon('image')} ${tr('megahub.details.mods.searchButton')}`;
+  btn.title = tr('megahub.details.mods.searchButtonTooltip');
   btn.onclick = () => toggleModPanel(btn, entry, consoleId);
   return btn;
 }
@@ -48,14 +48,14 @@ async function toggleModPanel(btn, entry, consoleId) {
   panel.className = 'mod-panel';
   const status = document.createElement('div');
   status.className = 'mod-panel-status';
-  status.textContent = 'Buscando en GameBanana…';
+  status.textContent = tr('megahub.details.mods.searching');
   panel.appendChild(status);
   actions.appendChild(panel);
 
   const games = await window.megahub.textureSearchGame(entry.title);
   if (!document.getElementById('d-actions').contains(panel)) return; // el usuario cambió de juego mientras cargaba
   if (!games || !games.length) {
-    status.textContent = `GameBanana no tiene ninguna página de juego que coincida con "${entry.title}".`;
+    status.textContent = tr('megahub.details.mods.noGameMatch', { title: entry.title });
     return;
   }
   // NameMatch ya viene ordenado por relevancia — se usa el primero sin pedir
@@ -64,12 +64,12 @@ async function toggleModPanel(btn, entry, consoleId) {
   let sortKey = 'popular';
 
   async function loadMods() {
-    status.textContent = `Buscando mods de "${game.name}"…`;
+    status.textContent = tr('megahub.details.mods.searchingFor', { name: game.name });
     const sort = MOD_SORTS.find(s => s.key === sortKey);
     const { mods } = await window.megahub.textureListMods({ gameId: game.id, sort: sort.apiSort, perPage: 40 });
     if (!document.getElementById('d-actions').contains(panel)) return;
     if (!mods.length) {
-      status.textContent = `"${game.name}" está en GameBanana pero no tiene mods todavía.`;
+      status.textContent = tr('megahub.details.mods.noModsYet', { name: game.name });
       return;
     }
     const list = sortKey === 'popular'
@@ -84,7 +84,7 @@ async function toggleModPanel(btn, entry, consoleId) {
     header.className = 'mod-panel-header';
     const title = document.createElement('div');
     title.className = 'mod-panel-title';
-    title.innerHTML = `Mods de <b>${escapeHtml(game.name)}</b> en GameBanana`;
+    title.innerHTML = tr('megahub.details.mods.modsOf', { name: escapeHtml(game.name) });
     const sortBox = document.createElement('div');
     sortBox.className = 'mod-panel-sort';
     for (const s of MOD_SORTS) {
@@ -104,7 +104,7 @@ async function toggleModPanel(btn, entry, consoleId) {
     for (const mod of list) {
       const row = document.createElement('div');
       row.className = 'mod-row';
-      const categoryLabel = mod.category || 'Sin categoría';
+      const categoryLabel = mod.category || tr('megahub.details.mods.noCategory');
       row.innerHTML = `
         ${mod.thumbUrl ? `<img class="mod-row-thumb" src="${escapeHtml(mod.thumbUrl)}" alt="">` : ''}
         <div class="mod-row-info">
@@ -116,34 +116,34 @@ async function toggleModPanel(btn, entry, consoleId) {
         </div>`;
       const installBtn = document.createElement('button');
       installBtn.className = 'action-btn mod-row-install';
-      installBtn.textContent = mod.autoInstallable ? 'Instalar' : 'Descargar';
+      installBtn.textContent = mod.autoInstallable ? tr('megahub.details.mods.install') : tr('megahub.details.mods.download');
       installBtn.title = mod.autoInstallable
-        ? 'Se instala solo: el emulador lo carga sin configuración extra.'
-        : `Este mod es "${categoryLabel}", no una textura — el emulador no lo carga solo. Se descarga a una carpeta aparte para que lo instales a mano siguiendo las instrucciones del propio mod.`;
+        ? tr('megahub.details.mods.autoInstallTooltip')
+        : tr('megahub.details.mods.manualInstallTooltip', { categoryLabel });
       installBtn.onclick = async () => {
         installBtn.disabled = true;
-        installBtn.textContent = 'Consultando…';
+        installBtn.textContent = tr('megahub.details.mods.checking');
         const info = await window.megahub.textureGetDownloadInfo(mod.id);
         if (!info) {
-          showToast(`No se pudo obtener el archivo de descarga de "${mod.name}".`, 'error');
+          showToast(tr('megahub.details.mods.downloadInfoError', { name: mod.name }), 'error');
           installBtn.disabled = false;
-          installBtn.textContent = mod.autoInstallable ? 'Instalar' : 'Descargar';
+          installBtn.textContent = mod.autoInstallable ? tr('megahub.details.mods.install') : tr('megahub.details.mods.download');
           return;
         }
         const confirmed = window.confirm(
-          `¿Descargar el mod "${mod.name}" (${categoryLabel}, ${info.sizeMb} MB) desde GameBanana para ${entry.title}?\n\n` +
+          tr('megahub.details.mods.confirmDownload', { name: mod.name, categoryLabel, sizeMb: info.sizeMb, title: entry.title }) + '\n\n' +
           (mod.autoInstallable
-            ? 'Se instala directo donde el emulador lo carga solo. Si el archivo trae el contenido dentro de una subcarpeta, puede que después tengas que moverlo un nivel hacia afuera a mano.'
-            : 'Este mod NO se instala solo: se descarga y descomprime en una carpeta aparte (MegaHUB-Mods) — revisa el LEEME que traiga el propio mod para saber dónde colocarlo.')
+            ? tr('megahub.details.mods.confirmAutoNote')
+            : tr('megahub.details.mods.confirmManualNote'))
         );
-        if (!confirmed) { installBtn.disabled = false; installBtn.textContent = mod.autoInstallable ? 'Instalar' : 'Descargar'; return; }
+        if (!confirmed) { installBtn.disabled = false; installBtn.textContent = mod.autoInstallable ? tr('megahub.details.mods.install') : tr('megahub.details.mods.download'); return; }
 
-        installBtn.textContent = 'Descargando…';
+        installBtn.textContent = tr('megahub.details.mods.downloading');
         const result = await window.megahub.textureDownloadInstall({ consoleId, romPath: entry.romPath, mod: { id: mod.id, name: mod.name, autoInstallable: mod.autoInstallable } });
         installBtn.disabled = false;
-        installBtn.textContent = mod.autoInstallable ? 'Instalar' : 'Descargar';
+        installBtn.textContent = mod.autoInstallable ? tr('megahub.details.mods.install') : tr('megahub.details.mods.download');
         if (result && result.error) { showToast(result.error, 'error', 7000); return; }
-        showToast(`"${mod.name}" ${result.manual ? 'descargado' : 'instalado'} en ${result.destDir}`, 'success', 6000);
+        showToast(tr(result.manual ? 'megahub.details.mods.downloadedToast' : 'megahub.details.mods.installedToast', { name: mod.name, destDir: result.destDir }), 'success', 6000);
       };
       row.appendChild(installBtn);
       listEl.appendChild(row);
@@ -205,7 +205,7 @@ async function renderDetailsAchievements(game, token) {
 
   box.hidden = false;
   box.innerHTML = `
-    <h3>${icon('trophy')} Logros</h3>
+    <h3>${icon('trophy')} ${tr('megahub.details.achievementsTitle')}</h3>
     <div class="d-ach-list">
       ${earned.map(a => `<span class="d-ach-chip earned" title="${escapeHtml(a.description || '')}">${icon('trophy')} ${escapeHtml(a.title)}</span>`).join('')}
       ${next ? `<span class="d-ach-chip next" title="${escapeHtml(next.description || '')}">${icon('lock')} ${escapeHtml(next.title)} — ${next.progressCurrent}/${next.progressTarget}h</span>` : ''}
@@ -229,8 +229,8 @@ async function renderDetails(game) {
   document.getElementById('d-badges').innerHTML =
     `<span class="d-badge plat">${PLAT_LABEL[game.platform]}</span>` +
     (game.installed
-      ? `<span class="d-badge installed">${icon('check')} Instalado</span>`
-      : `<span class="d-badge not-installed">${icon('download')} En biblioteca</span>`);
+      ? `<span class="d-badge installed">${icon('check')} ${tr('megahub.details.installed')}</span>`
+      : `<span class="d-badge not-installed">${icon('download')} ${tr('megahub.details.inLibrary')}</span>`);
 
   document.getElementById('d-desc').textContent = '';
   document.getElementById('d-meta').innerHTML = '';
@@ -243,13 +243,13 @@ async function renderDetails(game) {
   if (game.installed) {
     const btn = document.createElement('button');
     btn.className = 'action-btn play';
-    btn.innerHTML = `${icon('play')} Jugar`;
+    btn.innerHTML = `${icon('play')} ${tr('megahub.details.play')}`;
     btn.onclick = () => launchGame(game);
     actions.appendChild(btn);
   } else {
     const btn = document.createElement('button');
     btn.className = 'action-btn install';
-    btn.innerHTML = `${icon('download')} Instalar / ver en tienda`;
+    btn.innerHTML = `${icon('download')} ${tr('megahub.details.installOrViewStore')}`;
     btn.onclick = () => window.megahub.installGame(game);
     actions.appendChild(btn);
   }
@@ -261,8 +261,8 @@ async function renderDetails(game) {
   // la carpeta, solo al abrir esta ficha — nunca durante el escaneo completo.
   let sizeRow = '';
   if (game.installed) {
-    if (game.installSizeBytes != null) sizeRow = `<b>Tamaño:</b> ${formatBytes(game.installSizeBytes)}`;
-    else if (game.installDir || game.workDir) sizeRow = `<b>Tamaño:</b> <span id="d-size-pending">calculando…</span>`;
+    if (game.installSizeBytes != null) sizeRow = `<b>${tr('megahub.details.size')}:</b> ${formatBytes(game.installSizeBytes)}`;
+    else if (game.installDir || game.workDir) sizeRow = `<b>${tr('megahub.details.size')}:</b> <span id="d-size-pending">${tr('megahub.details.calculating')}</span>`;
   }
 
   const meta = await window.megahub.getMeta(game);
@@ -272,8 +272,8 @@ async function renderDetails(game) {
     metaById[game.id] = meta;
     rebuildGenreChips();
     if (meta.shortDesc) document.getElementById('d-desc').textContent = meta.shortDesc;
-    if (meta.genres && meta.genres.length) rows.push(`<b>Género:</b> ${escapeHtml(meta.genres.join(', '))}`);
-    if (meta.releaseDate) rows.push(`<b>Lanzamiento:</b> ${escapeHtml(meta.releaseDate)}`);
+    if (meta.genres && meta.genres.length) rows.push(`<b>${tr('megahub.details.genre')}:</b> ${escapeHtml(meta.genres.join(', '))}`);
+    if (meta.releaseDate) rows.push(`<b>${tr('megahub.details.releaseDate')}:</b> ${escapeHtml(meta.releaseDate)}`);
 
     // El gameplay solo se muestra en modo Lista Y si el usuario clicó de verdad
     // el juego (no al navegarlo con flechas) — así no se carga video de más.
@@ -282,7 +282,7 @@ async function renderDetails(game) {
       videoBox.hidden = false;
     }
   } else if (game.genre) {
-    rows.push(`<b>Género:</b> ${escapeHtml(game.genre)}`);
+    rows.push(`<b>${tr('megahub.details.genre')}:</b> ${escapeHtml(game.genre)}`);
   }
   document.getElementById('d-meta').innerHTML = rows.join('<br>');
 
@@ -292,7 +292,7 @@ async function renderDetails(game) {
     window.megahub.getInstallSize(game.installDir || game.workDir).then((bytes) => {
       if (token !== detailsToken) return;
       const el = document.getElementById('d-size-pending');
-      if (el) el.textContent = bytes ? formatBytes(bytes) : 'desconocido';
+      if (el) el.textContent = bytes ? formatBytes(bytes) : tr('megahub.details.unknown');
     });
   }
 
@@ -307,12 +307,14 @@ function pctColor(p) { return p >= 150 ? 'var(--great)' : p >= 100 ? 'var(--ok)'
 function renderRequirements(a) {
   const body = document.getElementById('d-reqs-body');
   if (!a || a.unsupported) { body.textContent = '—'; return; }
-  if (a.noMatch) { body.innerHTML = '<span style="font-size:11.5px">No encontramos este juego en Steam para comparar requisitos.</span>'; return; }
+  if (a.noMatch) { body.innerHTML = `<span style="font-size:11.5px">${tr('megahub.details.requirements.noMatch')}</span>`; return; }
   if (a.noData) {
-    body.innerHTML = `<span style="font-size:11.5px">${a.viaMatch ? `"${escapeHtml(a.viaMatch.title)}" (Steam) no` : 'Este juego no'} publica requisitos${a.viaMatch ? '' : ' en Steam'}.</span>`;
+    body.innerHTML = `<span style="font-size:11.5px">${a.viaMatch
+      ? tr('megahub.details.requirements.noDataViaMatch', { title: escapeHtml(a.viaMatch.title) })
+      : tr('megahub.details.requirements.noDataOwn')}</span>`;
     return;
   }
-  if (a.noSpecs) { body.innerHTML = '<span style="font-size:11.5px">No se pudo detectar tu hardware</span>'; return; }
+  if (a.noSpecs) { body.innerHTML = `<span style="font-size:11.5px">${tr('megahub.details.requirements.noSpecs')}</span>`; return; }
 
   const tier = (t, label) => {
     if (!t || t.overall == null) return '';
@@ -333,34 +335,37 @@ function renderRequirements(a) {
 
   const verdictText = {
     'recommended-met': {
-      excelente: 'Muy por encima de lo recomendado',
-      sobrado: 'Por encima de lo recomendado',
-      cumple: 'Normal — cumple los requisitos recomendados',
+      excelente: tr('megahub.details.requirements.verdict.recommendedMetExcellent'),
+      sobrado: tr('megahub.details.requirements.verdict.recommendedMetAbove'),
+      cumple: tr('megahub.details.requirements.verdict.recommendedMetMeets'),
     },
     'below-recommended': {
-      cumple: 'Normal — cumple los mínimos con margen, no llega a lo recomendado',
+      cumple: tr('megahub.details.requirements.verdict.belowRecommendedMeets'),
     },
     'minimum-only': {
-      excelente: 'Muy por encima de los mínimos (el juego no publica recomendados)',
-      sobrado: 'Por encima de los mínimos (el juego no publica recomendados)',
-      cumple: 'Normal — cumple los mínimos (el juego no publica recomendados)',
-      justo: 'Deficiente — al límite de los requisitos mínimos',
-      insuficiente: 'Deficiente — por debajo de los requisitos mínimos',
+      excelente: tr('megahub.details.requirements.verdict.minimumOnlyExcellent'),
+      sobrado: tr('megahub.details.requirements.verdict.minimumOnlyAbove'),
+      cumple: tr('megahub.details.requirements.verdict.minimumOnlyMeets'),
+      justo: tr('megahub.details.requirements.verdict.minimumOnlyTight'),
+      insuficiente: tr('megahub.details.requirements.verdict.minimumOnlyInsufficient'),
     },
     minimum: {
-      justo: 'Deficiente — por debajo de lo recomendado y al límite de los mínimos',
-      insuficiente: 'Deficiente — por debajo incluso de los requisitos mínimos',
+      justo: tr('megahub.details.requirements.verdict.minimumTight'),
+      insuficiente: tr('megahub.details.requirements.verdict.minimumInsufficient'),
     },
   };
   const verdictMsg = (verdictText[a.verdictBasis] || {})[a.verdict];
   const matchNote = a.viaMatch
-    ? `<div style="font-size:10.5px;margin-top:4px;opacity:0.7">Requisitos de la ficha de Steam "${escapeHtml(a.viaMatch.title)}"${a.viaMatch.exact ? '' : ' (coincidencia aproximada)'} — este juego no es de Steam.</div>`
+    ? `<div style="font-size:10.5px;margin-top:4px;opacity:0.7">${tr('megahub.details.requirements.viaMatchNote', {
+        title: escapeHtml(a.viaMatch.title),
+        approx: a.viaMatch.exact ? '' : tr('megahub.details.requirements.approxMatch'),
+      })}</div>`
     : '';
   body.innerHTML =
-    tier(a.minimum, 'Requisitos mínimos') +
-    tier(a.recommended, 'Recomendados') +
+    tier(a.minimum, tr('megahub.details.requirements.minimum')) +
+    tier(a.recommended, tr('megahub.details.requirements.recommended')) +
     (verdictMsg ? `<div class="verdict ${a.verdict}">${verdictMsg}</div>` : '') +
-    '<div style="font-size:10.5px;margin-top:6px;opacity:0.7">Estimación heurística comparando componentes, no un benchmark real.</div>' +
+    `<div style="font-size:10.5px;margin-top:6px;opacity:0.7">${tr('megahub.details.requirements.heuristicNote')}</div>` +
     matchNote;
 }
 

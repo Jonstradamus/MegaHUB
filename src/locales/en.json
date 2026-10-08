@@ -126,6 +126,68 @@
       "noDeals": "No big deals right now.",
       "seeLess": "See less",
       "seeMore": "See more (${count})"
+    },
+    "details": {
+      "searchDeriva": "Search on DERIVA",
+      "searchDerivaTooltip": "Opens DERIVA's content search for this game",
+      "achievementsTitle": "Achievements",
+      "installed": "Installed",
+      "inLibrary": "In library",
+      "play": "Play",
+      "installOrViewStore": "Install / view in store",
+      "size": "Size",
+      "calculating": "calculating…",
+      "genre": "Genre",
+      "releaseDate": "Release",
+      "unknown": "unknown",
+      "mods": {
+        "sortNew": "New",
+        "sortPopular": "Most popular",
+        "searchButton": "Search mods (GameBanana)",
+        "searchButtonTooltip": "Search mods for this game on GameBanana: textures, skins, languages, etc.",
+        "searching": "Searching GameBanana…",
+        "noGameMatch": "GameBanana doesn't have a game page matching \"${title}\".",
+        "searchingFor": "Searching mods for \"${name}\"…",
+        "noModsYet": "\"${name}\" is on GameBanana but doesn't have any mods yet.",
+        "modsOf": "Mods for <b>${name}</b> on GameBanana",
+        "noCategory": "No category",
+        "install": "Install",
+        "download": "Download",
+        "autoInstallTooltip": "Installs itself: the emulator loads it with no extra setup.",
+        "manualInstallTooltip": "This mod is \"${categoryLabel}\", not a texture — the emulator won't load it on its own. It downloads to a separate folder so you can install it by hand following the mod's own instructions.",
+        "checking": "Checking…",
+        "downloadInfoError": "Couldn't get the download file for \"${name}\".",
+        "confirmDownload": "Download the mod \"${name}\" (${categoryLabel}, ${sizeMb} MB) from GameBanana for ${title}?",
+        "confirmAutoNote": "It installs directly where the emulator loads it on its own. If the file has the content inside a subfolder, you might need to move it up one level by hand afterward.",
+        "confirmManualNote": "This mod does NOT install itself: it downloads and unzips into a separate folder (MegaHUB-Mods) — check the mod's own README to know where to place it.",
+        "downloading": "Downloading…",
+        "downloadedToast": "\"${name}\" downloaded to ${destDir}",
+        "installedToast": "\"${name}\" installed to ${destDir}"
+      },
+      "requirements": {
+        "noMatch": "We couldn't find this game on Steam to compare requirements.",
+        "noDataViaMatch": "\"${title}\" (Steam) doesn't publish requirements.",
+        "noDataOwn": "This game doesn't publish requirements on Steam.",
+        "noSpecs": "We couldn't detect your hardware",
+        "minimum": "Minimum requirements",
+        "recommended": "Recommended",
+        "verdict": {
+          "recommendedMetExcellent": "Well above recommended",
+          "recommendedMetAbove": "Above recommended",
+          "recommendedMetMeets": "Normal — meets recommended requirements",
+          "belowRecommendedMeets": "Normal — comfortably meets the minimum, short of recommended",
+          "minimumOnlyExcellent": "Well above the minimum (the game doesn't publish recommended specs)",
+          "minimumOnlyAbove": "Above the minimum (the game doesn't publish recommended specs)",
+          "minimumOnlyMeets": "Normal — meets the minimum (the game doesn't publish recommended specs)",
+          "minimumOnlyTight": "Poor — right at the minimum requirements",
+          "minimumOnlyInsufficient": "Poor — below the minimum requirements",
+          "minimumTight": "Poor — below recommended and right at the minimum",
+          "minimumInsufficient": "Poor — below even the minimum requirements"
+        },
+        "viaMatchNote": "Requirements from the Steam page \"${title}\"${approx} — this game isn't on Steam.",
+        "approxMatch": " (approximate match)",
+        "heuristicNote": "A heuristic estimate comparing components, not a real benchmark."
+      }
     }
   }
 }

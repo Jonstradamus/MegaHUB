@@ -126,6 +126,68 @@
       "noDeals": "Sin ofertas grandes en este momento.",
       "seeLess": "Ver menos",
       "seeMore": "Ver más (${count})"
+    },
+    "details": {
+      "searchDeriva": "Buscar en DERIVA",
+      "searchDerivaTooltip": "Abre la búsqueda de contenido de DERIVA para este juego",
+      "achievementsTitle": "Logros",
+      "installed": "Instalado",
+      "inLibrary": "En biblioteca",
+      "play": "Jugar",
+      "installOrViewStore": "Instalar / ver en tienda",
+      "size": "Tamaño",
+      "calculating": "calculando…",
+      "genre": "Género",
+      "releaseDate": "Lanzamiento",
+      "unknown": "desconocido",
+      "mods": {
+        "sortNew": "Nuevos",
+        "sortPopular": "Más populares",
+        "searchButton": "Buscar mods (GameBanana)",
+        "searchButtonTooltip": "Busca mods para este juego en GameBanana: texturas, skins, idiomas, etc.",
+        "searching": "Buscando en GameBanana…",
+        "noGameMatch": "GameBanana no tiene ninguna página de juego que coincida con \"${title}\".",
+        "searchingFor": "Buscando mods de \"${name}\"…",
+        "noModsYet": "\"${name}\" está en GameBanana pero no tiene mods todavía.",
+        "modsOf": "Mods de <b>${name}</b> en GameBanana",
+        "noCategory": "Sin categoría",
+        "install": "Instalar",
+        "download": "Descargar",
+        "autoInstallTooltip": "Se instala solo: el emulador lo carga sin configuración extra.",
+        "manualInstallTooltip": "Este mod es \"${categoryLabel}\", no una textura — el emulador no lo carga solo. Se descarga a una carpeta aparte para que lo instales a mano siguiendo las instrucciones del propio mod.",
+        "checking": "Consultando…",
+        "downloadInfoError": "No se pudo obtener el archivo de descarga de \"${name}\".",
+        "confirmDownload": "¿Descargar el mod \"${name}\" (${categoryLabel}, ${sizeMb} MB) desde GameBanana para ${title}?",
+        "confirmAutoNote": "Se instala directo donde el emulador lo carga solo. Si el archivo trae el contenido dentro de una subcarpeta, puede que después tengas que moverlo un nivel hacia afuera a mano.",
+        "confirmManualNote": "Este mod NO se instala solo: se descarga y descomprime en una carpeta aparte (MegaHUB-Mods) — revisa el LEEME que traiga el propio mod para saber dónde colocarlo.",
+        "downloading": "Descargando…",
+        "downloadedToast": "\"${name}\" descargado en ${destDir}",
+        "installedToast": "\"${name}\" instalado en ${destDir}"
+      },
+      "requirements": {
+        "noMatch": "No encontramos este juego en Steam para comparar requisitos.",
+        "noDataViaMatch": "\"${title}\" (Steam) no publica requisitos.",
+        "noDataOwn": "Este juego no publica requisitos en Steam.",
+        "noSpecs": "No se pudo detectar tu hardware",
+        "minimum": "Requisitos mínimos",
+        "recommended": "Recomendados",
+        "verdict": {
+          "recommendedMetExcellent": "Muy por encima de lo recomendado",
+          "recommendedMetAbove": "Por encima de lo recomendado",
+          "recommendedMetMeets": "Normal — cumple los requisitos recomendados",
+          "belowRecommendedMeets": "Normal — cumple los mínimos con margen, no llega a lo recomendado",
+          "minimumOnlyExcellent": "Muy por encima de los mínimos (el juego no publica recomendados)",
+          "minimumOnlyAbove": "Por encima de los mínimos (el juego no publica recomendados)",
+          "minimumOnlyMeets": "Normal — cumple los mínimos (el juego no publica recomendados)",
+          "minimumOnlyTight": "Deficiente — al límite de los requisitos mínimos",
+          "minimumOnlyInsufficient": "Deficiente — por debajo de los requisitos mínimos",
+          "minimumTight": "Deficiente — por debajo de lo recomendado y al límite de los mínimos",
+          "minimumInsufficient": "Deficiente — por debajo incluso de los requisitos mínimos"
+        },
+        "viaMatchNote": "Requisitos de la ficha de Steam \"${title}\"${approx} — este juego no es de Steam.",
+        "approxMatch": " (coincidencia aproximada)",
+        "heuristicNote": "Estimación heurística comparando componentes, no un benchmark real."
+      }
     }
   }
 }
