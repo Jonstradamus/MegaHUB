@@ -188,6 +188,36 @@
         "approxMatch": " (approximate match)",
         "heuristicNote": "A heuristic estimate comparing components, not a real benchmark."
       }
+    },
+    "search": {
+      "deal": "Deal",
+      "unlocked": "Unlocked",
+      "pending": "Pending",
+      "groupLibrary": "Library",
+      "groupDeals": "Deals",
+      "groupAchievements": "Achievements",
+      "noResults": "No results"
+    },
+    "accounts": {
+      "connected": "connected",
+      "gameCount": "${count} games",
+      "connecting": "connecting…",
+      "connectedToast": "${platform} connected — ${count} games.",
+      "connect": "connect",
+      "connectError": "Couldn't connect to ${platform}."
+    },
+    "apiKeys": {
+      "saved": "Saved ✓",
+      "savedPlaceholder": "Key saved (fill in to change it)"
+    },
+    "backup": {
+      "exporting": "Exporting…",
+      "error": "Error: ${error}",
+      "savedAt": "Saved to ${path}",
+      "exportedToast": "Settings exported.",
+      "importing": "Importing…",
+      "importedFrom": "Imported from ${path} — restart MegaHUB to apply all the changes.",
+      "importedToast": "Settings imported — restart MegaHUB to see them applied."
     }
   }
 }

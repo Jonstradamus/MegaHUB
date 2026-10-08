@@ -1,5 +1,5 @@
 /* exported markConnected */
-/* global PLAT_LABEL, allGames, applyRetroFilters, buildPlatformChips, currentConsole, dealKeyOf, dealsIndex, dockEls, escapeHtml, fetchMhAchievements, filterConsoleGridByName, filters, icon:writable, listEls, mhAchCache, mhAchLoading, rebuildGenreChips, render, renderRetroGameDetails, rescan, retroFilteredCatalog, retroGameEls, retroSearchTerm:writable, retroSelectedIndex, searchInput, selectById, selectDeal, selectedIndex:writable, sgdbInput, sgdbSaveBtn, showToast, switchViewMode, syncChips, updateDockIcon, updateListRow, updateRetroGameCard, viewMode, visible, widgetRefreshTile */
+/* global PLAT_LABEL, allGames, applyRetroFilters, buildPlatformChips, currentConsole, dealKeyOf, dealsIndex, dockEls, escapeHtml, fetchMhAchievements, filterConsoleGridByName, filters, icon:writable, listEls, mhAchCache, mhAchLoading, rebuildGenreChips, render, renderRetroGameDetails, rescan, retroFilteredCatalog, retroGameEls, retroSearchTerm:writable, retroSelectedIndex, searchInput, selectById, selectDeal, selectedIndex:writable, sgdbInput, sgdbSaveBtn, showToast, switchViewMode, syncChips, tr, updateDockIcon, updateListRow, updateRetroGameCard, viewMode, visible, widgetRefreshTile */
 /* ================= Búsqueda global (Fase 6) =================
    Aparte del filtrado normal de #search (contextual a la vista actual, ver
    más abajo) — cruza biblioteca completa + logros + ofertas YA CARGADOS en
@@ -41,7 +41,7 @@ function buildSearchResultGroups(term) {
   const q = term.toLowerCase();
   const library = allGames
     .filter(g => g.title.toLowerCase().includes(q))
-    .sort((a, b) => a.title.localeCompare(b.title, 'es'))
+    .sort((a, b) => a.title.localeCompare(b.title, window.megahub.getLanguage()))
     .slice(0, 6);
   const achievements = (Array.isArray(mhAchCache) ? mhAchCache : [])
     .filter(a => a.title.toLowerCase().includes(q))
@@ -68,7 +68,7 @@ function searchDealRowHtml(d) {
     <span class="search-result-icon">${d.thumb ? `<img src="${escapeHtml(d.thumb)}" alt="" loading="lazy">` : icon('tag')}</span>
     <span class="search-result-info">
       <span class="search-result-title">${escapeHtml(d.title)}</span>
-      <span class="search-result-meta">${escapeHtml(d.storeName || 'Oferta')}</span>
+      <span class="search-result-meta">${escapeHtml(d.storeName || tr('megahub.search.deal'))}</span>
     </span>
   </button>`;
 }
@@ -77,7 +77,7 @@ function searchAchievementRowHtml(a) {
     <span class="search-result-icon">${icon('trophy')}</span>
     <span class="search-result-info">
       <span class="search-result-title">${escapeHtml(a.title)}</span>
-      <span class="search-result-meta">${a.earned ? 'Desbloqueado' : 'Pendiente'}</span>
+      <span class="search-result-meta">${a.earned ? tr('megahub.search.unlocked') : tr('megahub.search.pending')}</span>
     </span>
   </button>`;
 }
@@ -90,11 +90,11 @@ function renderSearchResults(term) {
   if (!term || term.length < 2) { box.hidden = true; box.innerHTML = ''; return; }
   const { library, achievements, deals } = buildSearchResultGroups(term);
   const groups = [];
-  if (library.length) groups.push({ title: 'Biblioteca', rows: library.map(searchLibraryRowHtml) });
-  if (deals.length) groups.push({ title: 'Ofertas', rows: deals.map(searchDealRowHtml) });
-  if (achievements.length) groups.push({ title: 'Logros', rows: achievements.map(searchAchievementRowHtml) });
+  if (library.length) groups.push({ title: tr('megahub.search.groupLibrary'), rows: library.map(searchLibraryRowHtml) });
+  if (deals.length) groups.push({ title: tr('megahub.search.groupDeals'), rows: deals.map(searchDealRowHtml) });
+  if (achievements.length) groups.push({ title: tr('megahub.search.groupAchievements'), rows: achievements.map(searchAchievementRowHtml) });
   if (!groups.length) {
-    box.innerHTML = '<div class="search-results-empty">Sin resultados</div>';
+    box.innerHTML = `<div class="search-results-empty">${tr('megahub.search.noResults')}</div>`;
     box.hidden = false;
     return;
   }
@@ -158,7 +158,7 @@ function markConnected(platform, count) {
   // tienen que reflejar el estado, no solo el que se ve por defecto al cargar.
   document.querySelectorAll(`.account-btn[data-account="${platform}"]`).forEach((btn) => {
     btn.classList.add('connected');
-    btn.querySelector('.account-state').textContent = count == null ? 'conectado' : `${count} juegos`;
+    btn.querySelector('.account-state').textContent = count == null ? tr('megahub.accounts.connected') : tr('megahub.accounts.gameCount', { count });
   });
 }
 
@@ -166,15 +166,15 @@ document.querySelectorAll('.account-btn').forEach(btn => {
   btn.addEventListener('click', async () => {
     if (btn.classList.contains('disabled')) return;
     const platform = btn.dataset.account;
-    btn.querySelector('.account-state').textContent = 'conectando…';
+    btn.querySelector('.account-state').textContent = tr('megahub.accounts.connecting');
     const res = await window.megahub.connectAccount(platform);
     if (res.ok) {
       markConnected(platform, res.count);
-      showToast(`${PLAT_LABEL[platform] || platform} conectado — ${res.count ?? 0} juegos.`, 'success');
+      showToast(tr('megahub.accounts.connectedToast', { platform: PLAT_LABEL[platform] || platform, count: res.count ?? 0 }), 'success');
       await rescan();
     } else {
-      btn.querySelector('.account-state').textContent = 'conectar';
-      showToast(`No se pudo conectar con ${PLAT_LABEL[platform] || platform}.`, 'error');
+      btn.querySelector('.account-state').textContent = tr('megahub.accounts.connect');
+      showToast(tr('megahub.accounts.connectError', { platform: PLAT_LABEL[platform] || platform }), 'error');
     }
   });
 });
@@ -184,9 +184,9 @@ document.querySelectorAll('.account-btn').forEach(btn => {
 async function initSgdb() {
   const has = await window.megahub.sgdbHasKey();
   if (has) {
-    sgdbSaveBtn.textContent = 'Guardada ✓';
+    sgdbSaveBtn.textContent = tr('megahub.apiKeys.saved');
     sgdbSaveBtn.classList.add('saved');
-    sgdbInput.placeholder = 'Clave guardada (rellena para cambiarla)';
+    sgdbInput.placeholder = tr('megahub.apiKeys.savedPlaceholder');
   }
 }
 sgdbSaveBtn.addEventListener('click', async () => {
@@ -194,9 +194,9 @@ sgdbSaveBtn.addEventListener('click', async () => {
   if (!key) return;
   await window.megahub.sgdbSetKey(key);
   sgdbInput.value = '';
-  sgdbSaveBtn.textContent = 'Guardada ✓';
+  sgdbSaveBtn.textContent = tr('megahub.apiKeys.saved');
   sgdbSaveBtn.classList.add('saved');
-  sgdbInput.placeholder = 'Clave guardada (rellena para cambiarla)';
+  sgdbInput.placeholder = tr('megahub.apiKeys.savedPlaceholder');
   enrichCovers();
 });
 
@@ -205,9 +205,9 @@ const tgdbSaveBtn = document.getElementById('tgdb-save');
 async function initTgdb() {
   const has = await window.megahub.tgdbHasKey();
   if (has) {
-    tgdbSaveBtn.textContent = 'Guardada ✓';
+    tgdbSaveBtn.textContent = tr('megahub.apiKeys.saved');
     tgdbSaveBtn.classList.add('saved');
-    tgdbInput.placeholder = 'Clave guardada (rellena para cambiarla)';
+    tgdbInput.placeholder = tr('megahub.apiKeys.savedPlaceholder');
   }
 }
 tgdbSaveBtn.addEventListener('click', async () => {
@@ -215,9 +215,9 @@ tgdbSaveBtn.addEventListener('click', async () => {
   if (!key) return;
   await window.megahub.tgdbSetKey(key);
   tgdbInput.value = '';
-  tgdbSaveBtn.textContent = 'Guardada ✓';
+  tgdbSaveBtn.textContent = tr('megahub.apiKeys.saved');
   tgdbSaveBtn.classList.add('saved');
-  tgdbInput.placeholder = 'Clave guardada (rellena para cambiarla)';
+  tgdbInput.placeholder = tr('megahub.apiKeys.savedPlaceholder');
 });
 
 /* ---- Respaldo (exportar/importar ajustes en .json) ---- */
@@ -238,22 +238,22 @@ function collectLocalStorageSnapshot() {
 const backupStatusEl = document.getElementById('backup-status');
 
 document.getElementById('backup-export-btn').addEventListener('click', async () => {
-  backupStatusEl.textContent = 'Exportando…';
+  backupStatusEl.textContent = tr('megahub.backup.exporting');
   const res = await window.megahub.backupExport(collectLocalStorageSnapshot());
   if (res && res.canceled) { backupStatusEl.textContent = ''; return; }
-  if (res && res.error) { backupStatusEl.textContent = `Error: ${res.error}`; return; }
-  backupStatusEl.textContent = `Guardado en ${res.path}`;
-  showToast('Ajustes exportados.', 'success');
+  if (res && res.error) { backupStatusEl.textContent = tr('megahub.backup.error', { error: res.error }); return; }
+  backupStatusEl.textContent = tr('megahub.backup.savedAt', { path: res.path });
+  showToast(tr('megahub.backup.exportedToast'), 'success');
 });
 
 document.getElementById('backup-import-btn').addEventListener('click', async () => {
-  backupStatusEl.textContent = 'Importando…';
+  backupStatusEl.textContent = tr('megahub.backup.importing');
   const res = await window.megahub.backupImport();
   if (res && res.canceled) { backupStatusEl.textContent = ''; return; }
-  if (res && res.error) { backupStatusEl.textContent = `Error: ${res.error}`; return; }
+  if (res && res.error) { backupStatusEl.textContent = tr('megahub.backup.error', { error: res.error }); return; }
   for (const [key, value] of Object.entries(res.localStorage || {})) localStorage.setItem(key, value);
-  backupStatusEl.textContent = `Importado desde ${res.path} — reinicia MegaHUB para aplicar todos los cambios.`;
-  showToast('Ajustes importados — reinicia MegaHUB para verlos aplicados.', 'success', 7000);
+  backupStatusEl.textContent = tr('megahub.backup.importedFrom', { path: res.path });
+  showToast(tr('megahub.backup.importedToast'), 'success', 7000);
 });
 
 function applyCoverToElements(game) {
