@@ -77,14 +77,14 @@ async function renderSkinsList() {
       <div class="skin-card-body">
         <div class="skin-card-title">${escapeHtml(skin.name)} <span class="skin-card-driver">${MENU_DRIVER_LABEL[skin.menuDriver] || skin.menuDriver}</span></div>
         <div class="skin-card-desc">${escapeHtml(skin.description)}</div>
-        <div class="skin-card-credit">Por <a href="${escapeHtml(skin.creatorUrl)}" target="_blank" rel="noopener">${escapeHtml(skin.creator)}</a> · <a href="${escapeHtml(skin.sourceUrl)}" target="_blank" rel="noopener">código fuente</a> · ~${skin.sizeMb} MB</div>
+        <div class="skin-card-credit">${tr('megahub.skins.by')} <a href="${escapeHtml(skin.creatorUrl)}" target="_blank" rel="noopener">${escapeHtml(skin.creator)}</a> · <a href="${escapeHtml(skin.sourceUrl)}" target="_blank" rel="noopener">${tr('megahub.skins.sourceCode')}</a> · ~${skin.sizeMb} MB</div>
       </div>
       <div class="skin-card-actions">
         ${skin.installed
-          ? `<span class="skin-card-installed-badge">${icon('check')} Instalada</span>
-             <button class="account-btn skin-install-btn" data-action="install">Reinstalar</button>
-             ${skin.slot ? `<button class="account-btn skin-restore-btn" data-action="restore">Restaurar original</button>` : ''}`
-          : `<button class="account-btn skin-install-btn" data-action="install">${icon('download')} Instalar</button>`}
+          ? `<span class="skin-card-installed-badge">${icon('check')} ${tr('megahub.skins.installed')}</span>
+             <button class="account-btn skin-install-btn" data-action="install">${tr('megahub.skins.reinstall')}</button>
+             ${skin.slot ? `<button class="account-btn skin-restore-btn" data-action="restore">${tr('megahub.skins.restoreOriginal')}</button>` : ''}`
+          : `<button class="account-btn skin-install-btn" data-action="install">${icon('download')} ${tr('megahub.skins.install')}</button>`}
         <div class="skin-card-status"></div>
       </div>
     `;
@@ -97,22 +97,22 @@ async function renderSkinsList() {
       const id = card.dataset.skinId;
       const skin = skins.find(s => s.id === id);
       const confirmed = window.confirm(
-        `¿Instalar "${skin.name}" de ${skin.creator} (~${skin.sizeMb} MB)?\n\n` +
-        (skin.slot ? `Reemplaza la ranura de tema "${skin.slot}" en RetroArch — se respalda el original antes de sobreescribir.` : 'Se agrega junto a tus presets de RGUI existentes, sin reemplazar nada.')
+        tr('megahub.skins.confirmInstall', { name: skin.name, creator: skin.creator, sizeMb: skin.sizeMb }) +
+        (skin.slot ? tr('megahub.skins.confirmInstallReplacesSlot', { slot: skin.slot }) : tr('megahub.skins.confirmInstallAddsAlongside'))
       );
       if (!confirmed) return;
       const statusEl = card.querySelector('.skin-card-status');
       card.querySelectorAll('button').forEach(b => b.disabled = true);
-      statusEl.textContent = 'Descargando e instalando…';
+      statusEl.textContent = tr('megahub.retro.downloadingAndInstalling');
       const result = await window.megahub.retroInstallSkin(id);
       card.querySelectorAll('button').forEach(b => b.disabled = false);
       if (result && result.error) {
-        statusEl.textContent = 'Error: ' + result.error;
-        showToast(`Error instalando "${skin.name}": ${result.error}`, 'error');
+        statusEl.textContent = tr('megahub.retro.errorPrefix', { error: result.error });
+        showToast(tr('megahub.skins.installError', { name: skin.name, error: result.error }), 'error');
         return;
       }
       statusEl.textContent = '';
-      showToast(`"${skin.name}" instalada. Actívala en RetroArch → Ajustes → Apariencia.`, 'success');
+      showToast(tr('megahub.skins.installedToast', { name: skin.name }), 'success');
       renderSkinsList();
     });
   });
@@ -121,18 +121,18 @@ async function renderSkinsList() {
       const card = btn.closest('.skin-card');
       const id = card.dataset.skinId;
       const skin = skins.find(s => s.id === id);
-      if (!window.confirm(`¿Restaurar el tema original de la ranura "${skin.slot}" (quitar "${skin.name}")?`)) return;
+      if (!window.confirm(tr('megahub.skins.confirmRestore', { slot: skin.slot, name: skin.name }))) return;
       const statusEl = card.querySelector('.skin-card-status');
       card.querySelectorAll('button').forEach(b => b.disabled = true);
-      statusEl.textContent = 'Restaurando…';
+      statusEl.textContent = tr('megahub.skins.restoring');
       const result = await window.megahub.retroRestoreSkinSlot(id);
       card.querySelectorAll('button').forEach(b => b.disabled = false);
       if (result && result.error) {
-        statusEl.textContent = 'Error: ' + result.error;
-        showToast('Error al restaurar: ' + result.error, 'error');
+        statusEl.textContent = tr('megahub.retro.errorPrefix', { error: result.error });
+        showToast(tr('megahub.skins.restoreError', { error: result.error }), 'error');
         return;
       }
-      showToast(`Tema original restaurado.`, 'success');
+      showToast(tr('megahub.skins.restoredToast'), 'success');
       renderSkinsList();
     });
   });
@@ -161,9 +161,9 @@ function setupRetroTab() {
   const retroGames = allGames.filter(g => g.platform === 'retroarch');
   if (retroGames.length) {
     const systems = new Set(retroGames.map(g => g.system).filter(Boolean));
-    status.innerHTML = `<b>RetroArch detectado.</b> ${retroGames.length} ROMs indexadas en ${systems.size} sistema(s).`;
+    status.innerHTML = tr('megahub.settings.retroArchDetectedStatus', { count: retroGames.length, systems: systems.size });
   } else {
-    status.innerHTML = 'No se detectó RetroArch instalado (o no tiene playlists con ROMs indexadas todavía).';
+    status.innerHTML = tr('megahub.settings.retroArchNotDetectedStatus');
   }
   setupDefaultRootSettings();
 }
@@ -179,7 +179,7 @@ async function setupDefaultRootSettings() {
 
   async function refresh() {
     const info = await window.megahub.retroGetDefaultRoot();
-    pathEl.textContent = info.isDefault ? `${info.root} (Documentos, predeterminado)` : info.root;
+    pathEl.textContent = info.isDefault ? tr('megahub.settings.defaultRootDocuments', { root: info.root }) : info.root;
     resetBtn.hidden = info.isDefault;
   }
 
@@ -189,12 +189,12 @@ async function setupDefaultRootSettings() {
       const res = await window.megahub.retroPickDefaultRoot();
       if (!res) return; // cancelado
       if (res.error) { showToast(res.error, 'error'); return; }
-      showToast('Carpeta raíz actualizada. Las consolas ya creadas mantienen sus carpetas anteriores; solo aplica a partir de ahora.', 'success', 7000);
+      showToast(tr('megahub.settings.defaultRootUpdated'), 'success', 7000);
       refresh();
     });
     resetBtn.addEventListener('click', async () => {
       await window.megahub.retroResetDefaultRoot();
-      showToast('Restaurado a Documentos\\MegaHUB.', 'success');
+      showToast(tr('megahub.settings.defaultRootReset'), 'success');
       refresh();
     });
   }
@@ -208,16 +208,16 @@ async function setupDefaultRootSettings() {
    no tocar selectores. "aurora" (DERIVA) es la paleta por defecto de
    :root, sin atributo — por eso su id de tema es cadena vacía. */
 const THEME_REGISTRY = [
-  { id: '',              name: 'Violeta',   colors: ['#0b0d12', '#6d5df0', '#22d3ee'] },
-  { id: 'arcade',        name: 'Rosa',      colors: ['#0a0510', '#ff2f92', '#33e6ff'] },
-  { id: 'retrolight',    name: 'Lavanda',   colors: ['#eeece6', '#8683b8', '#7a5ea8'] },
-  { id: 'xbox',          name: 'Verde',     colors: ['#060706', '#107c10', '#7ec418'] },
-  { id: 'steam',         name: 'Celeste',   colors: ['#1b2838', '#66c0f4', '#a3cf06'] },
-  { id: 'atari',         name: 'Rojo',      colors: ['#1c130d', '#e0392f', '#e8a33d'] },
-  { id: 'sega',          name: 'Azul',      colors: ['#06182c', '#1e9be9', '#ff6a1a'] },
-  { id: 'arcadepremium', name: 'Dorado',    colors: ['#050506', '#d4af37', '#ff2fa0'] },
-  { id: 'rgb',           name: 'Arcoíris',  colors: ['#07080d', '#5cd8ff', '#b07dff'] },
-  { id: 'plaza',         name: 'Plaza',     colors: ['#eaf6ff', '#0bb4e0', '#ff6b6b'] },
+  { id: '',              nameKey: 'violet',   colors: ['#0b0d12', '#6d5df0', '#22d3ee'] },
+  { id: 'arcade',        nameKey: 'pink',     colors: ['#0a0510', '#ff2f92', '#33e6ff'] },
+  { id: 'retrolight',    nameKey: 'lavender', colors: ['#eeece6', '#8683b8', '#7a5ea8'] },
+  { id: 'xbox',          nameKey: 'green',    colors: ['#060706', '#107c10', '#7ec418'] },
+  { id: 'steam',         nameKey: 'cyan',     colors: ['#1b2838', '#66c0f4', '#a3cf06'] },
+  { id: 'atari',         nameKey: 'red',      colors: ['#1c130d', '#e0392f', '#e8a33d'] },
+  { id: 'sega',          nameKey: 'blue',     colors: ['#06182c', '#1e9be9', '#ff6a1a'] },
+  { id: 'arcadepremium', nameKey: 'gold',     colors: ['#050506', '#d4af37', '#ff2fa0'] },
+  { id: 'rgb',           nameKey: 'rainbow',  colors: ['#07080d', '#5cd8ff', '#b07dff'] },
+  { id: 'plaza',         nameKey: 'plaza',    colors: ['#eaf6ff', '#0bb4e0', '#ff6b6b'] },
 ];
 const THEME_STORAGE_KEY = 'megahub-theme';
 
@@ -244,7 +244,7 @@ function renderThemeGrid(gridId = 'theme-grid') {
     return `
     <button type="button" class="theme-card${t.id === current ? ' active' : ''}" data-theme-id="${t.id}">
       <span class="theme-swatch" style="background: linear-gradient(90deg, ${stops})"></span>
-      <span class="theme-name">${t.name}</span>
+      <span class="theme-name">${tr('megahub.themes.' + t.nameKey)}</span>
     </button>
   `;
   }).join('');

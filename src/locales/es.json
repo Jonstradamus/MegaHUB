@@ -290,6 +290,42 @@
       "ownedFolderSingular": "${localCount} archivo en tu carpeta",
       "ownedFolderPlural": "${localCount} archivos en tu carpeta",
       "noneDetected": "Ninguno detectado"
+    },
+    "skins": {
+      "by": "Por",
+      "sourceCode": "código fuente",
+      "installed": "Instalada",
+      "reinstall": "Reinstalar",
+      "restoreOriginal": "Restaurar original",
+      "install": "Instalar",
+      "confirmInstall": "¿Instalar \"${name}\" de ${creator} (~${sizeMb} MB)?\n\n",
+      "confirmInstallReplacesSlot": "Reemplaza la ranura de tema \"${slot}\" en RetroArch — se respalda el original antes de sobreescribir.",
+      "confirmInstallAddsAlongside": "Se agrega junto a tus presets de RGUI existentes, sin reemplazar nada.",
+      "installError": "Error instalando \"${name}\": ${error}",
+      "installedToast": "\"${name}\" instalada. Actívala en RetroArch → Ajustes → Apariencia.",
+      "confirmRestore": "¿Restaurar el tema original de la ranura \"${slot}\" (quitar \"${name}\")?",
+      "restoring": "Restaurando…",
+      "restoreError": "Error al restaurar: ${error}",
+      "restoredToast": "Tema original restaurado."
+    },
+    "settings": {
+      "retroArchDetectedStatus": "<b>RetroArch detectado.</b> ${count} ROMs indexadas en ${systems} sistema(s).",
+      "retroArchNotDetectedStatus": "No se detectó RetroArch instalado (o no tiene playlists con ROMs indexadas todavía).",
+      "defaultRootDocuments": "${root} (Documentos, predeterminado)",
+      "defaultRootUpdated": "Carpeta raíz actualizada. Las consolas ya creadas mantienen sus carpetas anteriores; solo aplica a partir de ahora.",
+      "defaultRootReset": "Restaurado a Documentos\\MegaHUB."
+    },
+    "themes": {
+      "violet": "Violeta",
+      "pink": "Rosa",
+      "lavender": "Lavanda",
+      "green": "Verde",
+      "cyan": "Celeste",
+      "red": "Rojo",
+      "blue": "Azul",
+      "gold": "Dorado",
+      "rainbow": "Arcoíris",
+      "plaza": "Plaza"
     }
   }
 }

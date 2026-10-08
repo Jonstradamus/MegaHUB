@@ -290,6 +290,42 @@
       "ownedFolderSingular": "${localCount} file in your folder",
       "ownedFolderPlural": "${localCount} files in your folder",
       "noneDetected": "None detected"
+    },
+    "skins": {
+      "by": "By",
+      "sourceCode": "source code",
+      "installed": "Installed",
+      "reinstall": "Reinstall",
+      "restoreOriginal": "Restore original",
+      "install": "Install",
+      "confirmInstall": "Install \"${name}\" by ${creator} (~${sizeMb} MB)?\n\n",
+      "confirmInstallReplacesSlot": "Replaces the \"${slot}\" theme slot in RetroArch — the original is backed up before overwriting.",
+      "confirmInstallAddsAlongside": "Added alongside your existing RGUI presets, without replacing anything.",
+      "installError": "Error installing \"${name}\": ${error}",
+      "installedToast": "\"${name}\" installed. Activate it in RetroArch → Settings → Appearance.",
+      "confirmRestore": "Restore the original theme for the \"${slot}\" slot (remove \"${name}\")?",
+      "restoring": "Restoring…",
+      "restoreError": "Error restoring: ${error}",
+      "restoredToast": "Original theme restored."
+    },
+    "settings": {
+      "retroArchDetectedStatus": "<b>RetroArch detected.</b> ${count} ROMs indexed across ${systems} system(s).",
+      "retroArchNotDetectedStatus": "RetroArch wasn't detected installed (or it has no playlists with indexed ROMs yet).",
+      "defaultRootDocuments": "${root} (Documents, default)",
+      "defaultRootUpdated": "Root folder updated. Consoles you already set up keep their previous folders; this only applies from now on.",
+      "defaultRootReset": "Reset to Documents\\MegaHUB."
+    },
+    "themes": {
+      "violet": "Violet",
+      "pink": "Pink",
+      "lavender": "Lavender",
+      "green": "Green",
+      "cyan": "Cyan",
+      "red": "Red",
+      "blue": "Blue",
+      "gold": "Gold",
+      "rainbow": "Rainbow",
+      "plaza": "Plaza"
     }
   }
 }
