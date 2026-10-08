@@ -198,7 +198,7 @@ function renderDealsSection(key) {
   const moreBtn = section.querySelector('.deals-more-btn');
   const countEl = section.querySelector('.deals-count');
   const all = dealsData[key] || [];
-  const failed = dealsData.errors.includes(key === 'other' ? 'Otras tiendas' : { steam: 'Steam', gog: 'GOG', epic: 'Epic Games' }[key]);
+  const failed = dealsData.errors.includes(key);
   countEl.textContent = all.length ? `(${all.length})` : '';
   if (failed && !all.length) {
     grid.innerHTML = `<div class="empty">${tr('megahub.deals.storeFetchError')}</div>`;

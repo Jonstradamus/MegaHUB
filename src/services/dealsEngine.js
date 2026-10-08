@@ -218,21 +218,28 @@ async function getTopDeals({ force = false } = {}) {
   if (!force && cache.top && Date.now() - cache.top.at < CACHE_TTL) return cache.top.value;
 
   const errors = [];
-  async function safeFetch(label, storeIDs) {
+  // La clave que se guarda en errors es la misma que usa data-store en
+  // index.html ('steam'/'gog'/'epic'/'other') — NUNCA un label traducible,
+  // para que el matching del renderer (ver renderDealsSection() en
+  // 17-deals.js) no dependa del idioma activo. Antes se guardaba el label
+  // humano ('Otras tiendas') y el renderer comparaba contra ese mismo
+  // literal en español — funcionaba solo porque ambos lados coincidían por
+  // casualidad, no porque el idioma no importara.
+  async function safeFetch(key, storeIDs) {
     try {
       const perStore = await Promise.all(storeIDs.map(id => fetchStoreDeals(id)));
       return dedupeByTitle(perStore.flat());
     } catch (e) {
-      errors.push(label);
+      errors.push(key);
       return null;
     }
   }
 
   const [steam, gog, epic, other] = await Promise.all([
-    safeFetch('Steam', [MAIN_STORE_IDS.steam]),
-    safeFetch('GOG', [MAIN_STORE_IDS.gog]),
-    safeFetch('Epic Games', [MAIN_STORE_IDS.epic]),
-    safeFetch('Otras tiendas', OTHER_STORE_IDS),
+    safeFetch('steam', [MAIN_STORE_IDS.steam]),
+    safeFetch('gog', [MAIN_STORE_IDS.gog]),
+    safeFetch('epic', [MAIN_STORE_IDS.epic]),
+    safeFetch('other', OTHER_STORE_IDS),
   ]);
 
   const value = {

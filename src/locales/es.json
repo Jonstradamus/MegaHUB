@@ -726,6 +726,10 @@
         "cfgNotFound": "No se encontró retroarch.cfg — abre RetroArch al menos una vez."
       },
       "cheevosEnabledMessage": "Logros activados en RetroArch — inicia sesión en Ajustes > Logros dentro de RetroArch con tu cuenta (MegaHUB nunca ve tu contraseña)."
+    },
+    "library": {
+      "connectEpicWindowTitle": "Conectar con Epic Games",
+      "connectGogWindowTitle": "Conectar con GOG"
     }
   }
 }

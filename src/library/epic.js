@@ -1,5 +1,8 @@
 const { BrowserWindow } = require('electron');
 const store = require('../util/store');
+const { t } = require('../lib/i18n');
+
+function lang() { return store.load('language', 'es'); }
 
 // Credenciales públicas del cliente "launcherAppClient2" de Epic Games —
 // las mismas que usan Legendary/Heroic (proyectos open source), no son secretas
@@ -13,7 +16,7 @@ function openLoginWindow(parent) {
   return new Promise((resolve, reject) => {
     const win = new BrowserWindow({
       width: 480, height: 720, parent, modal: true,
-      autoHideMenuBar: true, title: 'Conectar con Epic Games',
+      autoHideMenuBar: true, title: t(lang(), 'megahub.library.connectEpicWindowTitle'),
       webPreferences: { nodeIntegration: false, contextIsolation: true },
     });
     let done = false;

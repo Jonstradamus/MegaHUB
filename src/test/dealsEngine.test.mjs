@@ -101,7 +101,7 @@ describe('getTopDeals', () => {
     });
     const { getTopDeals } = await import('../services/dealsEngine.js');
     const result = await getTopDeals({ force: true });
-    expect(result.errors).toContain('Steam');
+    expect(result.errors).toContain('steam');
     expect(result.gog).toEqual([]);
   });
 });

@@ -1,5 +1,8 @@
 const { BrowserWindow } = require('electron');
 const store = require('../util/store');
+const { t } = require('../lib/i18n');
+
+function lang() { return store.load('language', 'es'); }
 
 // Client ID/secret públicos de GOG Galaxy (los mismos que usan Heroic/Lutris/Playnite)
 const CLIENT_ID = '46899977096215655';
@@ -21,7 +24,7 @@ function openLoginWindow(parent) {
   return new Promise((resolve, reject) => {
     const win = new BrowserWindow({
       width: 480, height: 720, parent, modal: true,
-      autoHideMenuBar: true, title: 'Conectar con GOG',
+      autoHideMenuBar: true, title: t(lang(), 'megahub.library.connectGogWindowTitle'),
       webPreferences: { nodeIntegration: false, contextIsolation: true },
     });
     let done = false;
