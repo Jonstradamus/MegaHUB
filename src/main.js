@@ -48,6 +48,15 @@ const dealsEngine = require('./services/dealsEngine');
 const activityLog = require('./services/activityLog');
 const processWatcher = require('./services/processWatcher');
 const store = require('./util/store');
+const { t } = require('./lib/i18n');
+
+// Proceso principal (Node puro): a diferencia del renderer, que llega a t()
+// vía window.megahub.t en el contextBridge, acá se usa directo el mismo
+// lib/i18n.js — mismo patrón ya resuelto en companion-desktop (ver
+// lib/trayMenu.js). El idioma vive en el store atómico por-clave igual que en
+// preload.js (store.load('language', 'es')), no hay un objeto de settings
+// único que lo traiga ya cargado.
+function lang() { return store.load('language', 'es'); }
 
 let mainWindow = null;
 let tray = null;
@@ -656,7 +665,7 @@ ipcMain.handle('retro-scan-roms', async (_ev, { id, repo }) => {
 // en silencio.
 ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulatorName, romPath, title: providedTitle }) => {
   try {
-    if (!romPath || !fs.existsSync(romPath)) return { error: 'No se encontró el archivo de la ROM.' };
+    if (!romPath || !fs.existsSync(romPath)) return { error: t(lang(), 'megahub.main.retroLaunch.romNotFound') };
     // El renderer manda el título ya cotejado contra el catálogo libretro-
     // thumbnails (el mismo que muestra la biblioteca) cuando lo tiene — evita
     // que la sesión/logro se guarde con el nombre crudo del archivo (ej.
@@ -693,7 +702,7 @@ ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulato
     // el proceso muere sospechosamente rápido.
     const watchForInstantCrash = (child, label, logPath) => {
       child.on('error', (err) => {
-        if (mainWindow) mainWindow.webContents.send('retro-launch-issue', { message: `No se pudo iniciar ${label}: ${err.message}` });
+        if (mainWindow) mainWindow.webContents.send('retro-launch-issue', { message: t(lang(), 'megahub.main.retroLaunch.crashStartFailed', { label, error: err.message }) });
       });
       setTimeout(() => {
         if (child.exitCode !== null && child.exitCode !== 0 && mainWindow) {
@@ -711,8 +720,8 @@ ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulato
             } catch {}
           }
           mainWindow.webContents.send('retro-launch-issue', {
-            message: `${label} se cerró casi enseguida (código ${child.exitCode}).` +
-              (detail || ' Probablemente el romset, la BIOS o el core no coinciden con lo que espera.'),
+            message: t(lang(), 'megahub.main.retroLaunch.crashQuickExit', { label, code: child.exitCode }) +
+              (detail || ` ${t(lang(), 'megahub.main.retroLaunch.crashQuickExitHint')}`),
           });
         }
       }, 2500);
@@ -721,9 +730,9 @@ ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulato
     const coreName = retroCoreInstall.CORE_MAP[consoleId];
     if (coreName) {
       const exe = scanRetroArch.findRetroArch();
-      if (!exe) return { error: 'RetroArch no está instalado — instálalo primero.' };
+      if (!exe) return { error: t(lang(), 'megahub.main.retroLaunch.retroArchNotInstalled') };
       const dllPath = retroCoreInstall.coreDllPath(path.dirname(exe), coreName);
-      if (!fs.existsSync(dllPath)) return { error: `Falta instalar el core "${coreName}" — usa el botón "Instalar core" primero.` };
+      if (!fs.existsSync(dllPath)) return { error: t(lang(), 'megahub.main.retroLaunch.coreMissing', { core: coreName }) };
       // Ventana sin bordes en vez de fullscreen exclusivo: así el gato del
       // DERIVA Companion (si está instalado) puede seguir mostrándose encima
       // durante la partida — ver services/companionOverlay.js.
@@ -736,7 +745,7 @@ ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulato
       return { ok: true };
     }
     const status = await emulatorDownload.getEmulatorStatus(consoleId, consoleName, emulatorName);
-    if (!status || !status.installed) return { error: 'El emulador de esta consola no está instalado todavía.' };
+    if (!status || !status.installed) return { error: t(lang(), 'megahub.main.retroLaunch.emulatorNotInstalled') };
     if (consoleId === 'gamecube' || consoleId === 'wii') {
       companionOverlay.ensureDolphinBorderless(path.dirname(status.exePath));
     }
@@ -760,13 +769,13 @@ ipcMain.handle('retro-launch-rom', async (_ev, { consoleId, consoleName, emulato
 // dejar que MegaHUB cree/descargue la suya. Queda guardado por consola.
 ipcMain.handle('retro-get-locations', (_ev, consoleId) => retroFolders.getLocationInfo(consoleId));
 ipcMain.handle('retro-pick-emulator-folder', async (_ev, consoleId) => {
-  const res = await dialog.showOpenDialog(mainWindow, { title: 'Selecciona la carpeta donde ya tienes el emulador instalado', properties: ['openDirectory'] });
+  const res = await dialog.showOpenDialog(mainWindow, { title: t(lang(), 'megahub.main.dialogs.pickEmulatorFolderTitle'), properties: ['openDirectory'] });
   if (res.canceled || !res.filePaths[0]) return null;
   retroFolders.setCustomEmuDir(consoleId, res.filePaths[0]);
   return retroFolders.getLocationInfo(consoleId);
 });
 ipcMain.handle('retro-pick-roms-folder', async (_ev, consoleId) => {
-  const res = await dialog.showOpenDialog(mainWindow, { title: 'Selecciona tu carpeta de ROMs existente', properties: ['openDirectory'] });
+  const res = await dialog.showOpenDialog(mainWindow, { title: t(lang(), 'megahub.main.dialogs.pickRomsFolderTitle'), properties: ['openDirectory'] });
   if (res.canceled || !res.filePaths[0]) return null;
   retroFolders.setCustomRomDir(consoleId, res.filePaths[0]);
   return retroFolders.getLocationInfo(consoleId);
@@ -779,7 +788,7 @@ ipcMain.handle('retro-clear-roms-location', (_ev, consoleId) => { retroFolders.c
 // generales (Modo Retro) para quien prefiera otro disco/carpeta.
 ipcMain.handle('retro-get-default-root', () => ({ root: retroFolders.ROOT, isDefault: retroFolders.ROOT === retroFolders.DOCUMENTS_ROOT, defaultRoot: retroFolders.DOCUMENTS_ROOT }));
 ipcMain.handle('retro-pick-default-root', async () => {
-  const res = await dialog.showOpenDialog(mainWindow, { title: 'Selecciona dónde guardar emuladores y ROMs por defecto', properties: ['openDirectory', 'createDirectory'] });
+  const res = await dialog.showOpenDialog(mainWindow, { title: t(lang(), 'megahub.main.dialogs.pickDefaultRootTitle'), properties: ['openDirectory', 'createDirectory'] });
   if (res.canceled || !res.filePaths[0]) return null;
   return retroFolders.setDefaultRoot(res.filePaths[0]);
 });
@@ -831,7 +840,7 @@ ipcMain.handle('rpcs3-get-trophies', async () => {
 // alcance exacto (qué se incluye y qué no).
 ipcMain.handle('backup-export', async (_ev, localStorageData) => {
   const res = await dialog.showSaveDialog(mainWindow, {
-    title: 'Exportar ajustes de MegaHUB',
+    title: t(lang(), 'megahub.main.dialogs.exportSettingsTitle'),
     defaultPath: `megahub-backup-${new Date().toISOString().slice(0, 10)}.json`,
     filters: [{ name: 'JSON', extensions: ['json'] }],
   });
@@ -844,7 +853,7 @@ ipcMain.handle('backup-export', async (_ev, localStorageData) => {
 });
 ipcMain.handle('backup-import', async () => {
   const res = await dialog.showOpenDialog(mainWindow, {
-    title: 'Importar ajustes de MegaHUB',
+    title: t(lang(), 'megahub.main.dialogs.importSettingsTitle'),
     filters: [{ name: 'JSON', extensions: ['json'] }],
     properties: ['openFile'],
   });
@@ -891,8 +900,8 @@ async function checkFreeGamesAndNotify() {
     // inundar al usuario de toasts apenas arranca MegaHUB.
     for (const g of fresh.slice(0, 3)) {
       const n = new Notification({
-        title: `Gratis en ${g.storeName}: ${g.title}`,
-        body: `Normalmente cuesta ${g.normalPrice.toFixed(2)} dólares — click para ir a reclamarlo.`,
+        title: t(lang(), 'megahub.main.notifications.freeGameTitle', { storeName: g.storeName, title: g.title }),
+        body: t(lang(), 'megahub.main.notifications.freeGameBody', { price: g.normalPrice.toFixed(2) }),
       });
       n.on('click', () => shell.openExternal(g.dealLink));
       n.show();
@@ -1072,11 +1081,11 @@ ipcMain.handle('retro-get-retroarch-status', async (_ev, consoleId) => {
 // duplicar la lógica de "dónde va cada BIOS" en dos lugares.
 ipcMain.handle('retro-open-bios-folder', (_ev, consoleId) => {
   const exe = scanRetroArch.findRetroArch();
-  if (!exe) return { error: 'RetroArch no está instalado.' };
+  if (!exe) return { error: t(lang(), 'megahub.main.retroLaunch.retroArchNotInstalledShort') };
   const dir = path.dirname(exe);
   const romDir = retroFolders.getRomDir(consoleId);
   const status = biosInfo.checkBiosStatus(consoleId, path.join(dir, 'system'), romDir);
-  if (!status.required) return { error: 'Esta consola no necesita BIOS.' };
+  if (!status.required) return { error: t(lang(), 'megahub.main.retroLaunch.biosNotRequired') };
   try {
     fs.mkdirSync(status.checkedDir, { recursive: true });
     shell.openPath(status.checkedDir);
@@ -1108,7 +1117,7 @@ const MULTIPLAYER_README = {
 };
 ipcMain.handle('open-multiplayer-readme', (_ev, key) => {
   const filename = MULTIPLAYER_README[key];
-  if (!filename) return { error: 'No hay guía de multijugador para este emulador.' };
+  if (!filename) return { error: t(lang(), 'megahub.main.retroLaunch.noMultiplayerGuide') };
   try {
     const source = path.join(__dirname, '..', 'docs', 'multiplayer', filename);
     const content = fs.readFileSync(source, 'utf8');
@@ -1126,7 +1135,7 @@ ipcMain.handle('open-multiplayer-readme', (_ev, key) => {
 ipcMain.handle('retro-install-core', async (_ev, consoleId) => {
   try {
     const exe = scanRetroArch.findRetroArch();
-    if (!exe) return { error: 'RetroArch no está instalado o no se detectó en tu equipo.' };
+    if (!exe) return { error: t(lang(), 'megahub.main.retroLaunch.retroArchNotDetected') };
     return await retroCoreInstall.installCore(consoleId, path.dirname(exe));
   } catch (e) {
     return { error: String(e.message || e) };
@@ -1136,7 +1145,7 @@ ipcMain.handle('retro-install-core', async (_ev, consoleId) => {
 ipcMain.handle('retro-install-core-system-files', async (_ev, consoleId) => {
   try {
     const exe = scanRetroArch.findRetroArch();
-    if (!exe) return { error: 'RetroArch no está instalado o no se detectó en tu equipo.' };
+    if (!exe) return { error: t(lang(), 'megahub.main.retroLaunch.retroArchNotDetected') };
     return await retroCoreInstall.installCoreSystemFiles(consoleId, path.dirname(exe));
   } catch (e) {
     return { error: String(e.message || e) };
@@ -1217,11 +1226,11 @@ function buildTray() {
   }
   const autostart = app.getLoginItemSettings().openAtLogin;
   tray.setContextMenu(Menu.buildFromTemplate([
-    { label: 'Abrir MegaHUB', click: () => { mainWindow?.show(); mainWindow?.focus(); } },
-    { label: 'Iniciar con Windows', type: 'checkbox', checked: autostart,
+    { label: t(lang(), 'megahub.main.tray.open'), click: () => { mainWindow?.show(); mainWindow?.focus(); } },
+    { label: t(lang(), 'megahub.main.tray.startWithWindows'), type: 'checkbox', checked: autostart,
       click: (item) => app.setLoginItemSettings({ openAtLogin: item.checked }) },
     { type: 'separator' },
-    { label: 'Salir', click: () => { isQuitting = true; app.quit(); } },
+    { label: t(lang(), 'megahub.main.tray.quit'), click: () => { isQuitting = true; app.quit(); } },
   ]));
 }
 
@@ -1266,7 +1275,7 @@ app.whenReady().then(() => {
   if (autostartFailed) {
     mainWindow.webContents.once('did-finish-load', () => {
       mainWindow.webContents.send('autostart-issue', {
-        message: 'No se pudo activar "Iniciar con Windows" automáticamente — podés activarlo a mano desde el ícono de MegaHUB en la bandeja del sistema.',
+        message: t(lang(), 'megahub.main.autostartIssue'),
       });
     });
   }

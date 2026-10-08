@@ -529,6 +529,38 @@
         "consoleIconsCredit": "Proyecto <a href=\"https://github.com/libretro/retroarch-assets\" target=\"_blank\">RetroArch / libretro (retroarch-assets)</a>, tema de menú XMB \"Monochrome\", creado originalmente por <b>Kivutar</b>.",
         "consoleIconsLicense": "Licencia: <a href=\"https://creativecommons.org/licenses/by/4.0/\" target=\"_blank\">Creative Commons Attribution 4.0 International (CC BY 4.0)</a> — recoloreados por consola respetando la licencia (permite modificar con atribución)."
       }
+    },
+    "main": {
+      "dialogs": {
+        "pickEmulatorFolderTitle": "Selecciona la carpeta donde ya tienes el emulador instalado",
+        "pickRomsFolderTitle": "Selecciona tu carpeta de ROMs existente",
+        "pickDefaultRootTitle": "Selecciona dónde guardar emuladores y ROMs por defecto",
+        "exportSettingsTitle": "Exportar ajustes de MegaHUB",
+        "importSettingsTitle": "Importar ajustes de MegaHUB"
+      },
+      "notifications": {
+        "freeGameTitle": "Gratis en ${storeName}: ${title}",
+        "freeGameBody": "Normalmente cuesta ${price} dólares — click para ir a reclamarlo."
+      },
+      "retroLaunch": {
+        "romNotFound": "No se encontró el archivo de la ROM.",
+        "retroArchNotInstalled": "RetroArch no está instalado — instálalo primero.",
+        "coreMissing": "Falta instalar el core \"${core}\" — usa el botón \"Instalar core\" primero.",
+        "emulatorNotInstalled": "El emulador de esta consola no está instalado todavía.",
+        "crashStartFailed": "No se pudo iniciar ${label}: ${error}",
+        "crashQuickExit": "${label} se cerró casi enseguida (código ${code}).",
+        "crashQuickExitHint": "Probablemente el romset, la BIOS o el core no coinciden con lo que espera.",
+        "retroArchNotInstalledShort": "RetroArch no está instalado.",
+        "biosNotRequired": "Esta consola no necesita BIOS.",
+        "noMultiplayerGuide": "No hay guía de multijugador para este emulador.",
+        "retroArchNotDetected": "RetroArch no está instalado o no se detectó en tu equipo."
+      },
+      "tray": {
+        "open": "Abrir MegaHUB",
+        "startWithWindows": "Iniciar con Windows",
+        "quit": "Salir"
+      },
+      "autostartIssue": "No se pudo activar \"Iniciar con Windows\" automáticamente — podés activarlo a mano desde el ícono de MegaHUB en la bandeja del sistema."
     }
   }
 }

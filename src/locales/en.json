@@ -529,6 +529,38 @@
         "consoleIconsCredit": "Project <a href=\"https://github.com/libretro/retroarch-assets\" target=\"_blank\">RetroArch / libretro (retroarch-assets)</a>, XMB menu theme \"Monochrome\", originally created by <b>Kivutar</b>.",
         "consoleIconsLicense": "License: <a href=\"https://creativecommons.org/licenses/by/4.0/\" target=\"_blank\">Creative Commons Attribution 4.0 International (CC BY 4.0)</a> — recolored per console in compliance with the license (it allows modification with attribution)."
       }
+    },
+    "main": {
+      "dialogs": {
+        "pickEmulatorFolderTitle": "Select the folder where you already have the emulator installed",
+        "pickRomsFolderTitle": "Select your existing ROMs folder",
+        "pickDefaultRootTitle": "Select where to save emulators and ROMs by default",
+        "exportSettingsTitle": "Export MegaHUB settings",
+        "importSettingsTitle": "Import MegaHUB settings"
+      },
+      "notifications": {
+        "freeGameTitle": "Free on ${storeName}: ${title}",
+        "freeGameBody": "Normally costs $${price} — click to go claim it."
+      },
+      "retroLaunch": {
+        "romNotFound": "Couldn't find the ROM file.",
+        "retroArchNotInstalled": "RetroArch isn't installed — install it first.",
+        "coreMissing": "The \"${core}\" core isn't installed yet — use the \"Install core\" button first.",
+        "emulatorNotInstalled": "This console's emulator isn't installed yet.",
+        "crashStartFailed": "Couldn't start ${label}: ${error}",
+        "crashQuickExit": "${label} closed almost immediately (code ${code}).",
+        "crashQuickExitHint": "The romset, BIOS or core probably don't match what it expects.",
+        "retroArchNotInstalledShort": "RetroArch isn't installed.",
+        "biosNotRequired": "This console doesn't need a BIOS.",
+        "noMultiplayerGuide": "There is no multiplayer guide for this emulator.",
+        "retroArchNotDetected": "RetroArch isn't installed or wasn't detected on your machine."
+      },
+      "tray": {
+        "open": "Open MegaHUB",
+        "startWithWindows": "Start with Windows",
+        "quit": "Quit"
+      },
+      "autostartIssue": "Couldn't turn on \"Start with Windows\" automatically — you can turn it on by hand from the MegaHUB icon in the system tray."
     }
   }
 }
