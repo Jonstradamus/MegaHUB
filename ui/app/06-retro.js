@@ -122,10 +122,10 @@ function refreshConsoleOwnedCounts() {
     const localCount = localRomCounts[c.id] || 0;
     const el = card.querySelector('.console-card-owned');
     let text;
-    if (retroCount && localCount) text = `${retroCount} en tu RetroArch + ${localCount} en tu carpeta`;
-    else if (retroCount) text = `${retroCount} en tu RetroArch`;
-    else if (localCount) text = `${localCount} archivo${localCount === 1 ? '' : 's'} en tu carpeta`;
-    else text = 'Ninguno detectado';
+    if (retroCount && localCount) text = tr('megahub.retro.ownedRetroArchPlusFolder', { retroCount, localCount });
+    else if (retroCount) text = tr('megahub.retro.ownedRetroArch', { retroCount });
+    else if (localCount) text = tr(localCount === 1 ? 'megahub.retro.ownedFolderSingular' : 'megahub.retro.ownedFolderPlural', { localCount });
+    else text = tr('megahub.retro.noneDetected');
     el.textContent = text;
     el.classList.toggle('none', !retroCount && !localCount);
   }
@@ -434,9 +434,9 @@ async function openConsoleDetail(consoleInfo) {
     // antes esto quedaba indistinguible de "sin resultados" y encima podía
     // dejar el resto del panel a medio cargar si algo más asumía un array.
     retroCatalog = [];
-    showToast(`No se pudo cargar el catálogo de ${consoleInfo.name}: ${result.error}`, 'error');
+    showToast(tr('megahub.retro.catalogLoadError', { name: consoleInfo.name, error: result.error }), 'error');
     retroGameEls.clear();
-    retroGameGrid.innerHTML = '<div class="empty">No se pudo cargar el catálogo de portadas — revisa tu conexión e intenta entrar de nuevo a esta consola.</div>';
+    retroGameGrid.innerHTML = `<div class="empty">${tr('megahub.retro.catalogLoadErrorBody')}</div>`;
     refreshRetroOwnedBadge();
     return;
   }
@@ -516,8 +516,8 @@ async function updateStandaloneEmulatorControls(consoleInfo) {
   locateBtn.hidden = true;
   openBtn.hidden = true;
   autoBtn.disabled = false;
-  autoBtn.querySelector('span').textContent = 'Descargar e instalar automáticamente (con tu confirmación)';
-  statusEl.textContent = 'Comprobando si ya está instalado…';
+  autoBtn.querySelector('span').textContent = tr('megahub.retro.autoDownloadDefault');
+  statusEl.textContent = tr('megahub.retro.checkingInstalled');
 
   const status = await window.megahub.retroGetEmulatorStatus({ id: consoleInfo.id, name: consoleInfo.name, emulator: consoleInfo.emulator });
   if (currentConsole !== consoleInfo) return;
@@ -529,8 +529,8 @@ async function updateStandaloneEmulatorControls(consoleInfo) {
     openBtn.hidden = false;
     const locations = await window.megahub.retroGetLocations(consoleInfo.id);
     if (currentConsole !== consoleInfo) return;
-    statusEl.innerHTML = `${escapeHtml(consoleInfo.emulator)} ya está instalado en <code>${escapeHtml(status.emuDir)}</code>.` +
-      (locations.customEmu ? ` <a href="#" id="retro-clear-emu-loc">Olvidar esta ubicación</a>` : '');
+    statusEl.innerHTML = tr('megahub.retro.emulatorInstalledAt', { emulator: escapeHtml(consoleInfo.emulator), dir: escapeHtml(status.emuDir) }) +
+      (locations.customEmu ? ` <a href="#" id="retro-clear-emu-loc">${tr('megahub.retro.forgetLocation')}</a>` : '');
     const clearLink = document.getElementById('retro-clear-emu-loc');
     if (clearLink) {
       clearLink.addEventListener('click', async (e) => {
@@ -571,7 +571,7 @@ async function updateResolutionPresetControls(consoleInfo) {
   // (PS2/PS3/Xbox/GameCube/etc.) no tienen shaders de RetroArch disponibles.
   const originalChip = document.querySelector('#retro-resolution-presets .chip[data-tier="original"]');
   if (originalChip) originalChip.hidden = !usesRetroArch;
-  statusEl.textContent = 'Elige el nivel de calidad/rendimiento para ' + consoleInfo.emulator + '.';
+  statusEl.textContent = tr('megahub.retro.choosePresetLevel', { emulator: consoleInfo.emulator });
 }
 
 document.getElementById('retro-resolution-presets').addEventListener('click', async (e) => {
@@ -580,13 +580,13 @@ document.getElementById('retro-resolution-presets').addEventListener('click', as
   const statusEl = document.getElementById('retro-resolution-status');
   const chips = document.querySelectorAll('#retro-resolution-presets .chip');
   chips.forEach(c => c.disabled = true);
-  statusEl.textContent = 'Aplicando…';
+  statusEl.textContent = tr('megahub.retro.applying');
   const result = await window.megahub.retroApplyResolutionPreset({ id: currentConsole.id, tier: btn.dataset.tier });
   chips.forEach(c => c.disabled = false);
   chips.forEach(c => c.classList.toggle('active', c === btn));
-  statusEl.textContent = result && result.error ? 'Error: ' + result.error : (result && result.message) || '';
-  if (result && result.error) showToast('Error aplicando preset: ' + result.error, 'error');
-  else if (!(result && result.info)) showToast(`Preset "${btn.textContent}" aplicado a ${currentConsole.emulator}.`, 'success');
+  statusEl.textContent = result && result.error ? tr('megahub.retro.errorPrefix', { error: result.error }) : (result && result.message) || '';
+  if (result && result.error) showToast(tr('megahub.retro.presetApplyError', { error: result.error }), 'error');
+  else if (!(result && result.info)) showToast(tr('megahub.retro.presetApplied', { preset: btn.textContent, emulator: currentConsole.emulator }), 'success');
 });
 
 document.getElementById('retro-locate-emulator-btn').addEventListener('click', async () => {
@@ -604,9 +604,9 @@ async function updateRomLocationControls(consoleInfo) {
   const locations = await window.megahub.retroGetLocations(consoleInfo.id);
   if (currentConsole !== consoleInfo) return;
 
-  locateBtn.querySelector('span').textContent = locations.customRom ? 'Cambiar carpeta de ROMs' : '¿Ya tienes ROMs en otra carpeta? Ubicar';
+  locateBtn.querySelector('span').textContent = locations.customRom ? tr('megahub.retro.changeRomFolder') : tr('megahub.retro.locateRomFolder');
   statusEl.innerHTML = locations.customRom
-    ? `Buscando ROMs en: <code>${escapeHtml(locations.romDir)}</code> — <a href="#" id="retro-clear-rom-loc">usar la carpeta de MegaHUB</a>`
+    ? tr('megahub.retro.searchingRomsAt', { dir: escapeHtml(locations.romDir) })
     : '';
   const clearLink = document.getElementById('retro-clear-rom-loc');
   if (clearLink) {
@@ -645,7 +645,7 @@ async function updateRetroArchControls(consoleInfo) {
   const biosWarning = document.getElementById('retro-bios-warning');
   controls.hidden = false;
   downloadLink.hidden = false; // se oculta más abajo solo si RetroArch ya está instalado
-  statusEl.textContent = 'Comprobando tu instalación de RetroArch…';
+  statusEl.textContent = tr('megahub.retro.checkingRetroArch');
   installBtn.hidden = true;
   sysFilesBtn.hidden = true;
   openBtn.hidden = true;
@@ -656,20 +656,20 @@ async function updateRetroArchControls(consoleInfo) {
   if (currentConsole !== consoleInfo) return;
 
   if (!status.installed) {
-    statusEl.textContent = 'RetroArch no se detectó instalado — usa el enlace de arriba para bajarlo primero.';
+    statusEl.textContent = tr('megahub.retro.retroArchNotInstalled');
     return;
   }
   // RetroArch ya está instalado: el enlace genérico de descarga ya no aplica.
   downloadLink.hidden = true;
   openBtn.hidden = false;
   if (!status.core) {
-    statusEl.textContent = 'RetroArch detectado ✓ (sin core automático disponible para este sistema).';
+    statusEl.textContent = tr('megahub.retro.retroArchDetectedNoCore');
   } else if (status.core.installed) {
-    statusEl.textContent = `RetroArch detectado ✓ — core "${status.core.coreName}" ya instalado.`;
+    statusEl.textContent = tr('megahub.retro.retroArchDetectedCoreInstalled', { coreName: status.core.coreName });
   } else {
-    statusEl.textContent = `RetroArch detectado ✓ — falta el core "${status.core.coreName}" (${status.core.sizeMb} MB).`;
+    statusEl.textContent = tr('megahub.retro.retroArchDetectedCoreMissing', { coreName: status.core.coreName, sizeMb: status.core.sizeMb });
     installBtn.hidden = false;
-    installBtn.querySelector('span').textContent = `Instalar core (${status.core.coreName}, ${status.core.sizeMb} MB)`;
+    installBtn.querySelector('span').textContent = tr('megahub.retro.installCoreLabel', { coreName: status.core.coreName, sizeMb: status.core.sizeMb });
   }
 
   // Archivos de sistema del core (fuentes/hiscore/etc, oficiales de RetroArch,
@@ -677,7 +677,7 @@ async function updateRetroArchControls(consoleInfo) {
   // del todo y normalmente se bajan a mano desde el Actualizador en línea.
   if (status.systemFiles && !status.systemFiles.installed) {
     sysFilesBtn.hidden = false;
-    sysFilesBtn.querySelector('span').textContent = `Descargar archivos de sistema (${status.systemFiles.zipName}, ${status.systemFiles.sizeMb} MB)`;
+    sysFilesBtn.querySelector('span').textContent = tr('megahub.retro.downloadSystemFilesLabel', { zipName: status.systemFiles.zipName, sizeMb: status.systemFiles.sizeMb });
   }
 
   // BIOS con copyright: nunca la proporcionamos, solo avisamos si falta.
@@ -685,17 +685,16 @@ async function updateRetroArchControls(consoleInfo) {
     biosWarning.hidden = false;
     const files = status.bios.expectedFiles || [];
     const fileList = files.length > 1
-      ? (status.bios.anyOf === false ? files.join(' y ') : files.join(' o '))
-      : (files[0] || 'BIOS oficial');
-    document.getElementById('retro-bios-warning-text').textContent =
-      `Requiere ${fileList} — extráela vía dumping desde tu consola. No proporcionamos BIOS.`;
+      ? (status.bios.anyOf === false ? files.join(tr('megahub.retro.joinAnd')) : files.join(tr('megahub.retro.joinOr')))
+      : (files[0] || tr('megahub.retro.officialBios'));
+    document.getElementById('retro-bios-warning-text').textContent = tr('megahub.retro.biosRequired', { fileList });
   }
 }
 
 document.getElementById('retro-open-bios-folder-btn').addEventListener('click', async () => {
   if (!currentConsole) return;
   const result = await window.megahub.retroOpenBiosFolder(currentConsole.id);
-  if (result && result.error) showToast('Error: ' + result.error, 'error');
+  if (result && result.error) showToast(tr('megahub.retro.errorPrefix', { error: result.error }), 'error');
 });
 
 document.getElementById('retro-install-core-btn').addEventListener('click', async () => {
@@ -706,24 +705,21 @@ document.getElementById('retro-install-core-btn').addEventListener('click', asyn
 
   const status = await window.megahub.retroGetRetroArchStatus(currentConsole.id);
   if (!status.core) return;
-  const confirmed = window.confirm(
-    `¿Descargar el core "${status.core.coreName}" (${status.core.sizeMb} MB) desde buildbot.libretro.com ` +
-    `e instalarlo en la carpeta cores/ de tu RetroArch?\n\nSolo se descomprime ahí — no se ejecuta nada.`
-  );
+  const confirmed = window.confirm(tr('megahub.retro.confirmInstallCore', { coreName: status.core.coreName, sizeMb: status.core.sizeMb }));
   if (!confirmed) return;
 
   btn.disabled = true;
-  label.textContent = 'Instalando…';
+  label.textContent = tr('megahub.retro.installing');
   const result = await window.megahub.retroInstallCore(currentConsole.id);
   btn.disabled = false;
   if (result && result.error) {
-    installStatus.textContent = 'Error: ' + result.error;
-    showToast('Error instalando el core: ' + result.error, 'error');
+    installStatus.textContent = tr('megahub.retro.errorPrefix', { error: result.error });
+    showToast(tr('megahub.retro.coreInstallError', { error: result.error }), 'error');
     return;
   }
-  label.textContent = `Instalar core (${result.coreName})`;
-  installStatus.textContent = `Core "${result.coreName}" instalado correctamente.`;
-  showToast(`Core "${result.coreName}" instalado.`, 'success');
+  label.textContent = tr('megahub.retro.installCoreShortLabel', { coreName: result.coreName });
+  installStatus.textContent = tr('megahub.retro.coreInstalledStatus', { coreName: result.coreName });
+  showToast(tr('megahub.retro.coreInstalledToast', { coreName: result.coreName }), 'success');
   updateRetroArchControls(currentConsole);
 });
 
@@ -735,26 +731,22 @@ document.getElementById('retro-install-sysfiles-btn').addEventListener('click', 
 
   const status = await window.megahub.retroGetRetroArchStatus(currentConsole.id);
   if (!status.systemFiles) return;
-  const confirmed = window.confirm(
-    `¿Descargar "${status.systemFiles.zipName}" (${status.systemFiles.sizeMb} MB) desde buildbot.libretro.com ` +
-    `(el mismo origen oficial que usa el Actualizador en línea de RetroArch) e instalarlo en tu carpeta system/?\n\n` +
-    `Esto NO es una BIOS — son assets propios y libres que el core necesita (fuentes, hiscore, etc).`
-  );
+  const confirmed = window.confirm(tr('megahub.retro.confirmInstallSystemFiles', { zipName: status.systemFiles.zipName, sizeMb: status.systemFiles.sizeMb }));
   if (!confirmed) return;
 
   const prevLabel = label.textContent;
   btn.disabled = true;
-  label.textContent = 'Descargando…';
+  label.textContent = tr('megahub.retro.downloading');
   const result = await window.megahub.retroInstallCoreSystemFiles(currentConsole.id);
   btn.disabled = false;
   if (result && result.error) {
-    installStatus.textContent = 'Error: ' + result.error;
+    installStatus.textContent = tr('megahub.retro.errorPrefix', { error: result.error });
     label.textContent = prevLabel;
-    showToast('Error descargando archivos de sistema: ' + result.error, 'error');
+    showToast(tr('megahub.retro.systemFilesDownloadError', { error: result.error }), 'error');
     return;
   }
-  installStatus.textContent = `"${result.zipName}" instalado correctamente.`;
-  showToast(`"${result.zipName}" instalado.`, 'success');
+  installStatus.textContent = tr('megahub.retro.systemFilesInstalledStatus', { zipName: result.zipName });
+  showToast(tr('megahub.retro.systemFilesInstalledToast', { zipName: result.zipName }), 'success');
   updateRetroArchControls(currentConsole);
 });
 
@@ -768,7 +760,7 @@ function refreshRetroOwnedBadge() {
   badge.classList.remove('skeleton', 'skeleton-pill');
   badge.style.cssText = '';
   const ownedCount = retroCatalog.filter(e => e.owned).length;
-  badge.textContent = `${ownedCount} obtenido${ownedCount === 1 ? '' : 's'} de ${retroCatalog.length} en el catálogo`;
+  badge.textContent = tr(ownedCount === 1 ? 'megahub.retro.ownedBadgeSingular' : 'megahub.retro.ownedBadgePlural', { count: ownedCount, total: retroCatalog.length });
 }
 
 // Cruza los archivos que el usuario puso en roms/<consola>/ contra el catálogo,
@@ -778,7 +770,7 @@ async function scanLocalRoms(consoleInfo) {
   const results = await window.megahub.retroScanRoms({ id: consoleInfo.id, repo: consoleInfo.repo });
   if (currentConsole !== consoleInfo) return;
   if (!results.length) {
-    statusEl.textContent = 'Sin archivos en tu carpeta roms/' + consoleInfo.id + ' todavía.';
+    statusEl.textContent = tr('megahub.retro.noLocalRomsYet', { id: consoleInfo.id });
     return;
   }
   const recognized = results.filter(r => r.recognized);
@@ -811,8 +803,8 @@ async function scanLocalRoms(consoleInfo) {
     newlyAdded.push(entry);
     dirty = true;
   }
-  statusEl.innerHTML = `<b>${results.length}</b> ROM${results.length === 1 ? '' : 's'} detectada${results.length === 1 ? '' : 's'} en tu carpeta` +
-    (newlyAdded.length ? `<br>${newlyAdded.length} no estaba${newlyAdded.length === 1 ? '' : 'n'} en el catálogo de portadas — se agregó${newlyAdded.length === 1 ? '' : 'ron'} igual a tu biblioteca.` : '');
+  statusEl.innerHTML = tr(results.length === 1 ? 'megahub.retro.romsDetectedSingular' : 'megahub.retro.romsDetectedPlural', { count: results.length }) +
+    (newlyAdded.length ? tr(newlyAdded.length === 1 ? 'megahub.retro.romsNewSingular' : 'megahub.retro.romsNewPlural', { count: newlyAdded.length }) : '');
   if (dirty) { refreshRetroOwnedBadge(); applyRetroFilters(); }
   // Si el juego seleccionado ahora mismo es uno de los que cambió, refresca el
   // botón "Jugar" del panel de detalles sin esperar a que el usuario reclique.
@@ -868,9 +860,9 @@ document.getElementById('retro-create-folders-btn').addEventListener('click', as
   if (!currentConsole) return;
   const res = await window.megahub.retroCreateFolders({ id: currentConsole.id, name: currentConsole.name, emulator: currentConsole.emulator });
   const statusEl = document.getElementById('retro-rom-scan-status');
-  if (res && res.error) { statusEl.textContent = 'Error creando carpetas: ' + res.error; showToast('Error creando carpetas: ' + res.error, 'error'); return; }
-  statusEl.textContent = 'Carpetas creadas en emulators/' + currentConsole.id + ' y roms/' + currentConsole.id + '.';
-  showToast(`Carpetas de ${currentConsole.name} creadas.`, 'success');
+  if (res && res.error) { statusEl.textContent = tr('megahub.retro.folderCreateError', { error: res.error }); showToast(tr('megahub.retro.folderCreateError', { error: res.error }), 'error'); return; }
+  statusEl.textContent = tr('megahub.retro.foldersCreatedAt', { id: currentConsole.id });
+  showToast(tr('megahub.retro.foldersCreatedToast', { name: currentConsole.name }), 'success');
   if (res && res.emuDir) window.megahub.retroOpenFolder(res.emuDir);
 });
 document.getElementById('retro-open-roms-btn').addEventListener('click', async () => {
@@ -888,45 +880,42 @@ document.getElementById('retro-auto-download-btn').addEventListener('click', asy
   const btn = document.getElementById('retro-auto-download-btn');
   const statusEl = document.getElementById('retro-auto-download-status');
   const label = btn.querySelector('span');
-  const defaultLabel = 'Descargar e instalar automáticamente (con tu confirmación)';
+  const defaultLabel = tr('megahub.retro.autoDownloadDefault');
 
   btn.disabled = true;
-  label.textContent = 'Consultando última versión…';
+  label.textContent = tr('megahub.retro.checkingLatestVersion');
   const info = await window.megahub.retroGetDownloadInfo(currentConsole.id);
   if (currentConsole == null) return;
   if (!info) {
     label.textContent = defaultLabel;
     btn.disabled = false;
-    statusEl.textContent = 'No se pudo obtener la última versión ahora mismo. Usa el enlace de arriba.';
+    statusEl.textContent = tr('megahub.retro.latestVersionError');
     return;
   }
 
-  const confirmed = window.confirm(
-    `¿Descargar ${info.name} (${info.sizeMb} MB, versión ${info.version}) desde github.com/${info.repo} ` +
-    `e instalarlo en emulators/${currentConsole.id}/?\n\nSolo se descomprime ahí — no se ejecuta nada.`
-  );
+  const confirmed = window.confirm(tr('megahub.retro.confirmAutoDownload', { name: info.name, sizeMb: info.sizeMb, version: info.version, repo: info.repo, id: currentConsole.id }));
   if (!confirmed) {
     label.textContent = defaultLabel;
     btn.disabled = false;
     return;
   }
 
-  label.textContent = 'Descargando e instalando…';
+  label.textContent = tr('megahub.retro.downloadingAndInstalling');
   statusEl.textContent = '';
   const result = await window.megahub.retroDownloadEmulator({ id: currentConsole.id, name: currentConsole.name, emulator: currentConsole.emulator });
   btn.disabled = false;
   label.textContent = defaultLabel;
   if (result && result.error) {
-    statusEl.textContent = 'Error al descargar: ' + result.error;
-    showToast('Error al descargar ' + currentConsole.emulator + ': ' + result.error, 'error');
+    statusEl.textContent = tr('megahub.retro.downloadError', { error: result.error });
+    showToast(tr('megahub.retro.emulatorDownloadError', { emulator: currentConsole.emulator, error: result.error }), 'error');
     return;
   }
   if (!result.installed) {
-    statusEl.textContent = `Se descargó y descomprimió en emulators/${currentConsole.id}/, pero no se encontró el ejecutable esperado — revisa la carpeta.`;
-    showToast('Descarga completada, pero no se encontró el ejecutable esperado.', 'error');
+    statusEl.textContent = tr('megahub.retro.executableNotFound', { id: currentConsole.id });
+    showToast(tr('megahub.retro.executableNotFoundToast'), 'error');
     return;
   }
-  showToast(`${currentConsole.emulator} instalado correctamente.`, 'success');
+  showToast(tr('megahub.retro.emulatorInstalledToast', { emulator: currentConsole.emulator }), 'success');
   updateStandaloneEmulatorControls(currentConsole);
 });
 
@@ -941,7 +930,7 @@ function applyRetroFilters() {
   if (retroOwnedFilterMode === 'owned') list_ = list_.filter(e => e.owned);
   if (retroSearchTerm) list_ = list_.filter(e => e.title.toLowerCase().includes(retroSearchTerm));
   retroFilteredCatalog = list_;
-  retroCountEl.textContent = `${list_.length} juegos`;
+  retroCountEl.textContent = `${list_.length} ${list_.length === 1 ? tr('megahub.gameList.gameSingular') : tr('megahub.gameList.gamePlural')}`;
   renderRetroGameGrid();
 }
 
@@ -986,7 +975,7 @@ function updateRetroGameCard(card, entry) {
   if (entry.owned && !ownedBadge) {
     ownedBadge = document.createElement('span');
     ownedBadge.className = 'rg-owned';
-    ownedBadge.textContent = 'Obtenido';
+    ownedBadge.textContent = tr('megahub.retro.ownedBadge');
     cover.appendChild(ownedBadge);
   } else if (!entry.owned && ownedBadge) {
     ownedBadge.remove();
@@ -995,7 +984,7 @@ function updateRetroGameCard(card, entry) {
   if (entry.rerelease && !rereleaseBadge) {
     rereleaseBadge = document.createElement('span');
     rereleaseBadge.className = 'rg-rerelease';
-    rereleaseBadge.textContent = 'Relanzamiento';
+    rereleaseBadge.textContent = tr('megahub.retro.rereleaseBadge');
     cover.appendChild(rereleaseBadge);
   } else if (!entry.rerelease && rereleaseBadge) {
     rereleaseBadge.remove();
@@ -1050,7 +1039,7 @@ function updateTextureHdBadge(cover, entry) {
   if (show && !badge) {
     badge = document.createElement('span');
     badge.className = 'rg-texture-hd';
-    badge.textContent = 'Texturas HD disponibles';
+    badge.textContent = tr('megahub.retro.hdTexturesAvailable');
     cover.appendChild(badge);
   } else if (!show && badge) {
     badge.remove();
@@ -1072,7 +1061,7 @@ function renderRetroGameGrid() {
   if (!retroFilteredCatalog.length) {
     retroGameEls.forEach(el => el.remove());
     retroGameEls.clear();
-    retroGameGrid.innerHTML = '<div class="empty">Sin resultados con estos filtros.</div>';
+    retroGameGrid.innerHTML = `<div class="empty">${tr('megahub.retro.noResultsWithFilters')}</div>`;
     return;
   }
   const emptyDiv = retroGameGrid.querySelector('.empty');
@@ -1106,10 +1095,10 @@ async function renderRetroGameDetails(entry) {
   cover.style.backgroundImage = entry.coverUrl ? `url("${entry.coverUrl}")` : '';
   document.getElementById('d-badges').innerHTML =
     `<span class="d-badge plat">${escapeHtml(currentConsole.name)}</span>` +
-    (entry.rerelease ? `<span class="d-badge not-installed">${icon('refresh')} Relanzamiento digital (versión mejorada)</span>` : '') +
+    (entry.rerelease ? `<span class="d-badge not-installed">${icon('refresh')} ${tr('megahub.retro.digitalRerelease')}</span>` : '') +
     (entry.owned
-      ? `<span class="d-badge installed">${icon('check')} Obtenido</span>`
-      : '<span class="d-badge not-installed">— ROM no detectada</span>');
+      ? `<span class="d-badge installed">${icon('check')} ${tr('megahub.retro.ownedBadge')}</span>`
+      : `<span class="d-badge not-installed">— ${tr('megahub.retro.romNotDetected')}</span>`);
   document.getElementById('d-desc').innerHTML = skeletonLinesHtml(['long', 'medium']);
   document.getElementById('d-meta').innerHTML = '';
   // "¿Lo mueve tu PC?" no aplica a ROMs de consola, solo a juegos de PC actuales.
@@ -1121,14 +1110,14 @@ async function renderRetroGameDetails(entry) {
   const btn = document.createElement('button');
   if (canPlay) {
     btn.className = 'action-btn play-ready';
-    btn.innerHTML = `${icon('play')} Jugar`;
+    btn.innerHTML = `${icon('play')} ${tr('megahub.details.play')}`;
     btn.onclick = () => {
       if (entry.ownedGame) launchGame(entry.ownedGame);
       else launchLocalRom(entry);
     };
   } else {
     btn.className = 'action-btn play-missing';
-    btn.innerHTML = `${icon('lock')} Falta la ROM`;
+    btn.innerHTML = `${icon('lock')} ${tr('megahub.retro.missingRom')}`;
     btn.disabled = true;
   }
   actions.appendChild(btn);
@@ -1143,14 +1132,14 @@ async function renderRetroGameDetails(entry) {
   if (!canPlay) {
     const hint = document.createElement('div');
     hint.id = 'd-play-hint';
-    hint.textContent = `Agrega tu copia de "${entry.title}" en la carpeta de ROMs de ${currentConsole.name} para poder jugarlo.`;
+    hint.textContent = tr('megahub.retro.addRomHint', { title: entry.title, consoleName: currentConsole.name });
     actions.appendChild(hint);
   }
 
   // Peso del archivo — solo tiene sentido para ROMs que el usuario ya tiene en
   // disco (no para el resto del catálogo, que ni siquiera existe localmente).
   const sizeBytes = entry.owned ? (entry.ownedGame ? entry.ownedGame.sizeBytes : entry.sizeBytes) : null;
-  const sizeRow = sizeBytes != null ? `<b>Tamaño:</b> ${formatBytes(sizeBytes)}` : '';
+  const sizeRow = sizeBytes != null ? `<b>${tr('megahub.details.size')}:</b> ${formatBytes(sizeBytes)}` : '';
 
   const info = await window.megahub.getRetroGameInfo(entry.title);
   // El usuario pudo haber seleccionado otro juego mientras esto cargaba
@@ -1158,14 +1147,14 @@ async function renderRetroGameDetails(entry) {
   if (info) {
     document.getElementById('d-desc').textContent = info.overview || '';
     const rows = sizeRow ? [sizeRow] : [];
-    if (info.genres && info.genres.length) rows.push(`<b>Género:</b> ${escapeHtml(info.genres.join(', '))}`);
-    if (info.developers && info.developers.length) rows.push(`<b>Desarrollador:</b> ${escapeHtml(info.developers.join(', '))}`);
-    if (info.releaseDate) rows.push(`<b>Lanzamiento:</b> ${escapeHtml(info.releaseDate)}`);
+    if (info.genres && info.genres.length) rows.push(`<b>${tr('megahub.details.genre')}:</b> ${escapeHtml(info.genres.join(', '))}`);
+    if (info.developers && info.developers.length) rows.push(`<b>${tr('megahub.retro.developer')}:</b> ${escapeHtml(info.developers.join(', '))}`);
+    if (info.releaseDate) rows.push(`<b>${tr('megahub.details.releaseDate')}:</b> ${escapeHtml(info.releaseDate)}`);
     document.getElementById('d-meta').innerHTML = rows.join('<br>');
   } else {
     document.getElementById('d-desc').textContent = '';
     document.getElementById('d-meta').innerHTML = (sizeRow ? sizeRow + '<br>' : '') +
-      '<span style="font-size:11.5px;opacity:0.75">Ficha completa (género, desarrollador, descripción) disponible agregando una clave gratuita de TheGamesDB en Ajustes → Modo Retro.</span>';
+      `<span style="font-size:11.5px;opacity:0.75">${tr('megahub.retro.tgdbHint')}</span>`;
   }
 }
 
