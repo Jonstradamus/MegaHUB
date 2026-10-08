@@ -326,6 +326,34 @@
       "gold": "Gold",
       "rainbow": "Rainbow",
       "plaza": "Plaza"
+    },
+    "achievements": {
+      "mhEmpty": "Nothing here yet — keep playing to unlock achievements in this category.",
+      "newRibbon": "New",
+      "wordAchievements": "achievements",
+      "retroArchNotInstalledForCheevos": "RetroArch wasn't detected — install it first to play with achievements active.",
+      "cheevosEnabled": "✔ Achievements are already enabled in RetroArch — if you haven't signed in yet, do it in Settings > Achievements.",
+      "cheevosNotEnabled": "RetroArch detected, but achievements aren't enabled yet.",
+      "connecting": "Connecting…",
+      "connect": "Connect",
+      "connectError": "Couldn't connect: ${error}\n\nCheck that the username and API key are correct.",
+      "confirmDisconnect": "Disconnect your RetroAchievements account from MegaHUB? (this doesn't erase your progress on retroachievements.org, only access from here)",
+      "profileLoadError": "Error loading the profile",
+      "points": "points",
+      "hardcorePoints": "hardcore points",
+      "rank": "Rank",
+      "gamesPlayed": "games played",
+      "mastered": "mastered",
+      "raNoProgress": "No progress recorded yet — play something with achievements enabled in RetroArch.",
+      "raNoHistory": "No achievements recorded yet — they pile up here every time you open this tab.",
+      "hardcore": "Hardcore",
+      "xeniaRpcs3LoadError": "Couldn't load Xenia/RPCS3: ${error}<br>If you just updated MegaHUB, close the app completely (not just reload) and open it again.",
+      "hiddenTrophy": "Trophy hidden until unlocked.",
+      "dataDisplayError": "Error displaying the data: ${error}",
+      "consolasEmpty": "Nothing yet — install Xenia or RPCS3 from Retro Mode and play something with achievements/trophies.",
+      "trophiesUnlockStatusUnavailable": "${count} trophies — unlock status not available yet",
+      "trophiesCount": "${count} trophies",
+      "unknownStatus": "unknown status"
     }
   }
 }

@@ -326,6 +326,34 @@
       "gold": "Dorado",
       "rainbow": "Arcoíris",
       "plaza": "Plaza"
+    },
+    "achievements": {
+      "mhEmpty": "Nada por aquí todavía — sigue jugando para desbloquear logros en esta categoría.",
+      "newRibbon": "Nuevo",
+      "wordAchievements": "logros",
+      "retroArchNotInstalledForCheevos": "RetroArch no se detectó instalado — instálalo primero para poder jugar con logros activos.",
+      "cheevosEnabled": "✔ Los logros ya están activados en RetroArch — si aún no iniciaste sesión, hazlo en Ajustes > Logros.",
+      "cheevosNotEnabled": "RetroArch detectado, pero los logros todavía no están activados.",
+      "connecting": "Conectando…",
+      "connect": "Conectar",
+      "connectError": "No se pudo conectar: ${error}\n\nRevisa que el usuario y la API key sean correctos.",
+      "confirmDisconnect": "¿Desconectar tu cuenta de RetroAchievements de MegaHUB? (esto no borra tu progreso en retroachievements.org, solo el acceso desde aquí)",
+      "profileLoadError": "Error al cargar el perfil",
+      "points": "puntos",
+      "hardcorePoints": "puntos hardcore",
+      "rank": "Rank",
+      "gamesPlayed": "juegos jugados",
+      "mastered": "masterizados",
+      "raNoProgress": "Todavía no hay progreso registrado — juega algo con los logros activados en RetroArch.",
+      "raNoHistory": "Sin logros registrados todavía — se van acumulando aquí cada vez que abres esta pestaña.",
+      "hardcore": "Hardcore",
+      "xeniaRpcs3LoadError": "No se pudo cargar Xenia/RPCS3: ${error}<br>Si acabas de actualizar MegaHUB, cierra la app por completo (no solo recargues) y vuelve a abrirla.",
+      "hiddenTrophy": "Trofeo oculto hasta desbloquearlo.",
+      "dataDisplayError": "Error mostrando los datos: ${error}",
+      "consolasEmpty": "Nada todavía — instala Xenia o RPCS3 desde Modo Retro y juega algo con logros/trofeos.",
+      "trophiesUnlockStatusUnavailable": "${count} trofeos — estado de desbloqueo no disponible todavía",
+      "trophiesCount": "${count} trofeos",
+      "unknownStatus": "estado desconocido"
     }
   }
 }

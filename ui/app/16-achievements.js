@@ -1,5 +1,5 @@
 /* exported isRecentlyEarned, mhAchCache, mhAchLoading */
-/* global CONSOLE_REGISTRY, allGames, consoleMonogram, escapeHtml, hueFromString, icon, showToast, skeletonLinesHtml, toastNewlyUnlockedAchievements */
+/* global CONSOLE_REGISTRY, allGames, consoleMonogram, escapeHtml, hueFromString, icon, showToast, skeletonLinesHtml, toastNewlyUnlockedAchievements, tr */
 /* ================= Logros ================= */
 // Dos fuentes independientes en la misma pestaña 🏆 LOGROS:
 //  - "mh" → motor propio de MegaHUB (global + Steam por horas reales +
@@ -61,7 +61,7 @@ async function loadMhDashboard() {
   ).join('');
   const res = await fetchMhAchievements();
   if (res && res.error) {
-    panel.innerHTML = `<div class="empty">Error: ${escapeHtml(res.error)}</div>`;
+    panel.innerHTML = `<div class="empty">${tr('megahub.retro.errorPrefix', { error: escapeHtml(res.error) })}</div>`;
     return;
   }
   renderMhPanel();
@@ -93,7 +93,7 @@ function renderMhPanel() {
   const panel = document.getElementById('mh-panel');
   const items = (mhAchCache || []).filter(a => a.scope === mhTab);
   if (!items.length) {
-    panel.innerHTML = '<div class="empty">Nada por aquí todavía — sigue jugando para desbloquear logros en esta categoría.</div>';
+    panel.innerHTML = `<div class="empty">${tr('megahub.achievements.mhEmpty')}</div>`;
     return;
   }
   if (mhTab === 'steamgame' || mhTab === 'retrogame') {
@@ -108,7 +108,7 @@ function renderMhPanel() {
     const sub = mhTab === 'retroconsole' ? consoleNameLookup(a.consoleId) : '';
     return `
       <div class="ach-card${a.earned ? ' earned' : ''}${isRecentlyEarned(a) ? ' recent' : ''}">
-        ${isRecentlyEarned(a) ? '<span class="ach-new-ribbon">Nuevo</span>' : ''}
+        ${isRecentlyEarned(a) ? `<span class="ach-new-ribbon">${tr('megahub.achievements.newRibbon')}</span>` : ''}
         <div class="ach-title">${a.earned ? icon('check') : ''}${escapeHtml(a.title)}</div>
         ${sub ? `<div class="ach-sub">${escapeHtml(sub)}</div>` : ''}
         <div class="ach-desc">${escapeHtml(a.description)}</div>
@@ -150,14 +150,14 @@ function renderMhGameList(panel, items) {
           <div class="ach-game-row-info">
             <div class="ach-game-row-title">${escapeHtml(gameTitle)}${sub ? ` <span class="ach-sub">— ${escapeHtml(sub)}</span>` : ''}</div>
             <div class="ra-progress-bar${earnedCount === achs.length ? ' mastered' : ''}"><div style="width:${pct}%"></div></div>
-            <div class="ra-progress-label"><span>${earnedCount}/${achs.length} logros</span><span>${first.progressCurrent}h</span></div>
+            <div class="ra-progress-label"><span>${earnedCount}/${achs.length} ${tr('megahub.achievements.wordAchievements')}</span><span>${first.progressCurrent}h</span></div>
           </div>
           <span class="ach-game-row-chevron">${icon('chevron')}</span>
         </button>
         <div class="ach-game-row-body" hidden>
           ${sortedAchs.map(a => `
               <div class="ach-card small${a.earned ? ' earned' : ''}${isRecentlyEarned(a) ? ' recent' : ''}">
-                ${isRecentlyEarned(a) ? '<span class="ach-new-ribbon">Nuevo</span>' : ''}
+                ${isRecentlyEarned(a) ? `<span class="ach-new-ribbon">${tr('megahub.achievements.newRibbon')}</span>` : ''}
                 <div class="ach-title">${a.earned ? icon('check') : ''}${escapeHtml(a.title)}</div>
                 <div class="ach-desc">${escapeHtml(a.description)}</div>
                 <div class="ra-progress-bar${a.earned ? ' mastered' : ''}"><div style="width:${pctOf(a.progressCurrent, a.progressTarget)}%"></div></div>
@@ -216,7 +216,7 @@ async function refreshCheevosStatusUi() {
   const openBtn = document.getElementById('ra-open-retroarch-btn');
   const status = await window.megahub.raGetCheevosStatus();
   if (!status.installed) {
-    statusEl.textContent = 'RetroArch no se detectó instalado — instálalo primero para poder jugar con logros activos.';
+    statusEl.textContent = tr('megahub.achievements.retroArchNotInstalledForCheevos');
     btn.hidden = true;
     openBtn.hidden = true;
     return;
@@ -226,10 +226,10 @@ async function refreshCheevosStatusUi() {
   // por eso el botón solo abre la app, no rellena nada.
   openBtn.hidden = false;
   if (status.enabled) {
-    statusEl.textContent = '✔ Los logros ya están activados en RetroArch — si aún no iniciaste sesión, hazlo en Ajustes > Logros.';
+    statusEl.textContent = tr('megahub.achievements.cheevosEnabled');
     btn.hidden = true;
   } else {
-    statusEl.textContent = 'RetroArch detectado, pero los logros todavía no están activados.';
+    statusEl.textContent = tr('megahub.achievements.cheevosNotEnabled');
     btn.hidden = false;
   }
 }
@@ -244,7 +244,7 @@ document.getElementById('ra-enable-cheevos-btn').addEventListener('click', async
   const result = await window.megahub.raEnableCheevos();
   btn.disabled = false;
   const statusEl = document.getElementById('ra-cheevos-status');
-  statusEl.textContent = result.error ? 'Error: ' + result.error : result.message;
+  statusEl.textContent = result.error ? tr('megahub.retro.errorPrefix', { error: result.error }) : result.message;
   if (result.ok) btn.hidden = true;
 });
 
@@ -254,13 +254,13 @@ document.getElementById('ra-connect-btn').addEventListener('click', async () => 
   if (!username || !apiKey) return;
   const btn = document.getElementById('ra-connect-btn');
   btn.disabled = true;
-  btn.textContent = 'Conectando…';
+  btn.textContent = tr('megahub.achievements.connecting');
   await window.megahub.raSetAccount({ username, apiKey });
   const summary = await window.megahub.raGetSummary();
   btn.disabled = false;
-  btn.textContent = 'Conectar';
+  btn.textContent = tr('megahub.achievements.connect');
   if (summary && summary.error) {
-    alert('No se pudo conectar: ' + summary.error + '\n\nRevisa que el usuario y la API key sean correctos.');
+    alert(tr('megahub.achievements.connectError', { error: summary.error }));
     await window.megahub.raSetAccount({ username: null, apiKey: null });
     return;
   }
@@ -268,7 +268,7 @@ document.getElementById('ra-connect-btn').addEventListener('click', async () => 
 });
 
 document.getElementById('ra-disconnect-btn').addEventListener('click', async () => {
-  if (!confirm('¿Desconectar tu cuenta de RetroAchievements de MegaHUB? (esto no borra tu progreso en retroachievements.org, solo el acceso desde aquí)')) return;
+  if (!confirm(tr('megahub.achievements.confirmDisconnect'))) return;
   await window.megahub.raSetAccount({ username: null, apiKey: null });
   await initRaSourcePanel();
 });
@@ -307,7 +307,7 @@ async function loadAchievementsDashboard(forceRefreshHistory) {
   ]);
 
   if (summary && summary.error) {
-    usernameLabel.textContent = 'Error al cargar el perfil';
+    usernameLabel.textContent = tr('megahub.achievements.profileLoadError');
     statsEl.innerHTML = `<span class="ra-stat-pill">${escapeHtml(summary.error)}</span>`;
     return;
   }
@@ -315,11 +315,11 @@ async function loadAchievementsDashboard(forceRefreshHistory) {
   usernameLabel.textContent = summary.username || '';
   const masteredCount = (progress || []).filter(g => g.highestAwardKind === 'mastered' || g.highestAwardKind === 'completed').length;
   statsEl.innerHTML = `
-    <span class="ra-stat-pill ra-points"><b>${summary.points ?? 0}</b> puntos</span>
-    <span class="ra-stat-pill"><b>${summary.truePoints ?? 0}</b> puntos hardcore</span>
-    ${summary.rank ? `<span class="ra-stat-pill">Rank <b>#${summary.rank}</b></span>` : ''}
-    <span class="ra-stat-pill"><b>${(progress || []).length}</b> juegos jugados</span>
-    <span class="ra-stat-pill ra-points"><b>${masteredCount}</b> masterizados</span>
+    <span class="ra-stat-pill ra-points"><b>${summary.points ?? 0}</b> ${tr('megahub.achievements.points')}</span>
+    <span class="ra-stat-pill"><b>${summary.truePoints ?? 0}</b> ${tr('megahub.achievements.hardcorePoints')}</span>
+    ${summary.rank ? `<span class="ra-stat-pill">${tr('megahub.achievements.rank')} <b>#${summary.rank}</b></span>` : ''}
+    <span class="ra-stat-pill"><b>${(progress || []).length}</b> ${tr('megahub.achievements.gamesPlayed')}</span>
+    <span class="ra-stat-pill ra-points"><b>${masteredCount}</b> ${tr('megahub.achievements.mastered')}</span>
   `;
 
   raCompletionCache = (progress && !progress.error) ? progress : [];
@@ -334,7 +334,7 @@ function renderRaGames() {
   const grid = document.getElementById('ra-panel-games');
   const games = raCompletionCache || [];
   if (!games.length) {
-    grid.innerHTML = '<div class="empty">Todavía no hay progreso registrado — juega algo con los logros activados en RetroArch.</div>';
+    grid.innerHTML = `<div class="empty">${tr('megahub.achievements.raNoProgress')}</div>`;
     return;
   }
   // Más reciente jugado primero.
@@ -367,7 +367,7 @@ async function renderRaHistory() {
   ).join('');
   const history = await window.megahub.raGetHistory();
   if (!history.length) {
-    panel.innerHTML = '<div class="empty">Sin logros registrados todavía — se van acumulando aquí cada vez que abres esta pestaña.</div>';
+    panel.innerHTML = `<div class="empty">${tr('megahub.achievements.raNoHistory')}</div>`;
     return;
   }
   panel.innerHTML = history.map(h => `
@@ -375,7 +375,7 @@ async function renderRaHistory() {
       ${h.badgeUrl ? `<img src="${escapeHtml(h.badgeUrl)}">` : ''}
       <div class="ra-hist-main">
         <div class="ra-hist-title">${escapeHtml(h.title)} — <span style="color:var(--dim);font-weight:500;">${escapeHtml(h.gameTitle || '')}</span></div>
-        <div class="ra-hist-meta">${escapeHtml(h.description || '')} · ${new Date(h.date).toLocaleString()}${h.hardcore ? ' · Hardcore' : ''}</div>
+        <div class="ra-hist-meta">${escapeHtml(h.description || '')} · ${new Date(h.date).toLocaleString()}${h.hardcore ? ` · ${tr('megahub.achievements.hardcore')}` : ''}</div>
       </div>
       <div class="ra-hist-points">${h.points} pts</div>
     </div>
@@ -395,26 +395,26 @@ async function openRaGameDetail(gameId) {
 
   const game = await window.megahub.raGetGameProgress(gameId);
   if (game.error) {
-    document.getElementById('ra-game-detail-header').innerHTML = `<div>Error: ${escapeHtml(game.error)}</div>`;
+    document.getElementById('ra-game-detail-header').innerHTML = `<div>${tr('megahub.retro.errorPrefix', { error: escapeHtml(game.error) })}</div>`;
     return;
   }
   document.getElementById('ra-game-detail-header').innerHTML = `
     ${game.icon ? `<img src="${escapeHtml(game.icon)}">` : ''}
     <div>
       <h2>${escapeHtml(game.title)}</h2>
-      <div class="side-note">${escapeHtml(game.consoleName || '')} · ${game.achievements.filter(a => a.earned).length}/${game.numAchievements} logros${game.userCompletion ? ` · ${escapeHtml(game.userCompletion)}` : ''}</div>
+      <div class="side-note">${escapeHtml(game.consoleName || '')} · ${game.achievements.filter(a => a.earned).length}/${game.numAchievements} ${tr('megahub.achievements.wordAchievements')}${game.userCompletion ? ` · ${escapeHtml(game.userCompletion)}` : ''}</div>
     </div>
   `;
   document.getElementById('ra-game-detail-grid').innerHTML = game.achievements.map(a => {
     const recent = a.earned && a.dateEarned && (Date.now() - new Date(a.dateEarned).getTime()) < 5 * 60 * 1000;
     return `
     <div class="ra-ach-card${a.earned ? '' : ' locked'}${recent ? ' recent' : ''}">
-      ${recent ? '<span class="ach-new-ribbon">Nuevo</span>' : ''}
+      ${recent ? `<span class="ach-new-ribbon">${tr('megahub.achievements.newRibbon')}</span>` : ''}
       ${a.badgeUrl ? `<img src="${escapeHtml(a.badgeUrl)}">` : ''}
       <div>
         <div class="ra-ach-title">${escapeHtml(a.title)}</div>
         <div class="ra-ach-desc">${escapeHtml(a.description || '')}</div>
-        <div class="ra-ach-points">${a.points} pts${a.earnedHardcore ? ' · Hardcore' : ''}</div>
+        <div class="ra-ach-points">${a.points} pts${a.earnedHardcore ? ` · ${tr('megahub.achievements.hardcore')}` : ''}</div>
       </div>
     </div>
   `;
@@ -439,7 +439,7 @@ async function loadConsolasDashboard() {
   try {
     [xenia, rpcs3] = await Promise.all([window.megahub.xeniaGetAchievements(), window.megahub.rpcs3GetTrophies()]);
   } catch (e) {
-    grid.innerHTML = `<div class="empty">No se pudo cargar Xenia/RPCS3: ${escapeHtml(String(e.message || e))}<br>Si acabas de actualizar MegaHUB, cierra la app por completo (no solo recargues) y vuelve a abrirla.</div>`;
+    grid.innerHTML = `<div class="empty">${tr('megahub.achievements.xeniaRpcs3LoadError', { error: escapeHtml(String(e.message || e)) })}</div>`;
     return;
   }
   const games = [];
@@ -478,7 +478,7 @@ async function loadConsolasDashboard() {
         totalCount: g.trophies.length,
         unknownStatus: true, // ver limitación TROPUSR.DAT en rpcs3Trophies.js
         items: g.trophies.map(t => ({
-          id: t.id, name: t.hidden ? '???' : t.name, description: t.hidden ? 'Trofeo oculto hasta desbloquearlo.' : t.description,
+          id: t.id, name: t.hidden ? '???' : t.name, description: t.hidden ? tr('megahub.achievements.hiddenTrophy') : t.description,
           earned: null, iconDataUrl: t.iconDataUrl, meta: t.typeLabel,
         })),
       });
@@ -486,14 +486,14 @@ async function loadConsolasDashboard() {
   }
 
   } catch (e) {
-    errors.push(`Error mostrando los datos: ${e.message || e}`);
+    errors.push(tr('megahub.achievements.dataDisplayError', { error: e.message || e }));
   }
 
   consolasCache = games;
   if (!games.length) {
     grid.innerHTML = errors.length
       ? `<div class="empty">${errors.map(escapeHtml).join('<br>')}</div>`
-      : '<div class="empty">Nada todavía — instala Xenia o RPCS3 desde Modo Retro y juega algo con logros/trofeos.</div>';
+      : `<div class="empty">${tr('megahub.achievements.consolasEmpty')}</div>`;
     return;
   }
   if (errors.length) showToast(errors.join(' · '), 'error', 8000);
@@ -512,7 +512,7 @@ function renderConsolasGames() {
         <div class="ra-game-info">
           <div class="ra-game-title">${escapeHtml(g.title)} <span class="ra-mastery-badge">${g.source === 'xenia' ? 'Xenia · Xbox 360' : 'RPCS3 · PS3'}</span></div>
           ${g.unknownStatus
-            ? `<div class="ra-game-console">${g.totalCount} trofeos — estado de desbloqueo no disponible todavía</div>`
+            ? `<div class="ra-game-console">${tr('megahub.achievements.trophiesUnlockStatusUnavailable', { count: g.totalCount })}</div>`
             : `<div class="ra-progress-bar${pct === 100 ? ' mastered' : ''}"><div style="width:${pct}%"></div></div>
                <div class="ra-progress-label"><span>${g.earnedCount}/${g.totalCount}</span><span>${pct}%</span></div>`}
         </div>
@@ -533,7 +533,7 @@ function openConsolasGameDetail(key) {
     ${g.iconDataUrl ? `<img src="${escapeHtml(g.iconDataUrl)}">` : ''}
     <div>
       <h2>${escapeHtml(g.title)}</h2>
-      <div class="side-note">${g.source === 'xenia' ? 'Xenia · Xbox 360' : 'RPCS3 · PS3'} · ${g.unknownStatus ? `${g.totalCount} trofeos` : `${g.earnedCount}/${g.totalCount} logros`}</div>
+      <div class="side-note">${g.source === 'xenia' ? 'Xenia · Xbox 360' : 'RPCS3 · PS3'} · ${g.unknownStatus ? tr('megahub.achievements.trophiesCount', { count: g.totalCount }) : `${g.earnedCount}/${g.totalCount} ${tr('megahub.achievements.wordAchievements')}`}</div>
     </div>
   `;
   document.getElementById('consolas-game-detail-grid').innerHTML = g.items.map(a => `
@@ -542,7 +542,7 @@ function openConsolasGameDetail(key) {
       <div>
         <div class="ra-ach-title">${escapeHtml(a.name)}</div>
         <div class="ra-ach-desc">${escapeHtml(a.description || '')}</div>
-        <div class="ra-ach-points">${escapeHtml(a.meta)}${a.earned === null ? ' · estado desconocido' : ''}</div>
+        <div class="ra-ach-points">${escapeHtml(a.meta)}${a.earned === null ? ` · ${tr('megahub.achievements.unknownStatus')}` : ''}</div>
       </div>
     </div>
   `).join('');
