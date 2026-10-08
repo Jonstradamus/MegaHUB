@@ -1108,16 +1108,19 @@ ipcMain.handle('retro-open-bios-folder', (_ev, consoleId) => {
 // es la misma: se LEE el contenido desde dentro del asar (eso sí lo puede
 // hacer Node/Electron) y se ESCRIBE una copia real, al lado de emulators/ y
 // roms/ (mismo ROOT que retroFolders.js), y se abre esa copia real.
+// Cada LEEME-*.txt (ES) tiene su README-*.txt (EN) hermano — mismo texto,
+// mismo nombre base, elegido según el idioma activo al momento de abrirlo.
 const MULTIPLAYER_README = {
-  retroarch: 'LEEME-RetroArch-Netplay.txt',
-  dolphin: 'LEEME-Dolphin-Netplay.txt',
-  rpcs3: 'LEEME-RPCS3-RPCN.txt',
-  pcsx2: 'LEEME-PCSX2-Red.txt',
-  xemu: 'LEEME-Xemu-XLinkKai.txt',
+  retroarch: { es: 'LEEME-RetroArch-Netplay.txt', en: 'README-RetroArch-Netplay.txt' },
+  dolphin: { es: 'LEEME-Dolphin-Netplay.txt', en: 'README-Dolphin-Netplay.txt' },
+  rpcs3: { es: 'LEEME-RPCS3-RPCN.txt', en: 'README-RPCS3-RPCN.txt' },
+  pcsx2: { es: 'LEEME-PCSX2-Red.txt', en: 'README-PCSX2-Red.txt' },
+  xemu: { es: 'LEEME-Xemu-XLinkKai.txt', en: 'README-Xemu-XLinkKai.txt' },
 };
 ipcMain.handle('open-multiplayer-readme', (_ev, key) => {
-  const filename = MULTIPLAYER_README[key];
-  if (!filename) return { error: t(lang(), 'megahub.main.retroLaunch.noMultiplayerGuide') };
+  const entry = MULTIPLAYER_README[key];
+  if (!entry) return { error: t(lang(), 'megahub.main.retroLaunch.noMultiplayerGuide') };
+  const filename = entry[lang()] || entry.es;
   try {
     const source = path.join(__dirname, '..', 'docs', 'multiplayer', filename);
     const content = fs.readFileSync(source, 'utf8');
