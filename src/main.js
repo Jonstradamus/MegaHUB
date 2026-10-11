@@ -249,13 +249,21 @@ function createWindow() {
       contextIsolation: true,
       nodeIntegration: false,
       // sandbox:false — preload.js hace require() de módulos propios del repo
-      // (./util/store, ./lib/i18n); el sandbox de renderer viene activado por
+      // (./lib/i18n); el sandbox de renderer viene activado por
       // default desde Electron 20 y bloquea ese require(), lo que rompe
       // contextBridge.exposeInMainWorld por completo (window.megahub nunca se
       // crea — t()/scan/launch/install, todo). Mismo hallazgo y mismo fix que
       // companion-desktop (ver docs/tech-debt/plan-traduccion-ingles-2026-09.md
       // del repo Deriva, Fase 7).
       sandbox: false,
+      // El idioma viaja por additionalArguments (mismo patrón que
+      // preload-radio.js en companion-desktop) en vez de que preload.js lea
+      // store.load() directo: `app.getPath()` no está disponible en el
+      // proceso de preload aunque el sandbox esté apagado, y store.js lo
+      // necesita para resolver dónde vive el .json (bug encontrado post-fix
+      // de sandbox, ver plan de Deriva, Fase 7 — "Cannot read properties of
+      // undefined (reading 'getPath')").
+      additionalArguments: [`--megahub-lang=${lang()}`],
     },
   });
   // Los enlaces <a target="_blank"> (descarga de emulador, alta en SteamGridDB/
@@ -325,6 +333,16 @@ function createWindow() {
     notifyRetractChange();
   });
 }
+
+// Persiste el idioma elegido en 11-settings.js — store.save() funciona bien
+// acá (proceso principal, `app` sí existe), a diferencia de preload.js donde
+// rompía (ver additionalArguments de arriba). El renderer no espera el
+// resultado ni relee el idioma en la misma sesión (setupLanguageToggle() solo
+// persiste para el próximo arranque, ver comentario en 11-settings.js).
+ipcMain.handle('set-language', (_ev, newLang) => {
+  store.save('language', newLang);
+  return true;
+});
 
 /* ---------- Titlebar propia (frame:false) ---------- */
 

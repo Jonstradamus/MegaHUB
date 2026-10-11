@@ -1,11 +1,27 @@
 const { contextBridge, ipcRenderer } = require('electron');
-const store = require('./util/store');
 const i18n = require('./lib/i18n');
 
+// El idioma llega por additionalArguments (mismo patrón que preload-radio.js
+// en companion-desktop) en vez de leerlo de util/store.js: `app.getPath()`
+// no está disponible en este proceso aunque el sandbox esté apagado, y
+// store.js lo necesita para resolver dónde vive el .json — rompía t()/
+// getLanguage() con "Cannot read properties of undefined (reading
+// 'getPath')". getLanguage()/t() deben seguir siendo síncronos: 01-icons.js
+// los llama en un IIFE que traduce el DOM estático al arrancar, antes de que
+// corra cualquier otro script.
+function readArg(prefix) {
+  const arg = process.argv.find((a) => a.startsWith(prefix));
+  return arg ? decodeURIComponent(arg.slice(prefix.length)) : null;
+}
+const currentLanguage = readArg('--megahub-lang=') || 'es';
+
 contextBridge.exposeInMainWorld('megahub', {
-  t:           (key, params) => i18n.t(store.load('language', 'es'), key, params),
-  getLanguage: () => store.load('language', 'es'),
-  setLanguage: (lang) => store.save('language', lang),
+  t:           (key, params) => i18n.t(currentLanguage, key, params),
+  getLanguage: () => currentLanguage,
+  // Persiste vía IPC (el main process sí tiene `app`, ver main.js); no hay
+  // que esperar el resultado — setupLanguageToggle() en 11-settings.js solo
+  // guarda la preferencia para el próximo arranque, no re-traduce en vivo.
+  setLanguage: (lang) => ipcRenderer.invoke('set-language', lang),
   onRetroLaunchIssue: (callback) => ipcRenderer.on('retro-launch-issue', (_ev, data) => callback(data)),
   onAutostartIssue: (callback) => ipcRenderer.on('autostart-issue', (_ev, data) => callback(data)),
   onGameSessionEnded: (callback) => ipcRenderer.on('game-session-ended', (_ev, data) => callback(data)),
