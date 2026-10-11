@@ -248,6 +248,14 @@ function createWindow() {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
       nodeIntegration: false,
+      // sandbox:false — preload.js hace require() de módulos propios del repo
+      // (./util/store, ./lib/i18n); el sandbox de renderer viene activado por
+      // default desde Electron 20 y bloquea ese require(), lo que rompe
+      // contextBridge.exposeInMainWorld por completo (window.megahub nunca se
+      // crea — t()/scan/launch/install, todo). Mismo hallazgo y mismo fix que
+      // companion-desktop (ver docs/tech-debt/plan-traduccion-ingles-2026-09.md
+      // del repo Deriva, Fase 7).
+      sandbox: false,
     },
   });
   // Los enlaces <a target="_blank"> (descarga de emulador, alta en SteamGridDB/
